@@ -47,3 +47,4 @@ cordic
 cordic = flip (ifoldl cordicStep') 
     where 
     cordicStep' accum index con = cordicStep index con accum
+
