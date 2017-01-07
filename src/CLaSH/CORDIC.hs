@@ -23,11 +23,12 @@ data CordicState a b = CordicState {
 
 cordicStep 
     :: (Ord a, Num a, Bits a, Num b, Ord b, KnownNat n) 
-    => Index n 
+    => (CordicState a b -> Bool)
+    -> Index n 
     -> b 
     -> CordicState a b 
     -> CordicState a b
-cordicStep idx a (CordicState (x :+ y) arg) = CordicState (nextX :+ nextY) nextArg
+cordicStep dir idx a state@(CordicState (x :+ y) arg) = CordicState (nextX :+ nextY) nextArg
     where
     addSub sel x y 
         | sel       = x + y
@@ -37,14 +38,15 @@ cordicStep idx a (CordicState (x :+ y) arg) = CordicState (nextX :+ nextY) nextA
     nextY   = addSub sel       y (x `shiftR` fromIntegral idx)
 
     nextArg = addSub (not sel) arg a
-    sel = y < 0
+    sel     = dir state
 
 cordic 
     :: (Ord a, Num a, Bits a, Num b, Ord b, Fractional b, KnownNat n) 
-    => Vec n b 
+    => (CordicState a b -> Bool)
+    -> Vec n b 
     -> CordicState a b 
     -> CordicState a b
-cordic = flip (ifoldl cordicStep') 
+cordic dir = flip (ifoldl cordicStep') 
     where 
-    cordicStep' accum index con = cordicStep index con accum
+    cordicStep' accum index con = cordicStep dir index con accum
 

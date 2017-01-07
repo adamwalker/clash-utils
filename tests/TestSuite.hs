@@ -42,7 +42,7 @@ propCORDICVectorMode =
     consts = $(v (Prelude.take 100 tangents))
 
     doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
-    doIt = cordic consts
+    doIt = cordic (\(CordicState (_ :+ y) _) -> y < 0) consts
 
     approxEqual :: Double -> Double -> Bool
     approxEqual x y = abs (x - y) < 0.0001
