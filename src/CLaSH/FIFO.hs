@@ -1,5 +1,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-module CLaSH.FIFO where
+
+{-| A block ram FIFO -}
+module CLaSH.FIFO (
+    blockRamFIFO
+    ) where
 
 import CLaSH.Prelude
 
@@ -10,9 +14,9 @@ blockRamFIFO
     -> Signal a    -- ^ Write data
     -> Signal Bool -- ^ Write request
     -> (
-        Signal a,    -- ^ Read data
-        Signal Bool, -- ^ Empty
-        Signal Bool  -- ^ Full
+        Signal a,    -- Read data
+        Signal Bool, -- Empty
+        Signal Bool  -- Full
     )
 blockRamFIFO size rReq wData wReq = (ramOut, empty, full)
     where

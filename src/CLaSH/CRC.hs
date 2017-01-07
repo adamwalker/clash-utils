@@ -1,5 +1,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-module CLaSH.CRC where
+
+{-| <https://en.wikipedia.org/wiki/Cyclic_redundancy_check Cyclic redundancy check> -}
+module CLaSH.CRC (
+    serialCRC
+    ) where
 
 import CLaSH.Prelude
 

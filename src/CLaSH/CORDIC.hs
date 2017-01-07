@@ -1,5 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-module CLaSH.CORDIC where
+
+{-| Compute trigonometric functions using <https://en.wikipedia.org/wiki/CORDIC CODRIC>. See also the Wikibook: <https://en.wikibooks.org/wiki/Digital_Circuits/CORDIC>. -}
+module CLaSH.CORDIC (
+    tangents,
+    kValue,
+    Complex(..),
+    CordicState(..),
+    cordicStep,
+    cordic
+    ) where
 
 import CLaSH.Prelude
 import qualified Prelude as P

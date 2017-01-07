@@ -1,5 +1,12 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-module CLaSH.BCD where
+
+{-| Binary to BCD conversion using the <https://en.wikipedia.org/wiki/Double_dabble Double Dabble> algorithm. -}
+module CLaSH.BCD (
+    BCDDigit,
+    convertStep,
+    singleCycleConvert,
+    toDec
+    ) where
 
 import CLaSH.Prelude
 
