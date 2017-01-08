@@ -13,10 +13,12 @@ import CLaSH.BCD
 import CLaSH.FIRFilter
 import CLaSH.CORDIC
 
+--BCD conversion testing
 propBCDConversion = 
     forAll (choose (0, 9999)) $ \(x :: Int) -> 
         dropWhile (==0) (toList (toDec (fromIntegral x :: BitVector 16) :: Vec 4 BCDDigit)) == Prelude.map fromIntegral (digits 10 x)
 
+--FIR filter testing
 propFilterTransposed :: (KnownNat (n + 1), KnownNat n) => Vec (n + 1) (Signed 32) -> [Signed 32] -> Bool
 propFilterTransposed coeffs input = 
        Prelude.take (Prelude.length input) (simulate (fir coeffs) input) 
@@ -64,7 +66,7 @@ propCORDICRotationMode =
     doIt = cordic (\(CordicState _ a) -> a > 0) consts
 
 tests = [
-        testProperty "bcd conversion"          propBCDConversion,
+        testProperty "BCD conversion"          propBCDConversion,
         testProperty "Transposed FIR filter"   (propFilterTransposed :: Vec 8 (Signed 32) -> [Signed 32] -> Bool),
         testProperty "Linear phase FIR filter" propFilterLinearPhase,
         testProperty "CORDIC vector mode"      propCORDICVectorMode,
@@ -72,3 +74,4 @@ tests = [
     ]
 
 main = defaultMain tests
+
