@@ -27,31 +27,48 @@ propFilterLinearPhase coeffs input =
        Prelude.take (Prelude.length input) (simulate (register 0 . fir (reverse coeffs ++ coeffs)) input) 
     == Prelude.take (Prelude.length input) (simulate (firLinearPhase coeffs) input)
 
+--CORDIC testing
+approxEqual :: Double -> Double -> Bool
+approxEqual x y = abs (x - y) < 0.0001
+
+realPart :: Complex a -> a
+realPart (x :+ _) = x
+
+imagPart :: Complex a -> a
+imagPart (_ :+ y) = y
+
+consts :: Vec 100 (SFixed 32 32)
+consts = $(v (Prelude.take 100 tangents))
+
 propCORDICVectorMode = 
-    forAll (choose (0, 500000000)) $ \(x :: Int) -> 
-        forAll (choose (0, 500000000)) $ \(y :: Int) -> 
-            let res     = doIt $ CordicState (fromIntegral x :+ fromIntegral y) 0
-                cplxNum = fromIntegral x C.:+ fromIntegral y
+    forAll (choose (0, 500000000)) $ \(x :: Double) -> 
+        forAll (choose (0, 500000000)) $ \(y :: Double) -> 
+            let res     = doIt $ CordicState (fromRational (toRational x) :+ fromRational (toRational y)) 0
+                cplxNum = x C.:+ y
             in     approxEqual (kValue 100 * realToFrac (realPart (cplx res))) (C.magnitude cplxNum)
                 && approxEqual (realToFrac (arg res)) (C.phase cplxNum)
     where
-    realPart :: Complex a -> a
-    realPart (x :+ y) = x
-
-    consts :: Vec 100 (SFixed 32 32)
-    consts = $(v (Prelude.take 100 tangents))
 
     doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
     doIt = cordic (\(CordicState (_ :+ y) _) -> y < 0) consts
 
-    approxEqual :: Double -> Double -> Bool
-    approxEqual x y = abs (x - y) < 0.0001
+propCORDICRotationMode = 
+    forAll (choose (0, 5000)) $ \(x :: Double) -> 
+        forAll (choose (0, 0.75)) $ \(y :: Double) -> 
+            let res     = doIt $ CordicState (fromRational (toRational x) :+ 0) (fromRational (toRational y))
+            in     approxEqual (kValue 100 * realToFrac (realPart (cplx res))) (x * Prelude.cos y)
+                && approxEqual (kValue 100 * realToFrac (imagPart (cplx res))) (x * Prelude.sin y)
+    where
+
+    doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
+    doIt = cordic (\(CordicState _ a) -> a > 0) consts
 
 tests = [
         testProperty "bcd conversion"          propBCDConversion,
         testProperty "Transposed FIR filter"   (propFilterTransposed :: Vec 8 (Signed 32) -> [Signed 32] -> Bool),
         testProperty "Linear phase FIR filter" propFilterLinearPhase,
-        testProperty "CORDIC vector mode"      propCORDICVectorMode
+        testProperty "CORDIC vector mode"      propCORDICVectorMode,
+        testProperty "CORDIC rotation mode"    propCORDICRotationMode
     ]
 
 main = defaultMain tests
