@@ -2,6 +2,7 @@
 
 {-| <https://en.wikipedia.org/wiki/Cyclic_redundancy_check Cyclic redundancy check> -}
 module CLaSH.CRC (
+    crcStep,
     serialCRC
     ) where
 
@@ -15,16 +16,18 @@ serialCRC
     -> BitVector n                -- ^ The polynomial
     -> Signal Bit                 -- ^ Input bit
     -> Signal (BitVector (n + 1)) -- ^ CRC
-serialCRC init polynomial input = pack <$> shiftRegister
+serialCRC init polynomial input = pack <$> mealy step' (unpack init) input
     where
-    --The shift register
-    shiftRegister :: Signal (Vec (n + 1) Bit) 
-    shiftRegister =  register (unpack init) $ step <$> shiftRegister <*> input
+    step' st inp = (x, x) where x = crcStep polynomial st inp
 
-    --The function which computes the next value of the shift register
-    step :: Vec (n + 1) Bit -> Bit -> Vec (n + 1) Bit
-    step (head :> rest) inp = zipWith selectIn (unpack polynomial) rest :< rightmostBit
-        where
-        rightmostBit = inp `xor` head
-        selectIn sel bit =  bool bit (bit `xor` rightmostBit) sel
+crcStep 
+    :: (KnownNat n)
+    => BitVector n     -- ^ Polynomial
+    -> Vec (n + 1) Bit -- ^ Shift register state
+    -> Bit             -- ^ Input bit
+    -> Vec (n + 1) Bit -- ^ Next shift register state
+crcStep polynomial (head :> rest) inp = zipWith selectIn (unpack polynomial) rest :< rightmostBit
+    where
+    rightmostBit = inp `xor` head
+    selectIn sel bit =  bool bit (bit `xor` rightmostBit) sel
 
