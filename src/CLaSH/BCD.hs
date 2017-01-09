@@ -4,7 +4,7 @@
 module CLaSH.BCD (
     BCDDigit,
     convertStep,
-    singleCycleConvert,
+    convertSteps,
     toDec
     ) where
 
@@ -34,15 +34,15 @@ convertStep bit digits = unpack $ pack shifted
     shifted   = flattened <<+ bit
 
 {-| Perform several iterations of the double dabble algorithm - shifting in several bits from the right -}
-singleCycleConvert 
+convertSteps 
     :: (KnownNat n, KnownNat m, KnownNat (m * 4))
     => BitVector n    -- ^ Bits to shift in
     -> Vec m BCDDigit -- ^ BCD digit scratch space (as the Wikipedia page calls it)
     -> Vec m BCDDigit -- ^ Updated BCD scratch space
-singleCycleConvert n d = foldl (flip convertStep) d (unpack n)
+convertSteps n d = foldl (flip convertStep) d (unpack n)
 
-{-| Combinationally convert a binary number to BCD. Use `singleCycleConvert` instead if you need to split up the calculation over several clock cycles. -}
+{-| Combinationally convert a binary number to BCD. Use `convertSteps` instead if you need to split up the calculation over several clock cycles. -}
 toDec :: (KnownNat n, KnownNat m, KnownNat (m * 4)) 
     => BitVector n    -- ^ Binary number to convert
     -> Vec m BCDDigit -- ^ Vector of BCD digits
-toDec = flip singleCycleConvert (repeat 0)
+toDec = flip convertSteps (repeat 0)
