@@ -16,12 +16,13 @@ extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
 library
-    exposed-modules:     CLaSH.BCD, CLaSH.CRC, CLaSH.FIFO, CLaSH.FIRFilter, CLaSH.CORDIC
+    exposed-modules:     CLaSH.BCD, CLaSH.CRC, CLaSH.FIFO, CLaSH.FIRFilter, CLaSH.CORDIC, CLaSH.Sort
     -- other-modules:       
     default-extensions:    ScopedTypeVariables, NoImplicitPrelude, TypeOperators, DataKinds, FlexibleContexts
-    build-depends:       base >=4.8 && <4.10, clash-prelude >=0.10 && <0.11
+    build-depends:       base >=4.8 && <4.10, clash-prelude >=0.10 && <0.11, ghc-typelits-natnormalise
     hs-source-dirs:      src
     default-language:    Haskell2010
+    ghc-options:         -fplugin GHC.TypeLits.Normalise
 
 Test-Suite test
     type:                exitcode-stdio-1.0
