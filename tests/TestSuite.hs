@@ -8,10 +8,12 @@ import qualified Data.Complex as C
 
 import CLaSH.Prelude
 import qualified Prelude
+import qualified Data.List as Prelude
 
 import CLaSH.BCD
 import CLaSH.FIRFilter
 import CLaSH.CORDIC
+import CLaSH.Sort
 
 --BCD conversion testing
 propBCDConversion = 
@@ -65,12 +67,17 @@ propCORDICRotationMode =
     doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
     doIt = cordic (\(CordicState _ a) -> a > 0) consts
 
+--Bitonic sorting network
+propBitonicSort :: Vec 16 (Signed 32) -> Bool
+propBitonicSort vec = toList (bitonicSorterExample vec) == Prelude.reverse (Prelude.sort (toList vec))
+
 tests = [
         testProperty "BCD conversion"          propBCDConversion,
         testProperty "Transposed FIR filter"   (propFilterTransposed :: Vec 8 (Signed 32) -> [Signed 32] -> Bool),
         testProperty "Linear phase FIR filter" propFilterLinearPhase,
         testProperty "CORDIC vector mode"      propCORDICVectorMode,
-        testProperty "CORDIC rotation mode"    propCORDICRotationMode
+        testProperty "CORDIC rotation mode"    propCORDICRotationMode,
+        testProperty "Bitonic sorter"          propBitonicSort
     ]
 
 main = defaultMain tests
