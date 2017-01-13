@@ -8,4 +8,4 @@ Includes:
 * CRC calculation
 * A FIFO
 * FIR filters
-
+* A bitonic sorting network
