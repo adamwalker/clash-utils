@@ -14,6 +14,7 @@ import CLaSH.BCD
 import CLaSH.FIRFilter
 import CLaSH.CORDIC
 import CLaSH.Sort
+import CLaSH.Divide
 
 --BCD conversion testing
 propBCDConversion = 
@@ -71,13 +72,18 @@ propCORDICRotationMode =
 propBitonicSort :: Vec 16 (Signed 32) -> Bool
 propBitonicSort vec = toList (bitonicSorterExample vec) == Prelude.reverse (Prelude.sort (toList vec))
 
+--Divider
+propDivider :: BitVector 32 -> BitVector 32 -> Bool
+propDivider x y = combDivide x y == x `quot` y
+
 tests = [
         testProperty "BCD conversion"          propBCDConversion,
         testProperty "Transposed FIR filter"   (propFilterTransposed :: Vec 8 (Signed 32) -> [Signed 32] -> Bool),
         testProperty "Linear phase FIR filter" propFilterLinearPhase,
         testProperty "CORDIC vector mode"      propCORDICVectorMode,
         testProperty "CORDIC rotation mode"    propCORDICRotationMode,
-        testProperty "Bitonic sorter"          propBitonicSort
+        testProperty "Bitonic sorter"          propBitonicSort,
+        testProperty "Divider"                 propDivider
     ]
 
 main = defaultMain tests

@@ -9,3 +9,4 @@ Includes:
 * A FIFO
 * FIR filters
 * A bitonic sorting network
+* Divider
