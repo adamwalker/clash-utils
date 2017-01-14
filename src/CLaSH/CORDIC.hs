@@ -37,11 +37,11 @@ data CordicState a b = CordicState {
 {-| Perform one step of the CORDIC algorithm. Can be used to calculate sine and cosine as well as calculate the magnitude and phase of a complex number. See the tests to see how this is done. This pure function can be used iteratively by feeding the output back into the input, pipelined by instantiating it several times with registers in between, or combinationally. `cordicSteps` may be useful for this. -}
 cordicStep 
     :: (Ord a, Num a, Bits a, Num b, Ord b, KnownNat n) 
-    => (CordicState a b -> Bool)
-    -> Index n 
-    -> b 
-    -> CordicState a b 
-    -> CordicState a b
+    => (CordicState a b -> Bool) -- ^ Function that determines the direction of rotation. See the tests for an example.
+    -> Index n                   -- ^ Iteration index of this step
+    -> b                         -- ^ Arctan for this index
+    -> CordicState a b           -- ^ Input state
+    -> CordicState a b           -- ^ Output state
 cordicStep dir idx a state@(CordicState (x :+ y) arg) = CordicState (nextX :+ nextY) nextArg
     where
     addSub sel x y 
@@ -57,10 +57,10 @@ cordicStep dir idx a state@(CordicState (x :+ y) arg) = CordicState (nextX :+ ne
 {-| Perform n iterations of the CORDIC algorithm -}
 cordicSteps
     :: (Ord a, Num a, Bits a, Num b, Ord b, Fractional b, KnownNat n) 
-    => (CordicState a b -> Bool)
-    -> Vec n b 
-    -> CordicState a b 
-    -> CordicState a b
+    => (CordicState a b -> Bool) -- ^ Function that determines the direction of rotation
+    -> Vec n b                   -- ^ Vector of arctan values
+    -> CordicState a b           -- ^ Input state
+    -> CordicState a b           -- ^ Output state
 cordicSteps dir = flip (ifoldl cordicStep') 
     where 
     cordicStep' accum index con = cordicStep dir index con accum
