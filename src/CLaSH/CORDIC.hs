@@ -13,13 +13,13 @@ module CLaSH.CORDIC (
 import CLaSH.Prelude
 import qualified Prelude as P
 
-{-| The gamma constants on the Wikipedia page -}
+{-| The gamma constants as described on the Wikipedia page -}
 arctans :: [Double]
 arctans = P.map func [0..]
     where
     func i = atan (2 ** (-i))
 
-{-| The K constants on the Wikipedia page -}
+{-| The K constants as described on the Wikipedia page -}
 kValue :: Int -> Double
 kValue i = product $ P.take i $ P.map func [0..]
     where
