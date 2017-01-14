@@ -4,6 +4,8 @@ module CLaSH.Divide where
 
 import CLaSH.Prelude
 
+import Control.Arrow
+
 data Divide n = Divide {
     a        :: Vec n Bit,
     p        :: Vec n Bit,
@@ -34,8 +36,8 @@ combDivide
     :: forall n. KnownNat (n + 1) 
     => BitVector (n + 1) 
     -> BitVector (n + 1) 
-    -> BitVector (n + 1)
-combDivide x y = pack $ quotient $ last $ iterate ((snat :: SNat (n + 1)) `addSNat` d1) step init
+    -> (BitVector (n + 1), BitVector (n + 1))
+combDivide x y = (pack . quotient &&& pack . p) $ last $ iterate ((snat :: SNat (n + 1)) `addSNat` d1) step init
     where
     init = initialDivide x
     step = divideStep (unpack y)

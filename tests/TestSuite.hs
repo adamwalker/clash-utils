@@ -74,7 +74,10 @@ propBitonicSort vec = toList (bitonicSorterExample vec) == Prelude.reverse (Prel
 
 --Divider
 propDivider :: BitVector 32 -> BitVector 32 -> Bool
-propDivider x y = combDivide x y == x `quot` y
+propDivider x y = q == q' && r == r'
+    where
+    (q, r)   = quotRem x y
+    (q', r') = combDivide x y
 
 tests = [
         testProperty "BCD conversion"          propBCDConversion,
