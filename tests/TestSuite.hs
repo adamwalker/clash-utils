@@ -42,7 +42,7 @@ imagPart :: Complex a -> a
 imagPart (_ :+ y) = y
 
 consts :: Vec 100 (SFixed 32 32)
-consts = $(v (Prelude.take 100 tangents))
+consts = $(v (Prelude.take 100 arctans))
 
 propCORDICVectorMode = 
     forAll (choose (0, 500000000)) $ \(x :: Double) -> 
@@ -54,7 +54,7 @@ propCORDICVectorMode =
     where
 
     doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
-    doIt = cordic (\(CordicState (_ :+ y) _) -> y < 0) consts
+    doIt = cordicSteps (\(CordicState (_ :+ y) _) -> y < 0) consts
 
 propCORDICRotationMode = 
     forAll (choose (0, 5000)) $ \(x :: Double) -> 
@@ -65,7 +65,7 @@ propCORDICRotationMode =
     where
 
     doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
-    doIt = cordic (\(CordicState _ a) -> a > 0) consts
+    doIt = cordicSteps (\(CordicState _ a) -> a > 0) consts
 
 --Bitonic sorting network
 propBitonicSort :: Vec 16 (Signed 32) -> Bool
