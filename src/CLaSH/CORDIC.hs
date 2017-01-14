@@ -25,6 +25,7 @@ kValue i = product $ P.take i $ P.map func [0..]
     where
     func i = 1 / sqrt (1 + 2 ** (-2 * i))
 
+{-| I defined my own complex type so that I can write a Num instance without the RealFloat constraint. TODO: think about whether this is really a good idea. -}
 data Complex a = a :+ a deriving (Show)
 
 {-| The state between iterations of the CORDIC algorithm. It is parameterised by two types: the type of the vector and the type of the accumulating angle. -}
@@ -33,7 +34,7 @@ data CordicState a b = CordicState {
     arg  :: b
 } deriving (Show)
 
-{-| Perform one step of the CORDIC algorithm. Can be used to calculate sin and cosine as well as calculate the magnitude and phase of a complex number. See the tests to see how this is done. This pure function can be used iteratively by feeding the output back into the input, pipelined by instantiating it several times with registers in between, or combinationally. `cordicSteps` may be useful for this. -}
+{-| Perform one step of the CORDIC algorithm. Can be used to calculate sine and cosine as well as calculate the magnitude and phase of a complex number. See the tests to see how this is done. This pure function can be used iteratively by feeding the output back into the input, pipelined by instantiating it several times with registers in between, or combinationally. `cordicSteps` may be useful for this. -}
 cordicStep 
     :: (Ord a, Num a, Bits a, Num b, Ord b, KnownNat n) 
     => (CordicState a b -> Bool)
@@ -53,7 +54,7 @@ cordicStep dir idx a state@(CordicState (x :+ y) arg) = CordicState (nextX :+ ne
     nextArg = addSub (not sel) arg a
     sel     = dir state
 
-{-| Perform n steps of the CORDIC algorithm -}
+{-| Perform n iterations of the CORDIC algorithm -}
 cordicSteps
     :: (Ord a, Num a, Bits a, Num b, Ord b, Fractional b, KnownNat n) 
     => (CordicState a b -> Bool)
