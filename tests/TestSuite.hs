@@ -36,12 +36,6 @@ propFilterLinearPhase coeffs input =
 approxEqual :: Double -> Double -> Bool
 approxEqual x y = abs (x - y) < 0.0001
 
-realPart :: Complex a -> a
-realPart (x :+ _) = x
-
-imagPart :: Complex a -> a
-imagPart (_ :+ y) = y
-
 consts :: Vec 100 (SFixed 32 32)
 consts = $(v (Prelude.take 100 arctans))
 

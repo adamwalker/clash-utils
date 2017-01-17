@@ -5,6 +5,8 @@ module CLaSH.CORDIC (
     arctans,
     kValue,
     Complex(..),
+    realPart,
+    imagPart,
     CordicState(..),
     cordicStep,
     cordicSteps
@@ -27,6 +29,12 @@ kValue i = product $ P.take i $ P.map func [0..]
 
 {-| I defined my own complex type so that I can write a Num instance without the RealFloat constraint. TODO: think about whether this is really a good idea. -}
 data Complex a = a :+ a deriving (Show)
+
+realPart :: Complex a -> a
+realPart (x :+ _) = x
+
+imagPart :: Complex a -> a
+imagPart (_ :+ y) = y
 
 {-| The state between iterations of the CORDIC algorithm. It is parameterised by two types: the type of the vector and the type of the accumulating angle. -}
 data CordicState a b = CordicState {
