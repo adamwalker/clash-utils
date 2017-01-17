@@ -13,9 +13,10 @@ import CLaSH.Prelude
 fir 
     :: (Num a, KnownNat (n + 1), KnownNat n) 
     => Vec (n + 1) a -- ^ Coefficients
+    -> Signal Bool   -- ^ Input enable
     -> Signal a      -- ^ Input samples
     -> Signal a      -- ^ Output samples
-fir coeffs x = dotp (map pure coeffs) (iterateI (register 0) x)
+fir coeffs en x = dotp (map pure coeffs) (iterateI (regEn 0 en) x)
     where
     dotp as bs = fold (+) (zipWith (*) as bs)
 
@@ -23,20 +24,22 @@ fir coeffs x = dotp (map pure coeffs) (iterateI (register 0) x)
 firTransposed 
     :: (Num a, KnownNat (n + 1)) 
     => Vec (n + 1) a -- ^ Coefficients
+    -> Signal Bool   -- ^ Input enable
     -> Signal a      -- ^ Input samples
     -> Signal a      -- ^ Output samples
-firTransposed coeffs x = foldl func 0 $ map (* x) (pure <$> coeffs)
+firTransposed coeffs en x = foldl func 0 $ map (* x) (pure <$> coeffs)
     where
-    func accum x = register 0 $ accum + x
+    func accum x = regEn 0 en $ accum + x
 
 {- | Linear phase FIR filter -}
 firLinearPhase 
     :: (KnownNat (n + 1), Num a) 
     => Vec (n + 1) a -- ^ Coefficients
+    -> Signal Bool   -- ^ Input enable
     -> Signal a      -- ^ Input samples
     -> Signal a      -- ^ Output samples
-firLinearPhase coeffs x = foldl func 0 $ zipWith (*) folded (pure <$> coeffs)
+firLinearPhase coeffs en x = foldl func 0 $ zipWith (*) folded (pure <$> coeffs)
     where
-    func accum x = register 0 $ accum + x
+    func accum x = regEn 0 en $ accum + x
     folded       = map (+ x) delayed
-    delayed      = iterate (lengthS coeffs) (register 0 . register 0) (register 0 x)
+    delayed      = iterate (lengthS coeffs) (regEn 0 en . regEn 0 en) (regEn 0 en x)

@@ -24,13 +24,13 @@ propBCDConversion =
 --FIR filter testing
 propFilterTransposed :: (KnownNat (n + 1), KnownNat n) => Vec (n + 1) (Signed 32) -> [Signed 32] -> Bool
 propFilterTransposed coeffs input = 
-       Prelude.take (Prelude.length input) (simulate (fir coeffs) input) 
-    == Prelude.take (Prelude.length input) (Prelude.drop 1 (simulate (firTransposed (reverse coeffs)) input))
+       Prelude.take (Prelude.length input) (simulate (fir coeffs (pure True)) input) 
+    == Prelude.take (Prelude.length input) (Prelude.drop 1 (simulate (firTransposed (reverse coeffs) (pure True)) input))
 
 propFilterLinearPhase :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
 propFilterLinearPhase coeffs input = 
-       Prelude.take (Prelude.length input) (simulate (register 0 . fir (reverse coeffs ++ coeffs)) input) 
-    == Prelude.take (Prelude.length input) (simulate (firLinearPhase coeffs) input)
+       Prelude.take (Prelude.length input) (simulate (register 0 . fir (reverse coeffs ++ coeffs) (pure True)) input) 
+    == Prelude.take (Prelude.length input) (simulate (firLinearPhase coeffs (pure True)) input)
 
 --CORDIC testing
 approxEqual :: Double -> Double -> Bool
