@@ -30,8 +30,6 @@ Test-Suite test
     build-depends:       
         base                       >=4.6  && <5, 
         QuickCheck                 >=2.8  && <2.10, 
-        test-framework             >=0.8  && <0.9,
-        test-framework-quickcheck2 >=0.3  && <0.4,
         digits                     >=0.3  && <0.4,
         clash-prelude,
         clash-utils

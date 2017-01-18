@@ -1,8 +1,11 @@
 {-# LANGUAGE DataKinds, ScopedTypeVariables, TypeOperators, NoImplicitPrelude, FlexibleContexts, TemplateHaskell #-}
 
+import Control.Monad
+import System.Exit
+
 import Test.QuickCheck
-import Test.Framework (defaultMain, testGroup)
-import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.QuickCheck.All
+
 import Data.Digits
 import qualified Data.Complex as C
 
@@ -17,18 +20,18 @@ import CLaSH.Sort
 import CLaSH.Divide
 
 --BCD conversion testing
-propBCDConversion = 
+prop_BCDConversion = 
     forAll (choose (0, 9999)) $ \(x :: Int) -> 
         dropWhile (==0) (toList (toDec (fromIntegral x :: BitVector 16) :: Vec 4 BCDDigit)) == Prelude.map fromIntegral (digits 10 x)
 
 --FIR filter testing
-propFilterTransposed :: (KnownNat (n + 1), KnownNat n) => Vec (n + 1) (Signed 32) -> [Signed 32] -> Bool
-propFilterTransposed coeffs input = 
+prop_FilterTransposed :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_FilterTransposed coeffs input = 
        Prelude.take (Prelude.length input) (simulate (fir coeffs (pure True)) input) 
     == Prelude.take (Prelude.length input) (Prelude.drop 1 (simulate (firTransposed (reverse coeffs) (pure True)) input))
 
-propFilterLinearPhase :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
-propFilterLinearPhase coeffs input = 
+prop_FilterLinearPhase :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_FilterLinearPhase coeffs input = 
        Prelude.take (Prelude.length input) (simulate (register 0 . fir (reverse coeffs ++ coeffs) (pure True)) input) 
     == Prelude.take (Prelude.length input) (simulate (firLinearPhase coeffs (pure True)) input)
 
@@ -39,7 +42,7 @@ approxEqual x y = abs (x - y) < 0.0001
 consts :: Vec 100 (SFixed 32 32)
 consts = $(v (Prelude.take 100 arctans))
 
-propCORDICVectorMode = 
+prop_CORDICVectorMode = 
     forAll (choose (0, 500000000)) $ \(x :: Double) -> 
         forAll (choose (0, 500000000)) $ \(y :: Double) -> 
             let res     = doIt $ CordicState (fromRational (toRational x) :+ fromRational (toRational y)) 0
@@ -51,7 +54,7 @@ propCORDICVectorMode =
     doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
     doIt = cordicSteps (\(CordicState (_ :+ y) _) -> y < 0) consts
 
-propCORDICRotationMode = 
+prop_CORDICRotationMode = 
     forAll (choose (0, 5000)) $ \(x :: Double) -> 
         forAll (choose (0, 0.75)) $ \(y :: Double) -> 
             let res     = doIt $ CordicState (fromRational (toRational x) :+ 0) (fromRational (toRational y))
@@ -63,25 +66,19 @@ propCORDICRotationMode =
     doIt = cordicSteps (\(CordicState _ a) -> a > 0) consts
 
 --Bitonic sorting network
-propBitonicSort :: Vec 16 (Signed 32) -> Bool
-propBitonicSort vec = toList (bitonicSorterExample vec) == Prelude.reverse (Prelude.sort (toList vec))
+prop_BitonicSort :: Vec 16 (Signed 32) -> Bool
+prop_BitonicSort vec = toList (bitonicSorterExample vec) == Prelude.reverse (Prelude.sort (toList vec))
 
 --Divider
-propDivider :: BitVector 32 -> BitVector 32 -> Bool
-propDivider x y = q == q' && r == r'
+prop_Divider :: BitVector 32 -> BitVector 32 -> Bool
+prop_Divider x y = q == q' && r == r'
     where
     (q, r)   = quotRem x y
     (q', r') = combDivide x y
 
-tests = [
-        testProperty "BCD conversion"          propBCDConversion,
-        testProperty "Transposed FIR filter"   (propFilterTransposed :: Vec 8 (Signed 32) -> [Signed 32] -> Bool),
-        testProperty "Linear phase FIR filter" propFilterLinearPhase,
-        testProperty "CORDIC vector mode"      propCORDICVectorMode,
-        testProperty "CORDIC rotation mode"    propCORDICRotationMode,
-        testProperty "Bitonic sorter"          propBitonicSort,
-        testProperty "Divider"                 propDivider
-    ]
-
-main = defaultMain tests
+return []
+main :: IO ()
+main = do
+    success <- $quickCheckAll
+    unless success exitFailure
 
