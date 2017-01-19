@@ -19,7 +19,7 @@ add3 digit
 
 {-| Perform one iteration of the double dabble algorithm - shifting one bit in from the right -}
 convertStep 
-    :: forall n. (KnownNat (n * 4), KnownNat n) 
+    :: forall n. KnownNat n
     => Bit            -- ^ Bit to shift in
     -> Vec n BCDDigit -- ^ BCD digit scratch space (as the Wikipedia page calls it)
     -> Vec n BCDDigit -- ^ Updated BCD scratch space
@@ -35,14 +35,15 @@ convertStep bit digits = unpack $ pack shifted
 
 {-| Perform several iterations of the double dabble algorithm - shifting in several bits from the right -}
 convertSteps 
-    :: (KnownNat n, KnownNat m, KnownNat (m * 4))
+    :: (KnownNat n, KnownNat m)
     => BitVector n    -- ^ Bits to shift in
     -> Vec m BCDDigit -- ^ BCD digit scratch space (as the Wikipedia page calls it)
     -> Vec m BCDDigit -- ^ Updated BCD scratch space
 convertSteps n d = foldl (flip convertStep) d (unpack n)
 
 {-| Combinationally convert a binary number to BCD. Use `convertSteps` instead if you need to split up the calculation over several clock cycles. -}
-toDec :: (KnownNat n, KnownNat m, KnownNat (m * 4)) 
+toDec :: (KnownNat n, KnownNat m) 
     => BitVector n    -- ^ Binary number to convert
     -> Vec m BCDDigit -- ^ Vector of BCD digits
 toDec = flip convertSteps (repeat 0)
+

@@ -23,7 +23,7 @@ initialDivide dividend = Divide (unpack dividend) (repeat 0) (repeat 0)
 
 {-| Perform one step of the restoring division algorithm -}
 divideStep 
-    :: KnownNat (n + 1) 
+    :: KnownNat n  
     => Vec (n + 1) Bit -- ^ Divisor
     -> Divide (n + 1)  -- ^ Divider state
     -> Divide (n + 1)  -- ^ Output divider state

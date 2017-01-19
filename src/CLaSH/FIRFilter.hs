@@ -11,7 +11,7 @@ import CLaSH.Prelude
 
 {- | Direct form FIR filter -}
 fir 
-    :: (Num a, KnownNat (n + 1), KnownNat n) 
+    :: (Num a, KnownNat n) 
     => Vec (n + 1) a -- ^ Coefficients
     -> Signal Bool   -- ^ Input enable
     -> Signal a      -- ^ Input samples
@@ -22,7 +22,7 @@ fir coeffs en x = dotp (map pure coeffs) (iterateI (regEn 0 en) x)
 
 {- | Transposed FIR filter -}
 firTransposed 
-    :: (Num a, KnownNat (n + 1)) 
+    :: (Num a, KnownNat n) 
     => Vec (n + 1) a -- ^ Coefficients
     -> Signal Bool   -- ^ Input enable
     -> Signal a      -- ^ Input samples
@@ -33,7 +33,7 @@ firTransposed coeffs en x = foldl func 0 $ map (* x) (pure <$> coeffs)
 
 {- | Linear phase FIR filter -}
 firLinearPhase 
-    :: (KnownNat (n + 1), Num a) 
+    :: (KnownNat n, Num a) 
     => Vec (n + 1) a -- ^ Coefficients
     -> Signal Bool   -- ^ Input enable
     -> Signal a      -- ^ Input samples

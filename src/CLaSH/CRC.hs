@@ -14,7 +14,7 @@ import Data.Bool
 
 {-| Calculates CRC one bit / clock cycle -}
 serialCRC 
-    :: forall n. (KnownNat (n + 1), KnownNat n)
+    :: forall n. KnownNat n
     => BitVector (n + 1)          -- ^ Initial value of shift register
     -> BitVector n                -- ^ The polynomial
     -> Signal Bit                 -- ^ Input bit
@@ -25,7 +25,7 @@ serialCRC init polynomial input = pack <$> mealy step' (unpack init) input
 
 {-| Calculates CRC m bits / clock cycle -}
 parallelCRC 
-    :: forall n m. (KnownNat n, KnownNat (n + 1), KnownNat m)
+    :: forall n m. (KnownNat n, KnownNat m)
     => BitVector (n + 1)          -- ^ Initial value of shift register
     -> BitVector n                -- ^ The polynomial
     -> Signal (BitVector m)       -- ^ Input bit
@@ -36,7 +36,7 @@ parallelCRC init polynomial input = pack <$> mealy step' (unpack init) input
 
 {-| Shift one bit into the CRC shift register -}
 crcStep 
-    :: (KnownNat n)
+    :: KnownNat n
     => BitVector n     -- ^ Polynomial
     -> Vec (n + 1) Bit -- ^ Shift register state
     -> Bit             -- ^ Input bit
