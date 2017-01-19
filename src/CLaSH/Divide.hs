@@ -42,7 +42,7 @@ combDivide
     => BitVector (n + 1)                      -- ^ Number to be divided
     -> BitVector (n + 1)                      -- ^ Divisor
     -> (BitVector (n + 1), BitVector (n + 1)) -- ^ (quotient, remainder)
-combDivide x y = (pack . quotient &&& pack . p) $ last $ iterate ((snat :: SNat (n + 1)) `addSNat` d1) step init
+combDivide x y = (pack . quotient &&& pack . p) $ last $ iterate ((SNat @ (n + 1)) `addSNat` d1) step init
     where
     init = initialDivide x
     step = divideStep (unpack y)

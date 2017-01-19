@@ -40,7 +40,7 @@ approxEqual :: Double -> Double -> Bool
 approxEqual x y = abs (x - y) < 0.0001
 
 consts :: Vec 100 (SFixed 32 32)
-consts = $(v (Prelude.take 100 arctans))
+consts = $(listToVecTH (Prelude.take 100 arctans))
 
 prop_CORDICVectorMode = 
     forAll (choose (0, 500000000)) $ \(x :: Double) -> 
