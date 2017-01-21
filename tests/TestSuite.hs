@@ -26,10 +26,11 @@ import CLaSH.CRC
 
 --BCD conversion testing
 prop_BCDConversion = 
-    forAll (choose (0, 9999)) $ \(x :: Int) -> 
+    forAll (choose (0, 9999)) $ \(x :: Int) -> --Make sure that the input range is representable within the output type
         dropWhile (==0) (toList (toDec (fromIntegral x :: BitVector 16) :: Vec 4 BCDDigit)) == Prelude.map fromIntegral (digits 10 x)
 
 --FIR filter testing
+--Check that both optimised filters return the same results as the unoptimised one
 prop_FilterTransposed :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
 prop_FilterTransposed coeffs input = 
        Prelude.take (Prelude.length input) (simulate (fir coeffs (pure True)) input) 
@@ -47,8 +48,9 @@ approxEqual x y = abs (x - y) < 0.0001
 consts :: Vec 100 (SFixed 32 32)
 consts = $(listToVecTH (Prelude.take 100 arctans))
 
+--Test CORDIC vector mode by calculating the magnitude and phase of a complex number
 prop_CORDICVectorMode = 
-    forAll (choose (0, 500000000)) $ \(x :: Double) -> 
+    forAll (choose (0, 500000000)) $ \(x :: Double) -> --Restrict the input ranges so that the error does not grow beyond what approxEqual considers acceptable
         forAll (choose (0, 500000000)) $ \(y :: Double) -> 
             let res     = doIt $ CordicState (fromRational (toRational x) :+ fromRational (toRational y)) 0
                 cplxNum = x C.:+ y
@@ -59,8 +61,9 @@ prop_CORDICVectorMode =
     doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
     doIt = cordicSteps (\(CordicState (_ :+ y) _) -> y < 0) consts
 
+--Test CORDIC rotation mode by calculating the real and imaginary part of a complex number given in polar form
 prop_CORDICRotationMode = 
-    forAll (choose (0, 5000)) $ \(x :: Double) -> 
+    forAll (choose (0, 5000)) $ \(x :: Double) ->  --Restrict the input ranges so that the error does not grow beyond what approxEqual considers acceptable
         forAll (choose (0, 0.75)) $ \(y :: Double) -> 
             let res     = doIt $ CordicState (fromRational (toRational x) :+ 0) (fromRational (toRational y))
             in     approxEqual (kValue 100 * realToFrac (realPart (cplx res))) (x * Prelude.cos y)
@@ -81,7 +84,7 @@ prop_Divider x y = q == q' && r == r'
     (q, r)   = quotRem x y
     (q', r') = combDivide x y
 
---CRC
+--Check that the CRC implementation agrees with a known goood implementation of CRC32
 revBV :: forall n. KnownNat n => BitVector n -> BitVector n
 revBV = pack . reverse . (unpack :: BitVector n -> Vec n Bit)
 
