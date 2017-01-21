@@ -31,9 +31,10 @@ Test-Suite test
     type:                exitcode-stdio-1.0
     main-is:             TestSuite.hs
     build-depends:       
-        base                       >=4.6  && <5, 
-        QuickCheck                 >=2.8  && <2.10, 
-        digits                     >=0.3  && <0.4,
+        base                       >=4.6   && <5, 
+        QuickCheck                 >=2.8   && <2.10, 
+        digits                     >=0.3   && <0.4,
+        digest                     >=0.0.1 && <0.0.2,
         clash-prelude,
         clash-utils
     hs-source-dirs:      tests

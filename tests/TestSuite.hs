@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, ScopedTypeVariables, TypeOperators, NoImplicitPrelude, FlexibleContexts, TemplateHaskell #-}
+{-# LANGUAGE DataKinds, ScopedTypeVariables, TypeOperators, NoImplicitPrelude, FlexibleContexts, TemplateHaskell, BinaryLiterals #-}
 
 import Control.Monad
 import System.Exit
@@ -8,16 +8,21 @@ import Test.QuickCheck.All
 
 import Data.Digits
 import qualified Data.Complex as C
+import Data.Digest.CRC32
 
 import CLaSH.Prelude
 import qualified Prelude
 import qualified Data.List as Prelude
+import Data.Word
 
 import CLaSH.BCD
 import CLaSH.FIRFilter
 import CLaSH.CORDIC
 import CLaSH.Sort
 import CLaSH.Divide
+import CLaSH.CRC
+
+{-# ANN module ("HLint: ignore Avoid reverse") #-}
 
 --BCD conversion testing
 prop_BCDConversion = 
@@ -76,6 +81,30 @@ prop_Divider x y = q == q' && r == r'
     (q, r)   = quotRem x y
     (q', r') = combDivide x y
 
+--CRC
+revBV :: forall n. KnownNat n => BitVector n -> BitVector n
+revBV = pack . reverse . (unpack :: BitVector n -> Vec n Bit)
+
+reverseByte :: Word8 -> Word8
+reverseByte = unpack . revBV . pack
+
+toBytes :: BitVector 64 -> [Word8]
+toBytes x = Prelude.map (fromIntegral . pack) $ toList unpacked
+    where
+    unpacked :: Vec 8 (Vec 8 Bit)
+    unpacked = unconcatI (unpack x)
+
+--The CRC32 polynomial
+poly :: BitVector 31
+poly = 0b10011000001000111011011011
+
+prop_crc32 :: BitVector 64 -> Bool
+prop_crc32 x = result == expect
+    where
+    expect = crc32 $ Prelude.map reverseByte (toBytes x)
+    result = fromIntegral $ pack $ map complement $ reverse $ crcSteps poly (repeat 1) x
+
+--Run the tests
 return []
 main :: IO ()
 main = do
