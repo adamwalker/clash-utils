@@ -2,7 +2,7 @@
 
 A random collection of reusable [Clash](http://www.clash-lang.org/) designs/examples.
 
-Includes:
+## Includes:
 * Binary to BCD conversion
 * CORDIC for calculating trigonometric functions
 * CRC calculation
@@ -10,3 +10,7 @@ Includes:
 * FIR filters
 * A bitonic sorting network
 * Divider
+
+## Features:
+
+Haddock documentation and QuickCheck tests.
