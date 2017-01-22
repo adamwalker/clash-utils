@@ -16,7 +16,7 @@ import Data.Bool
 serialCRC 
     :: forall n. KnownNat n
     => BitVector (n + 1)          -- ^ Initial value of shift register
-    -> BitVector n                -- ^ The polynomial
+    -> BitVector n                -- ^ The polynomial. The low order bit is assumed to be 1 so is not included.
     -> Signal Bit                 -- ^ Input bit
     -> Signal (BitVector (n + 1)) -- ^ CRC
 serialCRC init polynomial input = pack <$> mealy step' (unpack init) input
@@ -27,7 +27,7 @@ serialCRC init polynomial input = pack <$> mealy step' (unpack init) input
 parallelCRC 
     :: forall n m. (KnownNat n, KnownNat m)
     => BitVector (n + 1)          -- ^ Initial value of shift register
-    -> BitVector n                -- ^ The polynomial
+    -> BitVector n                -- ^ The polynomial. The low order bit is assumed to be 1 so is not included.
     -> Signal (BitVector m)       -- ^ Input bit
     -> Signal (BitVector (n + 1)) -- ^ CRC
 parallelCRC init polynomial input = pack <$> mealy step' (unpack init) input
@@ -37,7 +37,7 @@ parallelCRC init polynomial input = pack <$> mealy step' (unpack init) input
 {-| Shift one bit into the CRC shift register -}
 crcStep 
     :: KnownNat n
-    => BitVector n     -- ^ Polynomial
+    => BitVector n     -- ^ Polynomial. The low order bit is assumed to be 1 so is not included.
     -> Vec (n + 1) Bit -- ^ Shift register state
     -> Bit             -- ^ Input bit
     -> Vec (n + 1) Bit -- ^ Next shift register state
@@ -49,7 +49,7 @@ crcStep polynomial (head :> rest) inp = zipWith selectIn (unpack polynomial) res
 {-| Shift m bits into the CRC shift register -}
 crcSteps 
     :: forall n m. (KnownNat n, KnownNat m)
-    =>  BitVector n    -- ^ Polynomial
+    =>  BitVector n    -- ^ Polynomial. The low order bit is assumed to be 1 so is not included.
     -> Vec (n + 1) Bit -- ^ Shift register state
     -> BitVector m     -- ^ Input bits
     -> Vec (n + 1) Bit -- ^ Next shift register state
