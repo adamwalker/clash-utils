@@ -1,7 +1,12 @@
 {-# LANGUAGE ScopedTypeVariables, RecordWildCards #-}
 
 {-| A hardware divider -}
-module CLaSH.Divide where
+module CLaSH.Divide (
+    Divide(..),
+    initialDivide,
+    divideStep,
+    combDivide
+    ) where
 
 import CLaSH.Prelude
 
