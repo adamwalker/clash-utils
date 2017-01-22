@@ -7,6 +7,7 @@ module CLaSH.FIFO (
 
 import CLaSH.Prelude
 
+{-| A FIFO backed by block ram. The input does not fall through, i.e. if the FIFO is empty and a value is written to it, that value is not available on the output in the same cycle. A current limitation of this FIFO is that its capacity is one less than the capacity of the underlying block ram. -}
 blockRamFIFO 
     :: forall size a. (KnownNat size, Default a)
     => SNat size   -- ^ FIFO size
