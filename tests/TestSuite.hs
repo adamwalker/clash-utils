@@ -112,34 +112,19 @@ prop_crc32 x = result == expect
     result = fromIntegral $ pack $ map complement $ reverse $ crcSteps poly (repeat 1) x
 
 --FIFO
-data FIFO a = FIFO {
-    count   :: Int,
-    storage :: Seq a
-}
-
-emptyFIFO = FIFO 0 Seq.empty
-
 --This software model should behave identically to the hardare FIFO
-fifoStep :: Int -> FIFO a -> (Bool, a, Bool) -> (FIFO a, (a, Bool, Bool))
-fifoStep size FIFO{..} (readEn, writeValue, writeEn) = (FIFO count' storage'', (readValue, empty, full)) 
+fifoStep :: Int -> Seq a -> (Bool, a, Bool) -> (Seq a, (a, Bool, Bool))
+fifoStep size storage (readEn, writeValue, writeEn) = (storage'', (extract storage, empty, full)) 
     where
-    full             = count == size - 1
-    empty            = count == 0
-    effectiveReadEn  = readEn  && not empty
-    effectiveWriteEn = writeEn && not full
-    count' 
-        | effectiveReadEn && effectiveWriteEn = count 
-        | effectiveReadEn                     = count - 1
-        | effectiveWriteEn                    = count + 1
-        | otherwise                           = count
+    full             = Seq.length storage == size - 1
+    empty            = Seq.length storage == 0
     --Do the read operation before the write
     storage'
-        | effectiveReadEn  = Seq.drop 1 storage
-        | otherwise        = storage 
+        | readEn     = Seq.drop 1 storage
+        | otherwise  = storage 
     storage''
-        | effectiveWriteEn = storage' |> writeValue
-        | otherwise        = storage'
-    readValue = extract storage
+        | writeEn && not full = storage' |> writeValue
+        | otherwise           = storage'
     extract :: Seq a -> a
     extract s = case Seq.viewl s of
         (x Seq.:< rest) -> x
@@ -153,7 +138,7 @@ compareOutputs (val1, empty1, full1) (val2, empty2, full2)
 prop_FIFOs :: [(Bool, BitVector 32, Bool)] -> Bool
 prop_FIFOs signals = Prelude.and $ Prelude.zipWith compareOutputs expect result
     where
-    expect = Prelude.take (Prelude.length signals) $ simulate_lazy (mealy (fifoStep 5) emptyFIFO) signals
+    expect = Prelude.take (Prelude.length signals) $ simulate_lazy (mealy (fifoStep 5) Seq.empty) signals
     result = Prelude.take (Prelude.length signals) $ simulate_lazy hackedFIFO signals
     hackedFIFO :: Signal (Bool, BitVector 32, Bool) -> Signal (BitVector 32, Bool, Bool)
     hackedFIFO = bundle . uncurryN (blockRamFIFO (SNat @ 5)) . unbundle 
