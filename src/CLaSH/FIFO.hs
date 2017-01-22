@@ -21,7 +21,7 @@ blockRamFIFO
 blockRamFIFO size rReq wData wReq = (ramOut, empty, full)
     where
     --The backing ram
-    ramOut = blockRam (repeat def :: Vec size a) rAddr (mux wEn (Just <$> bundle (wAddr, wData)) (pure Nothing))
+    ramOut = readNew (blockRam (repeat def :: Vec size a)) rAddr' (mux wEn (Just <$> bundle (wAddr, wData)) (pure Nothing))
     --The status signals
     empty  = wAddr .==. rAddr
     full   = rAddr .==. (wrappingInc <$> wAddr)
@@ -29,10 +29,12 @@ blockRamFIFO size rReq wData wReq = (ramOut, empty, full)
     wEn    = wReq .&&. fmap not full
     --The read and write pointers
     wAddr, rAddr :: Signal (Index size)
-    wAddr = register 0 $ mux wEn                    (wrappingInc <$> wAddr) wAddr
-    rAddr = register 0 $ mux (rReq .&&. fmap not empty) (wrappingInc <$> rAddr) rAddr
+    wAddr = register 0 $ mux wEn            (wrappingInc <$> wAddr) wAddr
+    rAddr' = mux (rReq .&&. fmap not empty) (wrappingInc <$> rAddr) rAddr
+    rAddr = register 0 rAddr'
 
     wrappingInc :: Index size -> Index size
     wrappingInc val
         | val == maxBound = 0
         | otherwise       = val + 1
+

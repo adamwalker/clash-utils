@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, ScopedTypeVariables, TypeOperators, NoImplicitPrelude, FlexibleContexts, TemplateHaskell, BinaryLiterals #-}
+{-# LANGUAGE DataKinds, ScopedTypeVariables, TypeOperators, NoImplicitPrelude, FlexibleContexts, TemplateHaskell, BinaryLiterals, RecordWildCards, TypeApplications #-}
 
 import Control.Monad
 import System.Exit
@@ -9,11 +9,14 @@ import Test.QuickCheck.All
 import Data.Digits
 import qualified Data.Complex as C
 import Data.Digest.CRC32
+import Data.Sequence (Seq, (|>))
+import qualified Data.Sequence as Seq
 
 import CLaSH.Prelude
 import qualified Prelude
 import qualified Data.List as Prelude
 import Data.Word
+import Data.Tuple.All
 
 import CLaSH.BCD
 import CLaSH.FIRFilter
@@ -21,6 +24,7 @@ import CLaSH.CORDIC
 import CLaSH.Sort
 import CLaSH.Divide
 import CLaSH.CRC
+import CLaSH.FIFO
 
 {-# ANN module ("HLint: ignore Avoid reverse") #-}
 
@@ -107,6 +111,53 @@ prop_crc32 x = result == expect
     expect = crc32 $ Prelude.map reverseByte (toBytes x)
     result = fromIntegral $ pack $ map complement $ reverse $ crcSteps poly (repeat 1) x
 
+--FIFO
+data FIFO a = FIFO {
+    count   :: Int,
+    storage :: Seq a
+}
+
+emptyFIFO = FIFO 0 Seq.empty
+
+--This software model should behave identically to the hardare FIFO
+fifoStep :: Int -> FIFO a -> (Bool, a, Bool) -> (FIFO a, (a, Bool, Bool))
+fifoStep size FIFO{..} (readEn, writeValue, writeEn) = (FIFO count' storage'', (readValue, empty, full)) 
+    where
+    full             = count == size - 1
+    empty            = count == 0
+    effectiveReadEn  = readEn  && not empty
+    effectiveWriteEn = writeEn && not full
+    count' 
+        | effectiveReadEn && effectiveWriteEn = count 
+        | effectiveReadEn                     = count - 1
+        | effectiveWriteEn                    = count + 1
+        | otherwise                           = count
+    --Do the read operation before the write
+    storage'
+        | effectiveReadEn  = Seq.drop 1 storage
+        | otherwise        = storage 
+    storage''
+        | effectiveWriteEn = storage' |> writeValue
+        | otherwise        = storage'
+    readValue = extract storage
+    extract :: Seq a -> a
+    extract s = case Seq.viewl s of
+        (x Seq.:< rest) -> x
+
+compareOutputs :: Eq a => (a, Bool, Bool) -> (a, Bool, Bool) -> Bool
+compareOutputs (val1, empty1, full1) (val2, empty2, full2) 
+    =  empty1 == empty2 
+    && full1  == full2 
+    && (empty1 || val1 == val2)
+
+prop_FIFOs :: [(Bool, BitVector 32, Bool)] -> Bool
+prop_FIFOs signals = Prelude.and $ Prelude.zipWith compareOutputs expect result
+    where
+    expect = Prelude.take (Prelude.length signals) $ simulate_lazy (mealy (fifoStep 5) emptyFIFO) signals
+    result = Prelude.take (Prelude.length signals) $ simulate_lazy hackedFIFO signals
+    hackedFIFO :: Signal (Bool, BitVector 32, Bool) -> Signal (BitVector 32, Bool, Bool)
+    hackedFIFO = bundle . uncurryN (blockRamFIFO (SNat @ 5)) . unbundle 
+        
 --Run the tests
 return []
 main :: IO ()
