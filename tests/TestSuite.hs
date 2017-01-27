@@ -53,8 +53,13 @@ prop_IIRDirect coeffs1 coeffs2 input =
        Prelude.take (Prelude.length input) (simulate (iirDirect1 coeffs1 coeffs2 (pure True)) input) 
     == Prelude.take (Prelude.length input) (simulate (iirDirect2 coeffs1 coeffs2 (pure True)) input)
 
-prop_IIRTransposed :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Bool
-prop_IIRTransposed coeffs1 coeffs2 input = 
+prop_IIRTransposedI :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_IIRTransposedI coeffs1 coeffs2 input = 
+       Prelude.take (Prelude.length input) (simulate (iirDirect1     coeffs1 coeffs2 (pure True)) input) 
+    == Prelude.take (Prelude.length input) (simulate (iirTransposed1 coeffs1 coeffs2 (pure True)) input)
+
+prop_IIRTransposedII :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_IIRTransposedII coeffs1 coeffs2 input = 
        Prelude.take (Prelude.length input) (simulate (iirDirect1     coeffs1 coeffs2 (pure True)) input) 
     == Prelude.take (Prelude.length input) (simulate (iirTransposed2 coeffs1 coeffs2 (pure True)) input)
 
