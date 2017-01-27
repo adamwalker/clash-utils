@@ -4,13 +4,13 @@
 name:                clash-utils
 version:             0.1.0.0
 synopsis:            CLaSH utility library
--- description:         
+description:         A collection of reusable Clash example designs
 license:             BSD3
 license-file:        LICENSE
 author:              Adam Walker
 maintainer:          adamwalker10@gmail.com
--- copyright:           
--- category:            
+copyright:           2017 Adam Walker
+category:            Hardware
 build-type:          Simple
 extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
