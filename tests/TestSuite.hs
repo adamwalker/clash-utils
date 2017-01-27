@@ -53,6 +53,11 @@ prop_IIRDirect coeffs1 coeffs2 input =
        Prelude.take (Prelude.length input) (simulate (iirDirect1 coeffs1 coeffs2 (pure True)) input) 
     == Prelude.take (Prelude.length input) (simulate (iirDirect2 coeffs1 coeffs2 (pure True)) input)
 
+prop_IIRTransposed :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_IIRTransposed coeffs1 coeffs2 input = 
+       Prelude.take (Prelude.length input) (simulate (iirDirect1     coeffs1 coeffs2 (pure True)) input) 
+    == Prelude.take (Prelude.length input) (simulate (iirTransposed2 coeffs1 coeffs2 (pure True)) input)
+
 --CORDIC testing
 approxEqual :: Double -> Double -> Bool
 approxEqual x y = abs (x - y) < 0.0001

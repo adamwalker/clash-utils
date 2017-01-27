@@ -31,3 +31,20 @@ iirDirect2 coeffsN coeffsD en x = dotP (map pure coeffsN) delayed
     delayed    = iterateI (regEn 0 en) mid 
     mid        = x + dotP (map pure coeffsD) (tail delayed)  
     dotP as bs = fold (+) (zipWith (*) as bs)
+
+--Transposed form 2
+iirTransposed2
+    :: (Num a, KnownNat n)
+    => Vec (n + 2) a -- ^ Numerator coefficients
+    -> Vec (n + 1) a -- ^ Denominator coefficients
+    -> Signal Bool   -- ^ Input enable
+    -> Signal a      -- ^ Input sample
+    -> Signal a      -- ^ Output sample
+iirTransposed2 coeffsN coeffsD en x = res
+    where
+    res = head fir + regEn 0 en t 
+    fir = map (* x)   (pure <$> coeffsN)
+    iir = map (* res) (pure <$> coeffsD)
+    ts  = reverse $ zipWith (+) (tail fir) iir
+    t   = foldl1 (\accum inp -> regEn 0 en accum + inp) ts
+
