@@ -3,7 +3,7 @@ module CLaSH.IIRFilter where
 
 import CLaSH.Prelude
 
---Direct form 1
+{- | Direct form I: <https://www.dsprelated.com/freebooks/filters/Direct_Form_I.html> -}
 iirDirect1
     :: (Num a, KnownNat n)
     => Vec (n + 2) a -- ^ Numerator coefficients
@@ -18,7 +18,7 @@ iirDirect1 coeffsN coeffsD en x = res
     iir        = dotP (map pure coeffsD) (iterateI (regEn 0 en) (regEn 0 en res))
     dotP as bs = fold (+) (zipWith (*) as bs)
 
---Direct form 2
+{- | Direct form II: <https://www.dsprelated.com/freebooks/filters/Direct_Form_II.html> -}
 iirDirect2
     :: (Num a, KnownNat n)
     => Vec (n + 2) a -- ^ Numerator coefficients
@@ -32,7 +32,7 @@ iirDirect2 coeffsN coeffsD en x = dotP (map pure coeffsN) delayed
     mid        = x + dotP (map pure coeffsD) (tail delayed)  
     dotP as bs = fold (+) (zipWith (*) as bs)
 
---Transposed form 2
+{- | Transposed form II: <https://www.dsprelated.com/freebooks/filters/Transposed_Direct_Forms.html> -}
 iirTransposed2
     :: (Num a, KnownNat n)
     => Vec (n + 2) a -- ^ Numerator coefficients
