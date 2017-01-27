@@ -20,6 +20,7 @@ import Data.Tuple.All
 
 import CLaSH.BCD
 import CLaSH.FIRFilter
+import CLaSH.IIRFilter
 import CLaSH.CORDIC
 import CLaSH.Sort
 import CLaSH.Divide
@@ -44,6 +45,13 @@ prop_FilterLinearPhase :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
 prop_FilterLinearPhase coeffs input = 
        Prelude.take (Prelude.length input) (simulate (register 0 . fir (reverse coeffs ++ coeffs) (pure True)) input) 
     == Prelude.take (Prelude.length input) (simulate (firLinearPhase coeffs (pure True)) input)
+
+--IIR filter testing
+--Check that both direct forms are equivalent
+prop_IIRDirect :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_IIRDirect coeffs1 coeffs2 input = 
+       Prelude.take (Prelude.length input) (simulate (iirDirect1 coeffs1 coeffs2 (pure True)) input) 
+    == Prelude.take (Prelude.length input) (simulate (iirDirect2 coeffs1 coeffs2 (pure True)) input)
 
 --CORDIC testing
 approxEqual :: Double -> Double -> Bool
