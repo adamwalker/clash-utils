@@ -50,18 +50,18 @@ prop_FilterLinearPhase coeffs input =
 --Check that both direct forms are equivalent
 prop_IIRDirect :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Bool
 prop_IIRDirect coeffs1 coeffs2 input = 
-       Prelude.take (Prelude.length input) (simulate (iirDirect1 coeffs1 coeffs2 (pure True)) input) 
-    == Prelude.take (Prelude.length input) (simulate (iirDirect2 coeffs1 coeffs2 (pure True)) input)
+       Prelude.take (Prelude.length input) (simulate (iirDirectI coeffs1 coeffs2 (pure True)) input) 
+    == Prelude.take (Prelude.length input) (simulate (iirDirectII coeffs1 coeffs2 (pure True)) input)
 
 prop_IIRTransposedI :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Bool
 prop_IIRTransposedI coeffs1 coeffs2 input = 
-       Prelude.take (Prelude.length input) (simulate (iirDirect1     coeffs1 coeffs2 (pure True)) input) 
-    == Prelude.take (Prelude.length input) (simulate (iirTransposed1 coeffs1 coeffs2 (pure True)) input)
+       Prelude.take (Prelude.length input) (simulate (iirDirectI     coeffs1 coeffs2 (pure True)) input) 
+    == Prelude.take (Prelude.length input) (simulate (iirTransposedI coeffs1 coeffs2 (pure True)) input)
 
 prop_IIRTransposedII :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Bool
 prop_IIRTransposedII coeffs1 coeffs2 input = 
-       Prelude.take (Prelude.length input) (simulate (iirDirect1     coeffs1 coeffs2 (pure True)) input) 
-    == Prelude.take (Prelude.length input) (simulate (iirTransposed2 coeffs1 coeffs2 (pure True)) input)
+       Prelude.take (Prelude.length input) (simulate (iirDirectI     coeffs1 coeffs2 (pure True)) input) 
+    == Prelude.take (Prelude.length input) (simulate (iirTransposedII coeffs1 coeffs2 (pure True)) input)
 
 --CORDIC testing
 approxEqual :: Double -> Double -> Bool

@@ -1,17 +1,22 @@
 --Infinite impulse response filters
-module CLaSH.IIRFilter where
+module CLaSH.IIRFilter (
+    iirDirectI,
+    iirDirectII,
+    iirTransposedI,
+    iirTransposedII
+    ) where
 
 import CLaSH.Prelude
 
 {- | Direct form I: <https://www.dsprelated.com/freebooks/filters/Direct_Form_I.html> -}
-iirDirect1
+iirDirectI
     :: (Num a, KnownNat n)
     => Vec (n + 2) a -- ^ Numerator coefficients
     -> Vec (n + 1) a -- ^ Denominator coefficients
     -> Signal Bool   -- ^ Input enable
     -> Signal a      -- ^ Input sample
     -> Signal a      -- ^ Output sample
-iirDirect1 coeffsN coeffsD en x = res
+iirDirectI coeffsN coeffsD en x = res
     where
     res        = fir + iir
     fir        = dotP (map pure coeffsN) (iterateI (regEn 0 en) x)
@@ -19,41 +24,41 @@ iirDirect1 coeffsN coeffsD en x = res
     dotP as bs = fold (+) (zipWith (*) as bs)
 
 {- | Direct form II: <https://www.dsprelated.com/freebooks/filters/Direct_Form_II.html> -}
-iirDirect2
+iirDirectII
     :: (Num a, KnownNat n)
     => Vec (n + 2) a -- ^ Numerator coefficients
     -> Vec (n + 1) a -- ^ Denominator coefficients
     -> Signal Bool   -- ^ Input enable
     -> Signal a      -- ^ Input sample
     -> Signal a      -- ^ Output sample
-iirDirect2 coeffsN coeffsD en x = dotP (map pure coeffsN) delayed
+iirDirectII coeffsN coeffsD en x = dotP (map pure coeffsN) delayed
     where
     delayed    = iterateI (regEn 0 en) mid 
     mid        = x + dotP (map pure coeffsD) (tail delayed)  
     dotP as bs = fold (+) (zipWith (*) as bs)
 
 {- | Transposed form I: <https://www.dsprelated.com/freebooks/filters/Transposed_Direct_Forms.html> -}
-iirTransposed1
+iirTransposedI
     :: (Num a, KnownNat n)
     => Vec (n + 2) a -- ^ Numerator coefficients
     -> Vec (n + 1) a -- ^ Denominator coefficients
     -> Signal Bool   -- ^ Input enable
     -> Signal a      -- ^ Input sample
     -> Signal a      -- ^ Output sample
-iirTransposed1 coeffsN coeffsD en x = foldl1 func $ reverse $ map (* v) (pure <$> coeffsN)
+iirTransposedI coeffsN coeffsD en x = foldl1 func $ reverse $ map (* v) (pure <$> coeffsN)
     where
     v            = x + regEn 0 en (foldl1 func $ reverse $ map (* v) (pure <$> coeffsD))
     func accum x = x + regEn 0 en accum 
 
 {- | Transposed form II: <https://www.dsprelated.com/freebooks/filters/Transposed_Direct_Forms.html> -}
-iirTransposed2
+iirTransposedII
     :: (Num a, KnownNat n)
     => Vec (n + 2) a -- ^ Numerator coefficients
     -> Vec (n + 1) a -- ^ Denominator coefficients
     -> Signal Bool   -- ^ Input enable
     -> Signal a      -- ^ Input sample
     -> Signal a      -- ^ Output sample
-iirTransposed2 coeffsN coeffsD en x = res
+iirTransposedII coeffsN coeffsD en x = res
     where
     res = head fir + regEn 0 en t 
     fir = map (* x)   (pure <$> coeffsN)
