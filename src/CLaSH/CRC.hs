@@ -4,6 +4,8 @@
 module CLaSH.CRC (
     crcStep,
     crcSteps,
+    crcStep2,
+    crcSteps2,
     serialCRC,
     parallelCRC
     ) where
@@ -55,3 +57,23 @@ crcSteps
     -> Vec (n + 1) Bit -- ^ Next shift register state
 crcSteps polynomial state input = foldl (crcStep polynomial) state (unpack input :: Vec m Bit)
 
+{-| A modification of `crcStep` that does not xor each of the taps with the input bit. This means that, after the last bit of data has been shifted in, n + 1 0s must be shifted in to get the CRC. This is useful for verifying CRCs compute with `crcStep`. See the tests, specifically `prop_crc32_verify` for an example of this. -}
+crcStep2 
+    :: KnownNat n
+    => BitVector n     -- ^ Polynomial. The low order bit is assumed to be 1 so is not included.
+    -> Vec (n + 1) Bit -- ^ Shift register state
+    -> Bit             -- ^ Input bit
+    -> Vec (n + 1) Bit -- ^ Next shift register state
+crcStep2 polynomial (head :> rest) inp = zipWith selectIn (unpack polynomial) rest :< rightmostBit
+    where
+    rightmostBit = inp `xor` head
+    selectIn sel bit =  bool bit (bit `xor` head) sel
+
+{-| A modification of `crcSteps` that does not xor each of the taps with the input bit. See `crcStep2`. -}
+crcSteps2
+    :: forall n m. (KnownNat n, KnownNat m)
+    =>  BitVector n    -- ^ Polynomial. The low order bit is assumed to be 1 so is not included.
+    -> Vec (n + 1) Bit -- ^ Shift register state
+    -> BitVector m     -- ^ Input bits
+    -> Vec (n + 1) Bit -- ^ Next shift register state
+crcSteps2 polynomial state input = foldl (crcStep2 polynomial) state (unpack input :: Vec m Bit)
