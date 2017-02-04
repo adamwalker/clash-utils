@@ -7,7 +7,7 @@ A random collection of reusable [Clash](http://www.clash-lang.org/) designs/exam
 * CORDIC for calculating trigonometric functions
 * CRC calculation
 * A FIFO
-* FIR filters
+* FIR, IIR filters
 * A bitonic sorting network
 * Divider
 
