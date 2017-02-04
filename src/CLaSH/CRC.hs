@@ -2,6 +2,7 @@
 
 {-| <https://en.wikipedia.org/wiki/Cyclic_redundancy_check Cyclic redundancy check> -}
 module CLaSH.CRC (
+    crc32Poly,
     crcStep,
     crcSteps,
     crcStep2,
@@ -13,6 +14,10 @@ module CLaSH.CRC (
 import CLaSH.Prelude
 
 import Data.Bool
+
+--The CRC32 polynomial
+crc32Poly :: BitVector 31
+crc32Poly = 0b10011000001000111011011011
 
 {-| Calculates CRC one bit / clock cycle -}
 serialCRC 

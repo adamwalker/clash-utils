@@ -119,27 +119,23 @@ toBytes x = Prelude.map (fromIntegral . pack) $ toList unpacked
     unpacked :: Vec 16 (Vec 8 Bit)
     unpacked = unconcatI (unpack x)
 
---The CRC32 polynomial
-poly :: BitVector 31
-poly = 0b10011000001000111011011011
-
 prop_crc32 :: BitVector 128 -> Bool
 prop_crc32 x = result == expect
     where
     expect = crc32 $ Prelude.map reverseByte (toBytes x)
-    result = fromIntegral $ pack $ map complement $ reverse $ crcSteps poly (repeat 1) x
+    result = fromIntegral $ pack $ map complement $ reverse $ crcSteps crc32Poly (repeat 1) x
 
 prop_crc32_2 :: BitVector 128 -> Bool
 prop_crc32_2 x = result == expect
     where
-    expect = crcSteps  poly (repeat 0) x
-    result = crcSteps2 poly (repeat 0) $ x ++# (0 :: BitVector 32)
+    expect = crcSteps  crc32Poly (repeat 0) x
+    result = crcSteps2 crc32Poly (repeat 0) $ x ++# (0 :: BitVector 32)
 
 prop_crc32_verify :: BitVector 128 -> Bool
 prop_crc32_verify x = result == 0
     where
-    checksum = pack $ crcSteps  poly (repeat 0) x
-    result   = pack $ crcSteps2 poly (repeat 0) $ x ++# checksum
+    checksum = pack $ crcSteps  crc32Poly (repeat 0) x
+    result   = pack $ crcSteps2 crc32Poly (repeat 0) $ x ++# checksum
 
 --FIFO
 --This software model should behave identically to the hardare FIFO

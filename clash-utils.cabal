@@ -18,7 +18,7 @@ cabal-version:       >=1.10
 library
     exposed-modules:     CLaSH.BCD, CLaSH.CRC, CLaSH.FIFO, CLaSH.FIRFilter, CLaSH.CORDIC, CLaSH.Sort, CLaSH.Divide, CLaSH.IIRFilter
     -- other-modules:       
-    default-extensions:  ScopedTypeVariables, NoImplicitPrelude, TypeOperators, DataKinds, FlexibleContexts, TypeApplications
+    default-extensions:  ScopedTypeVariables, NoImplicitPrelude, TypeOperators, DataKinds, FlexibleContexts, TypeApplications, BinaryLiterals
     build-depends:       base          >=4.8 && <4.10, 
                          clash-prelude >=0.11 && <0.12, 
                          ghc-typelits-natnormalise,
