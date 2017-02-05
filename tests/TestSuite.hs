@@ -26,6 +26,7 @@ import CLaSH.Sort
 import CLaSH.Divide
 import CLaSH.CRC
 import CLaSH.FIFO
+import CLaSH.GrayCode
 
 {-# ANN module ("HLint: ignore Avoid reverse") #-}
 
@@ -168,6 +169,13 @@ prop_FIFOs signals = Prelude.and $ Prelude.zipWith compareOutputs expect result
     result = Prelude.take (Prelude.length signals) $ simulate_lazy hackedFIFO signals
     hackedFIFO :: Signal (Bool, BitVector 32, Bool) -> Signal (BitVector 32, Bool, Bool)
     hackedFIFO = bundle . uncurryN (blockRamFIFO (SNat @ 5)) . unbundle 
+
+--Gray code
+prop_grayCode :: BitVector 32 -> Bool
+prop_grayCode x = x == binaryToGray (grayToBinary32 x)
+
+prop_grayCode2 :: BitVector 32 -> Bool
+prop_grayCode2 x = x == grayToBinary32 (binaryToGray x)
         
 --Run the tests
 return []
