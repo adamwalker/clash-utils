@@ -8,7 +8,9 @@ module CLaSH.CRC (
     crcStep2,
     crcSteps2,
     serialCRC,
-    parallelCRC
+    parallelCRC,
+    makeCRCTable,
+    crcTable
     ) where
 
 import CLaSH.Prelude
@@ -82,3 +84,20 @@ crcSteps2
     -> BitVector m     -- ^ Input bits
     -> Vec (n + 1) Bit -- ^ Next shift register state
 crcSteps2 polynomial state input = foldl (crcStep2 polynomial) state (unpack input :: Vec m Bit)
+
+makeCRCTable
+    :: forall m n. KnownNat m
+    => (BitVector m -> BitVector n)
+    -> Vec m (BitVector n)
+makeCRCTable func = map func $ reverse $ iterateI (`shiftL` 1) 1
+
+crcTable 
+    :: forall m n. (KnownNat m, KnownNat n)
+    => Vec (m + 1) (BitVector n)
+    -> BitVector (m + 1)
+    -> BitVector n
+crcTable table input = fold xor $ zipWith func (unpack input) table
+    where
+    func     :: Bit -> BitVector n -> BitVector n
+    func x   =  pack . map (.&. x) . unpack 
+

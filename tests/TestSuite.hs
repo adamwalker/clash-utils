@@ -138,6 +138,12 @@ prop_crc32_verify x = result == 0
     checksum = pack $ crcSteps  crc32Poly (repeat 0) x
     result   = pack $ crcSteps2 crc32Poly (repeat 0) $ x ++# checksum
 
+prop_crc32_table :: BitVector 128 -> Bool
+prop_crc32_table x = result == expect
+    where
+    expect = pack $ crcSteps2 crc32Poly (repeat 0) x
+    result = crcTable (makeCRCTable (pack . crcSteps2 crc32Poly (repeat 0))) x
+
 --FIFO
 --This software model should behave identically to the hardare FIFO
 fifoStep :: Int -> Seq a -> (Bool, a, Bool) -> (Seq a, (a, Bool, Bool))
