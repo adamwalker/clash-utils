@@ -64,7 +64,7 @@ cordicStep dir idx a state@(CordicState (x :+ y) arg) = CordicState (nextX :+ ne
 
 {-| Perform n iterations of the CORDIC algorithm -}
 cordicSteps
-    :: (Ord a, Num a, Bits a, Num b, Ord b, Fractional b, KnownNat n) 
+    :: (Ord a, Num a, Bits a, Num b, Ord b,  KnownNat n) 
     => (CordicState a b -> Bool) -- ^ Function that determines the direction of rotation
     -> Vec n b                   -- ^ Vector of arctan values
     -> CordicState a b           -- ^ Input state
