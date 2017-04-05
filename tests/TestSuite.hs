@@ -133,20 +133,20 @@ prop_crc32 x = result == expect
 prop_crc32_2 :: BitVector 128 -> Bool
 prop_crc32_2 x = result == expect
     where
-    expect = crcSteps  crc32Poly (repeat 0) x
-    result = crcSteps2 crc32Poly (repeat 0) $ x ++# (0 :: BitVector 32)
+    expect = crcSteps       crc32Poly (repeat 0) x
+    result = crcVerifySteps crc32Poly (repeat 0) $ x ++# (0 :: BitVector 32)
 
 prop_crc32_verify :: BitVector 128 -> Bool
 prop_crc32_verify x = result == 0
     where
-    checksum = pack $ crcSteps  crc32Poly (repeat 0) x
-    result   = pack $ crcSteps2 crc32Poly (repeat 0) $ x ++# checksum
+    checksum = pack $ crcSteps       crc32Poly (repeat 0) x
+    result   = pack $ crcVerifySteps crc32Poly (repeat 0) $ x ++# checksum
 
 prop_crc32_table :: BitVector 128 -> Bool
 prop_crc32_table x = result == expect
     where
-    expect = pack $ crcSteps2 crc32Poly (repeat 0) x
-    result = crcTable (makeCRCTable (pack . crcSteps2 crc32Poly (repeat 0))) x
+    expect = pack $ crcVerifySteps crc32Poly (repeat 0) x
+    result = crcTable (makeCRCTable (pack . crcVerifySteps crc32Poly (repeat 0))) x
 
 --FIFO
 --This software model should behave identically to the hardare FIFO
