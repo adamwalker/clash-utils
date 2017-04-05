@@ -21,6 +21,7 @@ library
     default-extensions:  ScopedTypeVariables, NoImplicitPrelude, TypeOperators, DataKinds, FlexibleContexts, TypeApplications, BinaryLiterals
     build-depends:       base          >=4.8 && <4.10, 
                          clash-prelude >=0.11 && <0.12, 
+                         singletons    >=2.2   && <2.3,
                          ghc-typelits-natnormalise,
                          ghc-typelits-knownnat
     hs-source-dirs:      src

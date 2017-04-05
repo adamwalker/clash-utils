@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, KindSignatures, TypeFamilies, UndecidableInstances #-}
 
 {-| Bitonic sorting network. See <https://en.wikipedia.org/wiki/Bitonic_sorter> and <http://www.iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/bitonicen.htm>. -}
 module CLaSH.Sort (
@@ -8,6 +8,9 @@ module CLaSH.Sort (
     ) where
 
 import CLaSH.Prelude
+
+import Data.Singletons.Prelude
+import Data.Proxy
 
 compareAndSwap :: (Ord a) => a -> a -> (a, a)
 compareAndSwap x y 
@@ -61,8 +64,6 @@ bitonicSorterExample = sort16
 
     sort2  = bitonicSort  id merge2
     merge2 = bitonicMerge id 
-    
-    
     
 
 {-| generalised bitonic sorter. -}
