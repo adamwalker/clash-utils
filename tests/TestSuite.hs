@@ -100,6 +100,10 @@ prop_CORDICRotationMode =
 prop_BitonicSort :: Vec 16 (Signed 32) -> Bool
 prop_BitonicSort vec = toList (bitonicSorterExample vec) == Prelude.reverse (Prelude.sort (toList vec))
 
+--Length generic bitonic sorter
+prop_BitonicSortGeneric :: Vec 64 (Signed 32) -> Bool
+prop_BitonicSortGeneric vec = toList (bitonicSorter vec) == Prelude.reverse (Prelude.sort (toList vec))
+
 --Divider
 prop_Divider :: BitVector 32 -> BitVector 32 -> Bool
 prop_Divider x y = q == q' && r == r'

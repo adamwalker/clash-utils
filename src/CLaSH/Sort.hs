@@ -4,7 +4,10 @@
 module CLaSH.Sort (
     bitonicMerge,
     bitonicSort, 
-    bitonicSorterExample
+    bitonicSorterExample,
+    ExpVec,
+    SplitHalf(..),
+    bitonicSorter
     ) where
 
 import CLaSH.Prelude
@@ -66,48 +69,17 @@ bitonicSorterExample = sort16
     merge2 = bitonicMerge id 
     
 
-{-| generalised bitonic sorter. -}
+{-| Arbitrary length bitonic sorter -}
 type ExpVec k a = Vec (2 ^ k) a
 
 data SplitHalf (a :: *) (f :: TyFun Nat *) :: *
 type instance Apply (SplitHalf a) k = (ExpVec k a -> ExpVec k a, ExpVec (k + 1) a -> ExpVec (k + 1) a)
 
-generateBitonicSortN2 :: forall k a . (Ord a, KnownNat k) => SNat k -> ExpVec k a -> ExpVec k a
-generateBitonicSortN2 k = fst $ dfold (Proxy :: Proxy (SplitHalf a)) step base (replicate k ())
-  where
-    step :: SNat l -> () -> SplitHalf a @@ l -> SplitHalf a @@ (l+1)
+bitonicSorter :: forall k a . (Ord a, KnownNat k) => ExpVec k a -> ExpVec k a
+bitonicSorter = fst $ dfold (Proxy :: Proxy (SplitHalf a)) step base (replicate (SNat @ k) ())
+    where
+    step :: SNat l -> () -> SplitHalf a @@ l -> SplitHalf a @@ (l + 1)
     step SNat _ (sort, merge) = (bitonicSort sort merge, bitonicMerge merge)
 
     base = (id, bitonicMerge id)
-
-generateBitonicSortN2Base :: (KnownNat k, Ord a) => ExpVec k a -> ExpVec k a
-generateBitonicSortN2Base = generateBitonicSortN2 (snatProxy Proxy)
-
-
-
-{-| Examples -}
-testVec16 :: Num a => Vec 16 a
-testVec16 =  9 :> 2 :> 8 :> 6 :> 3 :> 7 :> 0 :> 1 :> 4 :> 5 :> 2 :> 8 :> 6 :> 3 :> 7 :> 0 :> Nil
-testVec8 :: Num a => Vec 8 a
-testVec8 =  9 :> 2 :> 8 :> 6 :> 3 :> 7 :> 0 :> 1 :> Nil
-testVec4 :: Num a => Vec 4 a
-testVec4 =  9 :> 2 :> 8 :> 6 :> Nil
-testVec2 :: Num a => Vec 2 a
-testVec2 =  2 :> 9 :> Nil
-
-sorter16 :: (Ord a) => Vec 16 a -> Vec 16 a
-sorter16 = generateBitonicSortN2Base 
-sorter8 :: (Ord a) => Vec 8 a -> Vec 8 a
-sorter8 = generateBitonicSortN2Base 
-sorter4 ::forall a. (Ord a) => Vec 4 a -> Vec 4 a
-sorter4 = generateBitonicSortN2Base 
-sorter2 :: forall a. (Ord a) => Vec 2 a -> Vec 2 a
-sorter2 = generateBitonicSortN2Base 
-
-example16 :: Vec 16 Int
-example16 = sorter16 testVec16
-example8 :: Vec 8 Int
-example8 = sorter8 testVec8
-example4 :: Vec 4 Int
-example4 = sorter4 testVec4
 
