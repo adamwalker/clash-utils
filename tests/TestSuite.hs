@@ -182,10 +182,10 @@ prop_FIFOs signals = Prelude.and $ Prelude.zipWith compareOutputs expect result
 
 --Gray code
 prop_grayCode :: BitVector 32 -> Bool
-prop_grayCode x = x == binaryToGray (grayToBinary32 x)
+prop_grayCode x = x == binaryToGray (grayToBinary x)
 
 prop_grayCode2 :: BitVector 32 -> Bool
-prop_grayCode2 x = x == grayToBinary32 (binaryToGray x)
+prop_grayCode2 x = x == grayToBinary (binaryToGray x)
         
 --Run the tests
 return []
