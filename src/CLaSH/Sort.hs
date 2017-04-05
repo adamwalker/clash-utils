@@ -49,7 +49,7 @@ bitonicSort recurse merge input = merge $ firstSorted ++ secondSorted
     firstSorted  = recurse $ split !! 0
     secondSorted = reverse $ recurse $ split !! 1
 
-{-| An example 16 element bitonic sorter. TODO: this can probably be generalised to any size using the dependently typed fold in the prelude. -}
+{-| An example 16 element bitonic sorter -}
 bitonicSorterExample 
     :: forall a. (Ord a) 
     => Vec 16 a -- ^ Input vector
