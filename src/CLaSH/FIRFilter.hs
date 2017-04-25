@@ -4,7 +4,8 @@
 module CLaSH.FIRFilter (
     fir,
     firTransposed,
-    firSymmetric
+    firSymmetric,
+    firTransposedSymmetric
     ) where
 
 import CLaSH.Prelude
@@ -43,3 +44,16 @@ firSymmetric coeffs en x = foldl func 0 $ zipWith (*) folded (pure <$> coeffs)
     func accum x = regEn 0 en $ accum + x
     folded       = map (+ x) delayed
     delayed      = iterate (lengthS coeffs) (regEn 0 en . regEn 0 en) (regEn 0 en x)
+
+{- | Transposed symmetric FIR filter -}
+firTransposedSymmetric
+    :: (Num a, KnownNat n) 
+    => Vec (n + 1) a -- ^ Coefficients
+    -> Signal Bool   -- ^ Input enable
+    -> Signal a      -- ^ Input samples
+    -> Signal a      -- ^ Output samples
+firTransposedSymmetric coeffs en x = foldl func 0 $ coeffd ++ reverse coeffd
+    where
+    coeffd       = map (* x) (pure <$> coeffs)
+    func accum x = regEn 0 en $ accum + x
+
