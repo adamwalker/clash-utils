@@ -4,6 +4,7 @@
 module CLaSH.FIRFilter (
     fir,
     firTransposed,
+    firSystolic,
     firSymmetric,
     firTransposedSymmetric
     ) where
@@ -31,6 +32,17 @@ firTransposed
 firTransposed coeffs en x = foldl func 0 $ map (* x) (pure <$> coeffs)
     where
     func accum x = regEn 0 en $ accum + x
+
+{- | Systolic FIR filter -}
+firSystolic 
+    :: (Num a, KnownNat n) 
+    => Vec (n + 1) a -- ^ Coefficients
+    -> Signal Bool   -- ^ Input enable
+    -> Signal a      -- ^ Input samples
+    -> Signal a      -- ^ Output samples
+firSystolic coeffs en x = foldl func 0 $ zip (map pure coeffs) $ iterateI (regEn 0 en . regEn 0 en) x
+    where
+    func accum (coeff, input) = regEn 0 en $ accum + input * coeff
 
 {- | Linear phase FIR filter -}
 firSymmetric
