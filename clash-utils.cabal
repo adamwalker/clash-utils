@@ -16,7 +16,7 @@ extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
 library
-    exposed-modules:     CLaSH.BCD, CLaSH.CRC, CLaSH.FIFO, CLaSH.FIRFilter, CLaSH.CORDIC, CLaSH.Sort, CLaSH.Divide, CLaSH.IIRFilter, CLaSH.GrayCode
+    exposed-modules:     CLaSH.BCD, CLaSH.CRC, CLaSH.FIFO, CLaSH.FIRFilter, CLaSH.CORDIC, CLaSH.Sort, CLaSH.Divide, CLaSH.IIRFilter, CLaSH.GrayCode, CLaSH.FFT
     -- other-modules:       
     default-extensions:  ScopedTypeVariables, NoImplicitPrelude, TypeOperators, DataKinds, FlexibleContexts, TypeApplications, BinaryLiterals
     build-depends:       base          >=4.8 && <4.10, 
@@ -38,6 +38,7 @@ Test-Suite test
         digest                     >=0.0.1 && <0.0.2,
         containers                 >=0.5   && <0.6,
         tuple                      >=0.3   && <0.4,
+        pure-fft                   >=0.2.0,
         clash-prelude              >=0.11  && <0.12,
         clash-utils
     hs-source-dirs:      tests
