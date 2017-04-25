@@ -43,10 +43,10 @@ prop_FilterTransposed coeffs input =
        Prelude.take (Prelude.length input) (simulate (fir coeffs (pure True)) input) 
     == Prelude.take (Prelude.length input) (Prelude.drop 1 (simulate (firTransposed (reverse coeffs) (pure True)) input))
 
-prop_FilterLinearPhase :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
-prop_FilterLinearPhase coeffs input = 
+prop_FilterSymmetric :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_FilterSymmetric coeffs input = 
        Prelude.take (Prelude.length input) (simulate (register 0 . fir (reverse coeffs ++ coeffs) (pure True)) input) 
-    == Prelude.take (Prelude.length input) (simulate (firLinearPhase coeffs (pure True)) input)
+    == Prelude.take (Prelude.length input) (simulate (firSymmetric coeffs (pure True)) input)
 
 --IIR filter testing
 --Check that both direct forms are equivalent

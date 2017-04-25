@@ -4,7 +4,7 @@
 module CLaSH.FIRFilter (
     fir,
     firTransposed,
-    firLinearPhase
+    firSymmetric
     ) where
 
 import CLaSH.Prelude
@@ -32,13 +32,13 @@ firTransposed coeffs en x = foldl func 0 $ map (* x) (pure <$> coeffs)
     func accum x = regEn 0 en $ accum + x
 
 {- | Linear phase FIR filter -}
-firLinearPhase 
+firSymmetric
     :: (KnownNat n, Num a) 
     => Vec (n + 1) a -- ^ Coefficients
     -> Signal Bool   -- ^ Input enable
     -> Signal a      -- ^ Input samples
     -> Signal a      -- ^ Output samples
-firLinearPhase coeffs en x = foldl func 0 $ zipWith (*) folded (pure <$> coeffs)
+firSymmetric coeffs en x = foldl func 0 $ zipWith (*) folded (pure <$> coeffs)
     where
     func accum x = regEn 0 en $ accum + x
     folded       = map (+ x) delayed
