@@ -17,6 +17,7 @@ import qualified Prelude
 import qualified Data.List as Prelude
 import Data.Word
 import Data.Tuple.All
+import Data.Maybe
 
 import CLaSH.BCD
 import CLaSH.FIRFilter
@@ -179,6 +180,17 @@ prop_FIFOs signals = Prelude.and $ Prelude.zipWith compareOutputs expect result
     result = Prelude.take (Prelude.length signals) $ simulate_lazy hackedFIFO signals
     hackedFIFO :: Signal (Bool, BitVector 32, Bool) -> Signal (BitVector 32, Bool, Bool)
     hackedFIFO = bundle . uncurryN (blockRamFIFO (SNat @ 5)) . unbundle 
+
+prop_FIFOMaybe :: [(Bool, BitVector 32, Bool)] -> Bool
+prop_FIFOMaybe signals = Prelude.and $ Prelude.zipWith compareOutputs expect result
+    where
+    expect = Prelude.take (Prelude.length signals) $ simulate_lazy (mealy (fifoStep 5) Seq.empty) signals
+    result = Prelude.take (Prelude.length signals) $ simulate_lazy hackedFIFO signals
+    hackedFIFO :: Signal (Bool, BitVector 32, Bool) -> Signal (BitVector 32, Bool, Bool)
+    hackedFIFO inputs = bundle $ (fromJust <$> readDataM, (not . isJust) <$> readDataM, full)
+        where
+        (readReq, writeData, writeReq) = unbundle inputs
+        (readDataM, full)              = blockRamFIFOMaybe (SNat @ 5) readReq $ mux writeReq (Just <$> writeData) (pure Nothing)
 
 --Gray code
 prop_grayCode :: BitVector 32 -> Bool
