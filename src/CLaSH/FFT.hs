@@ -111,12 +111,23 @@ fftDIFRec twiddles input = (a :> e :> c :> g :> b :> f :> d :> h :> Nil)
     fft8 :: Vec 8 (Complex a) -> Vec 8 (Complex a)
     fft8 = fftStepDIFRec cexp4 fft4
 
-fftStepDITIter
+butterfly 
+    :: forall n a. (Num a, KnownNat n)
+    => Vec (2 * n) (Complex a)
+    -> Vec (2 * n) (Complex a)
+butterfly input = butterflied1 ++ butterflied2
+    where
+    partitioned  :: Vec 2 (Vec n (Complex a))
+    partitioned  =  unconcatI input
+    butterflied1 =  zipWith (+) (partitioned !! 0) (partitioned !! 1)
+    butterflied2 =  zipWith (-) (partitioned !! 0) (partitioned !! 1)
+
+twiddle 
     :: forall n a. (Num a, KnownNat n)
     => Vec n (Complex a)
     -> Vec (2 * n) (Complex a)
     -> Vec (2 * n) (Complex a)
-fftStepDITIter twiddleFactors input = zipWith (+) (partitioned !! 0) twiddled ++ zipWith (-) (partitioned !! 0) twiddled
+twiddle twiddleFactors input = (partitioned !! 0) ++ twiddled
     where
     partitioned :: Vec 2 (Vec n (Complex a))
     partitioned =  unconcatI input
@@ -141,22 +152,9 @@ fftDITIter twiddles (a :> b :> c :> d :> e :> f :> g :> h :> Nil) = fft8
     cexp4 :: Vec 4 (Complex a)
     cexp4 = selectI (SNat @ 0) (SNat @ 1) twiddles
 
-    fft2 = concat $ map (fftStepDITIter cexp1) $ unconcatI reorderedInput
-    fft4 = concat $ map (fftStepDITIter cexp2) $ unconcatI fft2
-    fft8 = concat $ map (fftStepDITIter cexp4) $ unconcatI fft4
-
-fftStepDIFIter
-    :: forall n a. (Num a, KnownNat n)
-    => Vec n (Complex a)
-    -> Vec (2 * n) (Complex a)
-    -> Vec (2 * n) (Complex a)
-fftStepDIFIter twiddleFactors input = butterflied1 ++ twiddled 
-    where
-    partitioned  :: Vec 2 (Vec n (Complex a))
-    partitioned  =  unconcatI input
-    butterflied1 =  zipWith (+) (partitioned !! 0) (partitioned !! 1)
-    butterflied2 =  zipWith (-) (partitioned !! 0) (partitioned !! 1)
-    twiddled     =  zipWith (*) twiddleFactors butterflied2
+    fft2 = concat $ map (butterfly . twiddle cexp1) $ unconcatI reorderedInput
+    fft4 = concat $ map (butterfly . twiddle cexp2) $ unconcatI fft2
+    fft8 = concat $ map (butterfly . twiddle cexp4) $ unconcatI fft4
 
 fftDIFIter 
     :: forall a. (Num a)
@@ -177,7 +175,7 @@ fftDIFIter twiddles input = a :> e :> c :> g :> b :> f :> d :> h :> Nil
     cexp4 :: Vec 4 (Complex a)
     cexp4 = selectI (SNat @ 0) (SNat @ 1) twiddles
 
-    fft8 = concat $ map (fftStepDIFIter cexp4) $ unconcatI input
-    fft4 = concat $ map (fftStepDIFIter cexp2) $ unconcatI fft8
-    fft2 = concat $ map (fftStepDIFIter cexp1) $ unconcatI fft4
+    fft8 = concat $ map (twiddle cexp4 . butterfly) $ unconcatI input
+    fft4 = concat $ map (twiddle cexp2 . butterfly) $ unconcatI fft8
+    fft2 = concat $ map (twiddle cexp1 . butterfly) $ unconcatI fft4
 
