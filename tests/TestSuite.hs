@@ -225,6 +225,16 @@ prop_fftDIFRec :: Vec 8 (C.Complex Double) -> Bool
 prop_fftDIFRec vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDIFRec twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
     where
     approxEqualComplex (a C.:+ b) (c C.:+ d) = approxEqual a c && approxEqual b d
+
+prop_fftDITIter :: Vec 8 (C.Complex Double) -> Bool
+prop_fftDITIter vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDITIter twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
+    where
+    approxEqualComplex (a C.:+ b) (c C.:+ d) = approxEqual a c && approxEqual b d
+
+prop_fftDIFIter :: Vec 8 (C.Complex Double) -> Bool
+prop_fftDIFIter vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDIFIter twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
+    where
+    approxEqualComplex (a C.:+ b) (c C.:+ d) = approxEqual a c && approxEqual b d
         
 --Run the tests
 return []
