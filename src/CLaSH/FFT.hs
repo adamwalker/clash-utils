@@ -6,13 +6,7 @@ module CLaSH.FFT (
 
 import CLaSH.Prelude
 
-import CLaSH.CORDIC (Complex(..))
-
-instance Num a => Num (Complex a) where
-    (a :+ b) + (c :+ d) = (a + c) :+ (b + d)
-    (a :+ b) - (c :+ d) = (a - c) :+ (b - d)
-    (a :+ b) * (c :+ d) = (a * c - b * d) :+ (a * d + b * c)
-    fromInteger x       = (fromInteger x :+ 0)
+import CLaSH.Complex
 
 fftStep :: forall n a . (Num a, KnownNat n)
         => Vec n (Complex a)

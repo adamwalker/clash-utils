@@ -15,6 +15,8 @@ module CLaSH.CORDIC (
 import CLaSH.Prelude
 import qualified Prelude as P
 
+import CLaSH.Complex
+
 {-| The gamma constants as described on the Wikipedia page -}
 arctans :: [Double]
 arctans = P.map func [0..]
@@ -26,15 +28,6 @@ kValue :: Int -> Double
 kValue i = product $ P.take i $ P.map func [0..]
     where
     func i = 1 / sqrt (1 + 2 ** (-2 * i))
-
-{-| I defined my own complex type so that I can write a Num instance without the RealFloat constraint. TODO: think about whether this is really a good idea. -}
-data Complex a = a :+ a deriving (Show)
-
-realPart :: Complex a -> a
-realPart (x :+ _) = x
-
-imagPart :: Complex a -> a
-imagPart (_ :+ y) = y
 
 {-| The state between iterations of the CORDIC algorithm. It is parameterised by two types: the type of the vector and the type of the accumulating angle. -}
 data CordicState a b = CordicState {
