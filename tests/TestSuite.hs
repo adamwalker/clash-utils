@@ -216,8 +216,13 @@ prop_grayCode2 x = x == grayToBinary (binaryToGray x)
 twiddles :: Vec 4 (Complex Double)
 twiddles = $(listToVecTH (twiddleFactors 4))
 
-prop_fft :: Vec 8 (C.Complex Double) -> Bool
-prop_fft vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fft twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
+prop_fftDIT :: Vec 8 (C.Complex Double) -> Bool
+prop_fftDIT vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDIT twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
+    where
+    approxEqualComplex (a C.:+ b) (c C.:+ d) = approxEqual a c && approxEqual b d
+
+prop_fftDIF :: Vec 8 (C.Complex Double) -> Bool
+prop_fftDIF vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDIF twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
     where
     approxEqualComplex (a C.:+ b) (c C.:+ d) = approxEqual a c && approxEqual b d
         
