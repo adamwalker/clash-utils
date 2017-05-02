@@ -51,6 +51,11 @@ prop_FilterSystolic coeffs input =
        Prelude.take (Prelude.length input) (simulate (fir coeffs (pure True)) input) 
     == Prelude.take (Prelude.length input) (Prelude.drop 64 $ simulate (firSystolic coeffs (pure True)) input)
 
+prop_FilterSystolicSymmetric :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_FilterSystolicSymmetric coeffs input = 
+       Prelude.take (Prelude.length input) (simulate (fir (coeffs ++ reverse coeffs) (pure True)) input) 
+    == Prelude.take (Prelude.length input) (Prelude.drop 64 $ simulate (firSystolicSymmetric coeffs (pure True)) input)
+
 prop_FilterSymmetric :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
 prop_FilterSymmetric coeffs input = 
        Prelude.take (Prelude.length input) (simulate (register 0 . fir (reverse coeffs ++ coeffs) (pure True)) input) 

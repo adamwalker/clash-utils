@@ -6,7 +6,8 @@ module CLaSH.FIRFilter (
     firTransposed,
     firSystolic,
     firSymmetric,
-    firTransposedSymmetric
+    firTransposedSymmetric,
+    firSystolicSymmetric
     ) where
 
 import CLaSH.Prelude
@@ -44,7 +45,7 @@ firSystolic coeffs en x = foldl func 0 $ zip (map pure coeffs) $ iterateI (regEn
     where
     func accum (coeff, input) = regEn 0 en $ accum + input * coeff
 
-{- | Linear phase FIR filter -}
+{- | Symmetric FIR filter -}
 firSymmetric
     :: (KnownNat n, Num a) 
     => Vec (n + 1) a -- ^ Coefficients
@@ -69,3 +70,17 @@ firTransposedSymmetric coeffs en x = foldl func 0 $ coeffd ++ reverse coeffd
     coeffd       = map (* x) (pure <$> coeffs)
     func accum x = regEn 0 en $ accum + x
 
+{- | Systolic Symmetric FIR filter -}
+firSystolicSymmetric
+    :: (KnownNat n, Num a) 
+    => Vec (n + 1) a -- ^ Coefficients
+    -> Signal Bool   -- ^ Input enable
+    -> Signal a      -- ^ Input samples
+    -> Signal a      -- ^ Output samples
+firSystolicSymmetric coeffs en x = foldl func 0 $ zip (map pure coeffs) folded
+    where
+    delayLine                 = iterateI (regEn 0 en . regEn 0 en) x
+    lastDelayLine             = regEn 0 en $ last delayLine
+    folded                    = map (+ lastDelayLine) delayLine
+    func accum (coeff, input) = regEn 0 en $ accum + input * coeff
+    
