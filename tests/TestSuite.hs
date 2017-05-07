@@ -31,6 +31,7 @@ import CLaSH.FIFO
 import CLaSH.GrayCode
 import CLaSH.FFT
 import CLaSH.Complex
+import CLaSH.Hamming
 
 {-# ANN module ("HLint: ignore Avoid reverse") #-}
 
@@ -240,6 +241,24 @@ prop_fftDIFIter :: Vec 8 (C.Complex Double) -> Bool
 prop_fftDIFIter vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDIFIter twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
     where
     approxEqualComplex (a C.:+ b) (c C.:+ d) = approxEqual a c && approxEqual b d
+
+--Hamming codes
+--Test the (15, 11) code
+
+hammingGen :: Vec 11 (BitVector 4)
+hammingGen = map pack $ unconcatI $ $(listToVecTH $ Prelude.concat $ Prelude.take 11 $ Prelude.map (Prelude.take 4) generator)
+
+prop_hamming :: Index 15 -> BitVector 11 -> Bool
+prop_hamming mutIdx dat = dat == corrected
+    where
+    --encode
+    parityBits  = hammingParity hammingGen dat
+    encoded     = dat ++# parityBits
+    --flip a single bit
+    mutated     = complementBit encoded (fromIntegral mutIdx)
+    --decode
+    parityBits' = hammingParity hammingGen (slice d14 d4 mutated) `xor` (slice d3 d0 mutated)
+    corrected   = correctError hammingGen parityBits' (slice d14 d4 mutated)
         
 --Run the tests
 return []
