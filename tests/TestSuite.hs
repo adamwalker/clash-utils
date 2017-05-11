@@ -165,6 +165,12 @@ prop_crc32_verify x = result == 0
 prop_crc32_table :: BitVector 128 -> Bool
 prop_crc32_table x = result == expect
     where
+    expect = pack $ crcSteps crc32Poly (repeat 0) x
+    result = crcTable (makeCRCTable (pack . crcSteps crc32Poly (repeat 0))) x
+
+prop_crc32_table_verify :: BitVector 128 -> Bool
+prop_crc32_table_verify x = result == expect
+    where
     expect = pack $ crcVerifySteps crc32Poly (repeat 0) x
     result = crcTable (makeCRCTable (pack . crcVerifySteps crc32Poly (repeat 0))) x
 
