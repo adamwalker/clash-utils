@@ -177,6 +177,19 @@ prop_crc32_table_verify x = result == expect
 prop_crc32_multistep :: BitVector 256 -> Bool
 prop_crc32_multistep x = unpack result == expect
     where
+    expect = pack $ crcSteps crc32Poly (repeat 0) x
+    step :: BitVector 32 ->  BitVector 32 -> BitVector 32
+    step   = crcTableMultiStep shiftRegTable inputTable
+        where 
+        (shiftRegTable, inputTable) = makeCRCTableMultiStep (\x y -> pack $ crcSteps crc32Poly (unpack x) y)
+    words :: Vec 8 (BitVector 32)
+    words = unpack x 
+    result :: BitVector 32
+    result = foldl step 0 words
+
+prop_crc32_multistep_verify :: BitVector 256 -> Bool
+prop_crc32_multistep_verify x = unpack result == expect
+    where
     expect = pack $ crcVerifySteps crc32Poly (repeat 0) x
     step :: BitVector 32 ->  BitVector 32 -> BitVector 32
     step   = crcTableMultiStep shiftRegTable inputTable
