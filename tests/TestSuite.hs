@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, ScopedTypeVariables, TypeOperators, NoImplicitPrelude, FlexibleContexts, TemplateHaskell, BinaryLiterals, RecordWildCards, TypeApplications #-}
+{-# LANGUAGE DataKinds, ScopedTypeVariables, TypeOperators, NoImplicitPrelude, FlexibleContexts, TemplateHaskell, BinaryLiterals, RecordWildCards, TypeApplications, GADTs #-}
 
 import Control.Monad
 import System.Exit
@@ -30,6 +30,7 @@ import CLaSH.CRC
 import CLaSH.FIFO
 import CLaSH.GrayCode
 import CLaSH.FFT
+import CLaSH.FFTSerial
 import CLaSH.Complex
 import CLaSH.Hamming
 
@@ -267,25 +268,31 @@ prop_grayCode2 x = x == grayToBinary (binaryToGray x)
 twiddles :: Vec 4 (Complex Double)
 twiddles = $(listToVecTH (twiddleFactors 4))
 
+approxEqualComplex (a C.:+ b) (c C.:+ d) = approxEqual a c && approxEqual b d
+
 prop_fftDITRec :: Vec 8 (C.Complex Double) -> Bool
 prop_fftDITRec vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDITRec twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
-    where
-    approxEqualComplex (a C.:+ b) (c C.:+ d) = approxEqual a c && approxEqual b d
 
 prop_fftDIFRec :: Vec 8 (C.Complex Double) -> Bool
 prop_fftDIFRec vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDIFRec twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
-    where
-    approxEqualComplex (a C.:+ b) (c C.:+ d) = approxEqual a c && approxEqual b d
 
 prop_fftDITIter :: Vec 8 (C.Complex Double) -> Bool
 prop_fftDITIter vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDITIter twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
-    where
-    approxEqualComplex (a C.:+ b) (c C.:+ d) = approxEqual a c && approxEqual b d
 
 prop_fftDIFIter :: Vec 8 (C.Complex Double) -> Bool
 prop_fftDIFIter vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDIFIter twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
+
+--serial FFT
+ditInputReorder :: Vec 8 a -> Vec 4 (a, a)
+ditInputReorder (a :> b :> c :> d :> e :> f :> g :> h :> Nil) = (a, e) :> (c, g) :> (b, f) :> (d, h) :> Nil
+
+ditOutputReorder :: [(a, a)] -> [a]
+ditOutputReorder ((a, b) : (c, d) : (e, f) : (g, h) : _) = a : c : e : g : b : d : f : h : []
+
+prop_fftSerial :: Vec 8 (C.Complex Double) -> Bool
+prop_fftSerial vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex result) (FFT.fft (toList vec))
     where
-    approxEqualComplex (a C.:+ b) (c C.:+ d) = approxEqual a c && approxEqual b d
+    result = ditOutputReorder $ Prelude.drop 8 $ simulate_lazy (fftSerial twiddles (pure True)) $ (toList (ditInputReorder (map fromComplex vec))) Prelude.++ Prelude.repeat (0, 0)
 
 --Hamming codes
 --Test the (15, 11) code
