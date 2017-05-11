@@ -138,10 +138,10 @@ revBV = pack . reverse . (unpack :: BitVector n -> Vec n Bit)
 reverseByte :: Word8 -> Word8
 reverseByte = unpack . revBV . pack
 
-toBytes :: BitVector 128 -> [Word8]
+toBytes :: forall n. KnownNat n => BitVector (n * 8) -> [Word8]
 toBytes x = Prelude.map (fromIntegral . pack) $ toList unpacked
     where
-    unpacked :: Vec 16 (Vec 8 Bit)
+    unpacked :: Vec n (Vec 8 Bit)
     unpacked = unconcatI (unpack x)
 
 prop_crc32 :: BitVector 128 -> Bool
@@ -167,6 +167,19 @@ prop_crc32_table x = result == expect
     where
     expect = pack $ crcVerifySteps crc32Poly (repeat 0) x
     result = crcTable (makeCRCTable (pack . crcVerifySteps crc32Poly (repeat 0))) x
+
+prop_crc32_multistep :: BitVector 256 -> Bool
+prop_crc32_multistep x = unpack result == expect
+    where
+    expect = pack $ crcVerifySteps crc32Poly (repeat 0) x
+    step :: BitVector 32 ->  BitVector 32 -> BitVector 32
+    step   = crcTableMultiStep shiftRegTable inputTable
+        where 
+        (shiftRegTable, inputTable) = makeCRCTableMultiStep (\x y -> pack $ crcVerifySteps crc32Poly (unpack x) y)
+    words :: Vec 8 (BitVector 32)
+    words = unpack x 
+    result :: BitVector 32
+    result = foldl step 0 words
 
 --FIFO
 --This software model should behave identically to the hardare FIFO
