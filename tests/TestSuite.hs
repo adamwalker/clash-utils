@@ -187,6 +187,19 @@ prop_crc32_multistep x = unpack result == expect
     result :: BitVector 32
     result = foldl step 0 words
 
+prop_crc32_multistep_2 :: BitVector 256 -> Bool
+prop_crc32_multistep_2 x = unpack result == expect
+    where
+    expect = crc32 $ Prelude.map reverseByte (toBytes x)
+    step :: BitVector 32 ->  BitVector 32 -> BitVector 32
+    step   = crcTableMultiStep shiftRegTable inputTable
+        where 
+        (shiftRegTable, inputTable) = makeCRCTableMultiStep (\x y -> pack $ crcSteps crc32Poly (unpack x) y)
+    words :: Vec 8 (BitVector 32)
+    words = unpack x 
+    result :: BitVector 32
+    result = fromIntegral $ pack $ map complement $ reverse $ (unpack $ foldl step 0xffffffff words :: Vec 32 Bit)
+
 prop_crc32_multistep_verify :: BitVector 256 -> Bool
 prop_crc32_multistep_verify x = unpack result == expect
     where
