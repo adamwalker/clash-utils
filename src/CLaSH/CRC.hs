@@ -35,7 +35,7 @@ import CLaSH.Prelude
 
 import Data.Bool
 
---The CRC32 polynomial
+-- | The CRC32 polynomial. This is the one used by Ethernet.
 crc32Poly :: BitVector 31
 crc32Poly = 0b10011000001000111011011011
 

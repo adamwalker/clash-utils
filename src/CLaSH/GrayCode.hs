@@ -1,3 +1,4 @@
+{-| Conversion between binary and Gray code. https://en.wikipedia.org/wiki/Gray_code. -}
 module CLaSH.GrayCode (
     binaryToGray,
     grayToBinary
@@ -5,16 +6,18 @@ module CLaSH.GrayCode (
 
 import CLaSH.Prelude
 
+{-| Binary to Gray code conversion -}
 binaryToGray 
     :: KnownNat n 
-    => BitVector n 
-    -> BitVector n
+    => BitVector n -- ^ Binary input
+    -> BitVector n -- ^ Gray code output
 binaryToGray x = x `xor` (x `shiftR` 1)
 
+{-| Gray code to binary conversion -}
 grayToBinary
     :: forall n. KnownNat n
-    => BitVector (2 ^ n)
-    -> BitVector (2 ^ n)
+    => BitVector (2 ^ n) -- ^ Gray code input
+    -> BitVector (2 ^ n) -- ^ Binary output
 grayToBinary x = foldl func x powers
     where 
     powers :: Vec n Int

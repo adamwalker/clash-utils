@@ -73,6 +73,7 @@ type ExpVec k a = Vec (2 ^ k) a
 data SplitHalf (a :: *) (f :: TyFun Nat *) :: *
 type instance Apply (SplitHalf a) k = (ExpVec k a -> ExpVec k a, ExpVec (k + 1) a -> ExpVec (k + 1) a)
 
+{-| Length generic bitonic sorter -}
 bitonicSorter :: forall k a . (Ord a, KnownNat k) => Vec (2 ^ k) a -> Vec (2 ^ k) a
 bitonicSorter = fst $ dfold (Proxy @ (SplitHalf a)) step base (replicate (SNat @ k) ())
     where
