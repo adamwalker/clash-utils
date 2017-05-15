@@ -1,4 +1,6 @@
---TODO: tests
+{-| Radix 2 complex-to-complex Cooley-Tukey FFTs. https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm.
+    The FFTs in this module are serial, saving multiplers and routing resources. They operate on and produce two complex numbers at a time. 
+-}
 module CLaSH.FFTSerial (
     fftSerialStep,
     fftSerial

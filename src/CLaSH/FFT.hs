@@ -1,5 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables, GADTs #-}
 
+{-| Radix 2 complex-to-complex Cooley-Tukey FFTs. https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm.
+    The FFTs in this module are fully parallel, which means they use a large number of multipliers and routing resources and are only practical for smaller FFTs.
+-}
 module CLaSH.FFT (
     twiddleFactors,
     fftDITRec,
