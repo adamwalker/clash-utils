@@ -10,6 +10,9 @@ A random collection of reusable [Clash](http://www.clash-lang.org/) designs/exam
 * FIR, IIR filters
 * A bitonic sorting network
 * Divider
+* FFTs
+* Gray code conversion
+* Hamming code encoding/decoding
 
 ## Features:
 
