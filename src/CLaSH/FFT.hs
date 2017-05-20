@@ -5,6 +5,7 @@
 -}
 module CLaSH.FFT (
     twiddleFactors,
+    halveTwiddles,
     fftDITRec,
     fftDIFRec,
     fftDITIter,
@@ -19,6 +20,9 @@ import qualified Prelude as P
 
 twiddleFactors :: Int -> [Complex Double]
 twiddleFactors num = P.take num $ [fromComplex $ C.cis $ (-1) * P.pi * fromIntegral i / (fromIntegral num) | i <- [0..]]
+
+halveTwiddles :: KnownNat n => Vec (2 * n) a -> Vec n a
+halveTwiddles vec = transpose (unconcat (SNat  @ 2) vec) !! 0
 
 fftStepDITRec 
     :: forall n a . (Num a, KnownNat n)
@@ -61,13 +65,13 @@ fftDITRec
 fftDITRec twiddles = fft8 
     where
     cexp1 :: Vec 1 (Complex a)
-    cexp1 = selectI (SNat @ 0) (SNat @ 4) twiddles
+    cexp1 = halveTwiddles cexp2
 
     cexp2 :: Vec 2 (Complex a)
-    cexp2 = selectI (SNat @ 0) (SNat @ 2) twiddles
+    cexp2 = halveTwiddles cexp4
 
     cexp4 :: Vec 4 (Complex a)
-    cexp4 = selectI (SNat @ 0) (SNat @ 1) twiddles
+    cexp4 = twiddles
 
     fft1 :: Vec 1 (Complex a) -> Vec 1 (Complex a)
     fft1 = id
@@ -94,13 +98,13 @@ fftDIFRec twiddles input = (a :> e :> c :> g :> b :> f :> d :> h :> Nil)
     (a :> b :> c :> d :> e :> f :> g :> h :> Nil) = fft8 input
 
     cexp1 :: Vec 1 (Complex a)
-    cexp1 = selectI (SNat @ 0) (SNat @ 4) twiddles
+    cexp1 = halveTwiddles cexp2
 
     cexp2 :: Vec 2 (Complex a)
-    cexp2 = selectI (SNat @ 0) (SNat @ 2) twiddles
+    cexp2 = halveTwiddles cexp4
 
     cexp4 :: Vec 4 (Complex a)
-    cexp4 = selectI (SNat @ 0) (SNat @ 1) twiddles
+    cexp4 = twiddles
 
     fft1 :: Vec 1 (Complex a) -> Vec 1 (Complex a)
     fft1 = id
@@ -147,13 +151,13 @@ fftDITIter twiddles (a :> b :> c :> d :> e :> f :> g :> h :> Nil) = fft8
     reorderedInput = a :> e :> c :> g :> b :> f :> d :> h :> Nil
 
     cexp1 :: Vec 1 (Complex a)
-    cexp1 = selectI (SNat @ 0) (SNat @ 4) twiddles
+    cexp1 = halveTwiddles cexp2
 
     cexp2 :: Vec 2 (Complex a)
-    cexp2 = selectI (SNat @ 0) (SNat @ 2) twiddles
+    cexp2 = halveTwiddles cexp4
 
     cexp4 :: Vec 4 (Complex a)
-    cexp4 = selectI (SNat @ 0) (SNat @ 1) twiddles
+    cexp4 = twiddles
 
     fft2 = concat $ map (butterfly . twiddle cexp1) $ unconcatI reorderedInput
     fft4 = concat $ map (butterfly . twiddle cexp2) $ unconcatI fft2
@@ -170,13 +174,13 @@ fftDIFIter twiddles input = a :> e :> c :> g :> b :> f :> d :> h :> Nil
     a :> b :> c :> d :> e :> f :> g :> h :> Nil = fft2
 
     cexp1 :: Vec 1 (Complex a)
-    cexp1 = selectI (SNat @ 0) (SNat @ 4) twiddles
+    cexp1 = halveTwiddles cexp2
 
     cexp2 :: Vec 2 (Complex a)
-    cexp2 = selectI (SNat @ 0) (SNat @ 2) twiddles
+    cexp2 = halveTwiddles cexp4
 
     cexp4 :: Vec 4 (Complex a)
-    cexp4 = selectI (SNat @ 0) (SNat @ 1) twiddles
+    cexp4 = twiddles
 
     fft8 = concat $ map (twiddle cexp4 . butterfly) $ unconcatI input
     fft4 = concat $ map (twiddle cexp2 . butterfly) $ unconcatI fft8

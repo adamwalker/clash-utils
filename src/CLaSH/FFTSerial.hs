@@ -9,7 +9,7 @@ module CLaSH.FFTSerial (
 import CLaSH.Prelude
 
 import CLaSH.Complex
-import CLaSH.FIFO
+import CLaSH.FFT(halveTwiddles)
 
 --Decimation in time
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
@@ -53,7 +53,6 @@ fftSerialStep twiddles en input = bundle (butterflyHighOutput, butterflyLowOutpu
     butterflyHighOutput = butterflyHighInput + twiddled
     butterflyLowOutput  = butterflyHighInput - twiddled 
 
-
 fftSerial
     :: forall a. Num a
     => Vec 4 (Complex a)
@@ -61,8 +60,8 @@ fftSerial
     -> Signal (Complex a, Complex a)
     -> Signal (Complex a, Complex a)
 fftSerial twiddles en input = 
-    fftSerialStep cexp4 (de . de . de . de $ en) $ 
-    fftSerialStep cexp2 (de en) $ 
+    fftSerialStep twiddles (de . de . de . de $ en) $ 
+    fftSerialStep cexp2    (de en) $ 
     fftBase en input
 
     where
@@ -70,10 +69,7 @@ fftSerial twiddles en input =
     de = register False
 
     cexp2 :: Vec 2 (Complex a)
-    cexp2 = selectI (SNat @ 0) (SNat @ 2) twiddles
-
-    cexp4 :: Vec 4 (Complex a)
-    cexp4 = selectI (SNat @ 0) (SNat @ 1) twiddles
+    cexp2 = halveTwiddles twiddles
 
     fftBase :: Signal Bool -> Signal (Complex a, Complex a) -> Signal (Complex a, Complex a)
     fftBase en = regEn (0, 0) en . fmap func
