@@ -1,3 +1,4 @@
+{-# LANGUAGE KindSignatures, TypeFamilies, UndecidableInstances #-}
 {-| Radix 2 complex-to-complex Cooley-Tukey FFTs. https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm.
     The FFTs in this module are serial, saving multiplers and routing resources. They operate on and produce two complex numbers at a time. 
 -}
@@ -12,6 +13,8 @@ import CLaSH.Prelude
 
 import CLaSH.Complex
 import CLaSH.FFT(halveTwiddles)
+import Data.Singletons.Prelude
+import Data.Proxy
 
 fftBase :: Num a => Signal Bool -> Signal (Complex a, Complex a) -> Signal (Complex a, Complex a)
 fftBase en = regEn (0, 0) en . fmap func
@@ -140,4 +143,24 @@ fftSerialDIF twiddles en input =
 
     cexp2 :: Vec 2 (Complex a)
     cexp2 = halveTwiddles twiddles
+
+data FFTStep (n :: Nat) (a :: *) (f :: TyFun Nat *) :: *
+type instance Apply (FFTStep n a) k = (Signal Bool -> Signal (Complex a, Complex a) -> Signal (Complex a, Complex a), Vec (2 ^ (n - k + 1)) (Complex a))
+
+fftGeneral 
+    :: forall n a. (KnownNat n, Num a)
+    => Vec (2 ^ (n + 1)) (Complex a)
+    -> Signal Bool
+    -> Signal (Complex a, Complex a)
+    -> Signal (Complex a, Complex a)
+fftGeneral twiddles = fst $ dfold (Proxy @ (FFTStep n a)) step base (replicate (SNat @ n) ())
+    where
+    step :: forall l. SNat l -> () -> FFTStep n a @@ l -> FFTStep n a @@ (l + 1)
+    step SNat _ (stepsToRight, twiddles) = (
+            \en inp -> fftSerialDITStep twiddles en $ stepsToRight en inp, 
+            halveTwiddles twiddles
+        )
+
+    base :: FFTStep n a @@ 0 
+    base = (const id, twiddles)
 
