@@ -9,8 +9,12 @@ module CLaSH.FFT (
     twiddleFactors,
     halveTwiddles,
     reorder,
+    fftStepDITRec,
+    fftStepDIFRec,
     fftDITRec,
     fftDIFRec,
+    butterfly,
+    twiddle,
     fftDITIter,
     fftDIFIter
     ) where
@@ -46,6 +50,7 @@ reorder inp = map (inp !!) indices
     revBits :: forall n. KnownNat n => BitVector n -> BitVector n
     revBits x = pack $ reverse (unpack x :: Vec n Bit)
 
+-- | A step in the recursive decimation in time FFT
 fftStepDITRec 
     :: forall n a . (Num a, KnownNat n)
     => Vec n (Complex a)
@@ -63,6 +68,7 @@ fftStepDITRec twiddleFactors recurse input = zipWith (+) fft1 twiddled ++ zipWit
     fft2        =  recurse $ partitioned !! 1
     twiddled    =  zipWith (*) twiddleFactors fft2
 
+-- | A step in the recursive decimation in frequency FFT
 fftStepDIFRec 
     :: forall n a . (Num a, KnownNat n)
     => Vec n (Complex a)
@@ -131,6 +137,7 @@ fftDIFRec twiddles input = reorder $ fft16 input
     fft16 :: Vec 16 (Complex a) -> Vec 16 (Complex a)
     fft16 =  fftStepDIFRec twiddles fft8
 
+-- | The FFT butterfly calculation
 butterfly 
     :: forall n a. (Num a, KnownNat n)
     => Vec (2 * n) (Complex a)
@@ -142,6 +149,7 @@ butterfly input = butterflied1 ++ butterflied2
     butterflied1 =  zipWith (+) (partitioned !! 0) (partitioned !! 1)
     butterflied2 =  zipWith (-) (partitioned !! 0) (partitioned !! 1)
 
+-- | The FFT twiddle step
 twiddle 
     :: forall n a. (Num a, KnownNat n)
     => Vec n (Complex a)
