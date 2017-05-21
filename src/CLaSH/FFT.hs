@@ -68,62 +68,57 @@ fftStepDIFRec twiddleFactors recurse input = fft1 ++ fft2
 --A completely impractical purely combinational FFT
 fftDITRec
     :: forall a. (Num a, Floating a)
-    => Vec 4 (Complex a)
-    -> Vec 8 (Complex a) 
-    -> Vec 8 (Complex a)
-fftDITRec twiddles = fft8 
+    => Vec 8 (Complex a)
+    -> Vec 16 (Complex a) 
+    -> Vec 16 (Complex a)
+fftDITRec twiddles = fft16
     where
+
     cexp1 :: Vec 1 (Complex a)
-    cexp1 = halveTwiddles cexp2
+    cexp1 =  halveTwiddles cexp2
+    fft2  :: Vec 2 (Complex a) -> Vec 2 (Complex a)
+    fft2  =  fftStepDITRec cexp1 id
 
     cexp2 :: Vec 2 (Complex a)
-    cexp2 = halveTwiddles cexp4
+    cexp2 =  halveTwiddles cexp4
+    fft4  :: Vec 4 (Complex a) -> Vec 4 (Complex a)
+    fft4  =  fftStepDITRec cexp2 fft2
 
     cexp4 :: Vec 4 (Complex a)
-    cexp4 = twiddles
+    cexp4 =  halveTwiddles twiddles
+    fft8  :: Vec 8 (Complex a) -> Vec 8 (Complex a)
+    fft8  =  fftStepDITRec cexp4 fft4
 
-    fft1 :: Vec 1 (Complex a) -> Vec 1 (Complex a)
-    fft1 = id
-
-    fft2 :: Vec 2 (Complex a) -> Vec 2 (Complex a)
-    fft2 = fftStepDITRec cexp1 fft1
-
-    fft4 :: Vec 4 (Complex a) -> Vec 4 (Complex a)
-    fft4 = fftStepDITRec cexp2 fft2
-
-    fft8 :: Vec 8 (Complex a) -> Vec 8 (Complex a)
-    fft8 = fftStepDITRec cexp4 fft4
+    fft16 :: Vec 16 (Complex a) -> Vec 16 (Complex a)
+    fft16 =  fftStepDITRec twiddles fft8
 
 --TODO: use dependently typed fold to automate all this
 --A completely impractical purely combinational FFT
 fftDIFRec 
     :: forall a. (Num a, Floating a)
-    => Vec 4 (Complex a)
-    -> Vec 8 (Complex a) 
-    -> Vec 8 (Complex a)
-fftDIFRec twiddles input = reorder $ fft8 input
+    => Vec 8 (Complex a)
+    -> Vec 16 (Complex a) 
+    -> Vec 16 (Complex a)
+fftDIFRec twiddles input = reorder $ fft16 input
     where
 
     cexp1 :: Vec 1 (Complex a)
-    cexp1 = halveTwiddles cexp2
+    cexp1 =  halveTwiddles cexp2
+    fft2  :: Vec 2 (Complex a) -> Vec 2 (Complex a)
+    fft2  =  fftStepDIFRec cexp1 id
 
     cexp2 :: Vec 2 (Complex a)
-    cexp2 = halveTwiddles cexp4
+    cexp2 =  halveTwiddles cexp4
+    fft4  :: Vec 4 (Complex a) -> Vec 4 (Complex a)
+    fft4  =  fftStepDIFRec cexp2 fft2
 
     cexp4 :: Vec 4 (Complex a)
-    cexp4 = twiddles
+    cexp4 =  halveTwiddles twiddles
+    fft8  :: Vec 8 (Complex a) -> Vec 8 (Complex a)
+    fft8  =  fftStepDIFRec cexp4 fft4
 
-    fft1 :: Vec 1 (Complex a) -> Vec 1 (Complex a)
-    fft1 = id
-
-    fft2 :: Vec 2 (Complex a) -> Vec 2 (Complex a)
-    fft2 = fftStepDIFRec cexp1 fft1
-
-    fft4 :: Vec 4 (Complex a) -> Vec 4 (Complex a)
-    fft4 = fftStepDIFRec cexp2 fft2
-
-    fft8 :: Vec 8 (Complex a) -> Vec 8 (Complex a)
-    fft8 = fftStepDIFRec cexp4 fft4
+    fft16 :: Vec 16 (Complex a) -> Vec 16 (Complex a)
+    fft16 =  fftStepDIFRec twiddles fft8
 
 butterfly 
     :: forall n a. (Num a, KnownNat n)
@@ -149,42 +144,45 @@ twiddle twiddleFactors input = (partitioned !! 0) ++ twiddled
 
 fftDITIter 
     :: forall a. (Num a)
-    => Vec 4 (Complex a)
-    -> Vec 8 (Complex a)
-    -> Vec 8 (Complex a)
-fftDITIter twiddles inp = fft8
+    => Vec 8 (Complex a)
+    -> Vec 16 (Complex a)
+    -> Vec 16 (Complex a)
+fftDITIter twiddles inp = fft16
     where
+
     cexp1 :: Vec 1 (Complex a)
-    cexp1 = halveTwiddles cexp2
+    cexp1 =  halveTwiddles cexp2
+    fft2  =  concat $ map (butterfly . twiddle cexp1) $ unconcatI $ reorder inp
 
     cexp2 :: Vec 2 (Complex a)
-    cexp2 = halveTwiddles cexp4
+    cexp2 =  halveTwiddles cexp4
+    fft4  =  concat $ map (butterfly . twiddle cexp2) $ unconcatI fft2
 
     cexp4 :: Vec 4 (Complex a)
-    cexp4 = twiddles
+    cexp4 =  halveTwiddles twiddles
+    fft8  =  concat $ map (butterfly . twiddle cexp4) $ unconcatI fft4
 
-    fft2 = concat $ map (butterfly . twiddle cexp1) $ unconcatI $ reorder inp
-    fft4 = concat $ map (butterfly . twiddle cexp2) $ unconcatI fft2
-    fft8 = concat $ map (butterfly . twiddle cexp4) $ unconcatI fft4
+    fft16 =  concat $ map (butterfly . twiddle twiddles) $ unconcatI fft8
 
 fftDIFIter 
     :: forall a. (Num a)
-    => Vec 4 (Complex a)
-    -> Vec 8 (Complex a)
-    -> Vec 8 (Complex a)
+    => Vec 8 (Complex a)
+    -> Vec 16 (Complex a)
+    -> Vec 16 (Complex a)
 fftDIFIter twiddles input = reorder fft2
     where
+
+    fft16 =  concat $ map (twiddle twiddles . butterfly) $ unconcatI input
     
-    cexp1 :: Vec 1 (Complex a)
-    cexp1 = halveTwiddles cexp2
+    cexp4 :: Vec 4 (Complex a)
+    cexp4 =  halveTwiddles twiddles
+    fft8  =  concat $ map (twiddle cexp4 . butterfly) $ unconcatI fft16
 
     cexp2 :: Vec 2 (Complex a)
-    cexp2 = halveTwiddles cexp4
+    cexp2 =  halveTwiddles cexp4
+    fft4  =  concat $ map (twiddle cexp2 . butterfly) $ unconcatI fft8
 
-    cexp4 :: Vec 4 (Complex a)
-    cexp4 = twiddles
-
-    fft8 = concat $ map (twiddle cexp4 . butterfly) $ unconcatI input
-    fft4 = concat $ map (twiddle cexp2 . butterfly) $ unconcatI fft8
-    fft2 = concat $ map (twiddle cexp1 . butterfly) $ unconcatI fft4
+    cexp1 :: Vec 1 (Complex a)
+    cexp1 =  halveTwiddles cexp2
+    fft2  =  concat $ map (twiddle cexp1 . butterfly) $ unconcatI fft4
 

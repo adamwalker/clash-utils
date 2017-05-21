@@ -265,24 +265,27 @@ prop_grayCode2 :: BitVector 32 -> Bool
 prop_grayCode2 x = x == grayToBinary (binaryToGray x)
 
 --FFT
-twiddles :: Vec 4 (Complex Double)
-twiddles = $(listToVecTH (twiddleFactors 4))
+twiddles :: Vec 8 (Complex Double)
+twiddles = $(listToVecTH (twiddleFactors 8))
 
 approxEqualComplex (a C.:+ b) (c C.:+ d) = approxEqual a c && approxEqual b d
 
-prop_fftDITRec :: Vec 8 (C.Complex Double) -> Bool
+prop_fftDITRec :: Vec 16 (C.Complex Double) -> Bool
 prop_fftDITRec vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDITRec twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
 
-prop_fftDIFRec :: Vec 8 (C.Complex Double) -> Bool
+prop_fftDIFRec :: Vec 16 (C.Complex Double) -> Bool
 prop_fftDIFRec vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDIFRec twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
 
-prop_fftDITIter :: Vec 8 (C.Complex Double) -> Bool
+prop_fftDITIter :: Vec 16 (C.Complex Double) -> Bool
 prop_fftDITIter vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDITIter twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
 
-prop_fftDIFIter :: Vec 8 (C.Complex Double) -> Bool
+prop_fftDIFIter :: Vec 16 (C.Complex Double) -> Bool
 prop_fftDIFIter vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex (toList (fftDIFIter twiddles (map fromComplex vec)))) (FFT.fft (toList vec))
 
 --serial FFT
+twiddles4 :: Vec 4 (Complex Double)
+twiddles4 = $(listToVecTH (twiddleFactors 4))
+
 ditInputReorder :: Vec 8 a -> Vec 4 (a, a)
 ditInputReorder (a :> b :> c :> d :> e :> f :> g :> h :> Nil) = (a, e) :> (c, g) :> (b, f) :> (d, h) :> Nil
 
@@ -292,7 +295,7 @@ ditOutputReorder ((a, b) : (c, d) : (e, f) : (g, h) : _) = a : c : e : g : b : d
 prop_fftSerial :: Vec 8 (C.Complex Double) -> Bool
 prop_fftSerial vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex result) (FFT.fft (toList vec))
     where
-    result = ditOutputReorder $ Prelude.drop 8 $ simulate_lazy (fftSerial twiddles (pure True)) $ (toList (ditInputReorder (map fromComplex vec))) Prelude.++ Prelude.repeat (0, 0)
+    result = ditOutputReorder $ Prelude.drop 8 $ simulate_lazy (fftSerial twiddles4 (pure True)) $ (toList (ditInputReorder (map fromComplex vec))) Prelude.++ Prelude.repeat (0, 0)
 
 --Hamming codes
 --Test the (15, 11) code
