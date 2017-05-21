@@ -2,6 +2,8 @@
 
 {-| Radix 2 complex-to-complex Cooley-Tukey FFTs. https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm.
     The FFTs in this module are fully parallel, which means they use a large number of multipliers and routing resources and are only practical for smaller FFTs.
+
+    TODO: use the dependently typed fold to define FFTs of any length.
 -}
 module CLaSH.FFT (
     twiddleFactors,
@@ -19,13 +21,24 @@ import CLaSH.Complex
 import qualified Data.Complex as C
 import qualified Prelude as P
 
-twiddleFactors :: Int -> [Complex Double]
+-- | Calculate FFT `twiddle` factors. You probably want to do this with template Haskell to ensure they are calculated at compile time.
+twiddleFactors 
+    :: Int              -- ^ Twiddle factor vector length
+    -> [Complex Double] -- ^ Twiddle factors
 twiddleFactors num = P.take num $ [fromComplex $ C.cis $ (-1) * P.pi * fromIntegral i / (fromIntegral num) | i <- [0..]]
 
-halveTwiddles :: KnownNat n => Vec (2 * n) a -> Vec n a
+-- | Take every second element of a vector of twiddle factors.
+halveTwiddles 
+    :: KnownNat n 
+    => Vec (2 * n) a -- ^ Twiddle factors
+    -> Vec n a       -- ^ Halved output twiddle factors
 halveTwiddles vec = transpose (unconcat (SNat  @ 2) vec) !! 0
 
-reorder :: forall n a. KnownNat n => Vec (2 ^ n) a -> Vec (2 ^ n) a
+-- | Reorder FFT imput or output samples.
+reorder 
+    :: forall n a. KnownNat n 
+    => Vec (2 ^ n) a -- ^ Input samples
+    -> Vec (2 ^ n) a -- ^ Reordered output samples
 reorder inp = map (inp !!) indices
     where
     indices :: Vec (2 ^ n) (BitVector n)
@@ -64,13 +77,12 @@ fftStepDIFRec twiddleFactors recurse input = fft1 ++ fft2
     fft1        = recurse $ zipWith (+) (partitioned !! 0) (partitioned !! 1)
     fft2        = recurse $ zipWith (*) twiddleFactors $ zipWith (-) (partitioned !! 0) (partitioned !! 1)
 
---TODO: use dependently typed fold to automate all this
---A completely impractical purely combinational FFT
+-- | Compute a 16 element FFT, using the 'decimation in time' algorithm recursively. You probably want to use `fftDITIter` as it can be more easily pipelined.
 fftDITRec
     :: forall a. (Num a, Floating a)
-    => Vec 8 (Complex a)
-    -> Vec 16 (Complex a) 
-    -> Vec 16 (Complex a)
+    => Vec 8 (Complex a)  -- ^ Precomputed twiddle factors
+    -> Vec 16 (Complex a) -- ^ Input samples
+    -> Vec 16 (Complex a) -- ^ Output samples
 fftDITRec twiddles = fft16
     where
 
@@ -92,13 +104,12 @@ fftDITRec twiddles = fft16
     fft16 :: Vec 16 (Complex a) -> Vec 16 (Complex a)
     fft16 =  fftStepDITRec twiddles fft8
 
---TODO: use dependently typed fold to automate all this
---A completely impractical purely combinational FFT
+-- | Compute a 16 element FFT, using the 'decimation in frequency' algorithm recursively. You probably want to use `fftDIFIter` as it can be more easily pipelined.
 fftDIFRec 
     :: forall a. (Num a, Floating a)
-    => Vec 8 (Complex a)
-    -> Vec 16 (Complex a) 
-    -> Vec 16 (Complex a)
+    => Vec 8 (Complex a)  -- ^ Precomputed twiddle factors
+    -> Vec 16 (Complex a) -- ^ Input samples
+    -> Vec 16 (Complex a) -- ^ Output samples
 fftDIFRec twiddles input = reorder $ fft16 input
     where
 
@@ -142,11 +153,12 @@ twiddle twiddleFactors input = (partitioned !! 0) ++ twiddled
     partitioned =  unconcatI input
     twiddled    =  zipWith (*) twiddleFactors (partitioned !! 1)
 
+-- | Compute a 16 element FFT, using the 'decimation in time' algorithm.
 fftDITIter 
     :: forall a. (Num a)
-    => Vec 8 (Complex a)
-    -> Vec 16 (Complex a)
-    -> Vec 16 (Complex a)
+    => Vec 8 (Complex a)  -- ^ Precomputed twiddle factors
+    -> Vec 16 (Complex a) -- ^ Input samples
+    -> Vec 16 (Complex a) -- ^ Output samples
 fftDITIter twiddles inp = fft16
     where
 
@@ -164,11 +176,12 @@ fftDITIter twiddles inp = fft16
 
     fft16 =  concat $ map (butterfly . twiddle twiddles) $ unconcatI fft8
 
+-- | Compute a 16 element FFT, using the 'decimation in frequency' algorithm.
 fftDIFIter 
     :: forall a. (Num a)
-    => Vec 8 (Complex a)
-    -> Vec 16 (Complex a)
-    -> Vec 16 (Complex a)
+    => Vec 8 (Complex a)  -- ^ Presomputed twiddle factors
+    -> Vec 16 (Complex a) -- ^ Input samples
+    -> Vec 16 (Complex a) -- ^ Output samples
 fftDIFIter twiddles input = reorder fft2
     where
 
