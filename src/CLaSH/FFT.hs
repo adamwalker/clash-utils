@@ -6,6 +6,7 @@
 module CLaSH.FFT (
     twiddleFactors,
     halveTwiddles,
+    reorder,
     fftDITRec,
     fftDIFRec,
     fftDITIter,
@@ -23,6 +24,14 @@ twiddleFactors num = P.take num $ [fromComplex $ C.cis $ (-1) * P.pi * fromInteg
 
 halveTwiddles :: KnownNat n => Vec (2 * n) a -> Vec n a
 halveTwiddles vec = transpose (unconcat (SNat  @ 2) vec) !! 0
+
+reorder :: forall n a. KnownNat n => Vec (2 ^ n) a -> Vec (2 ^ n) a
+reorder inp = map (inp !!) indices
+    where
+    indices :: Vec (2 ^ n) (BitVector n)
+    indices = map revBits $ iterateI (+1) 0
+    revBits :: forall n. KnownNat n => BitVector n -> BitVector n
+    revBits x = pack $ reverse (unpack x :: Vec n Bit)
 
 fftStepDITRec 
     :: forall n a . (Num a, KnownNat n)
@@ -92,10 +101,8 @@ fftDIFRec
     => Vec 4 (Complex a)
     -> Vec 8 (Complex a) 
     -> Vec 8 (Complex a)
-fftDIFRec twiddles input = (a :> e :> c :> g :> b :> f :> d :> h :> Nil)
+fftDIFRec twiddles input = reorder $ fft8 input
     where
-
-    (a :> b :> c :> d :> e :> f :> g :> h :> Nil) = fft8 input
 
     cexp1 :: Vec 1 (Complex a)
     cexp1 = halveTwiddles cexp2
@@ -145,11 +152,8 @@ fftDITIter
     => Vec 4 (Complex a)
     -> Vec 8 (Complex a)
     -> Vec 8 (Complex a)
-fftDITIter twiddles (a :> b :> c :> d :> e :> f :> g :> h :> Nil) = fft8
+fftDITIter twiddles inp = fft8
     where
-
-    reorderedInput = a :> e :> c :> g :> b :> f :> d :> h :> Nil
-
     cexp1 :: Vec 1 (Complex a)
     cexp1 = halveTwiddles cexp2
 
@@ -159,7 +163,7 @@ fftDITIter twiddles (a :> b :> c :> d :> e :> f :> g :> h :> Nil) = fft8
     cexp4 :: Vec 4 (Complex a)
     cexp4 = twiddles
 
-    fft2 = concat $ map (butterfly . twiddle cexp1) $ unconcatI reorderedInput
+    fft2 = concat $ map (butterfly . twiddle cexp1) $ unconcatI $ reorder inp
     fft4 = concat $ map (butterfly . twiddle cexp2) $ unconcatI fft2
     fft8 = concat $ map (butterfly . twiddle cexp4) $ unconcatI fft4
 
@@ -168,11 +172,9 @@ fftDIFIter
     => Vec 4 (Complex a)
     -> Vec 8 (Complex a)
     -> Vec 8 (Complex a)
-fftDIFIter twiddles input = a :> e :> c :> g :> b :> f :> d :> h :> Nil
+fftDIFIter twiddles input = reorder fft2
     where
     
-    a :> b :> c :> d :> e :> f :> g :> h :> Nil = fft2
-
     cexp1 :: Vec 1 (Complex a)
     cexp1 = halveTwiddles cexp2
 
