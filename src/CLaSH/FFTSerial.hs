@@ -13,12 +13,13 @@ import CLaSH.FFT(halveTwiddles)
 
 --Decimation in time
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
+-- | A step in the serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. 
 fftSerialStep
     :: forall n a. (KnownNat n, Num a)
-    => Vec (2 ^ (n + 1)) (Complex a)
-    -> Signal Bool
-    -> Signal (Complex a, Complex a) 
-    -> Signal (Complex a, Complex a)
+    => Vec (2 ^ (n + 1)) (Complex a) -- ^ Precomputed twiddle factors
+    -> Signal Bool                   -- ^ Input enable signal
+    -> Signal (Complex a, Complex a) -- ^ Pair of input samples
+    -> Signal (Complex a, Complex a) -- ^ Pair of output samples
 fftSerialStep twiddles en input = bundle (butterflyHighOutput, butterflyLowOutput)
     where
 
@@ -53,12 +54,13 @@ fftSerialStep twiddles en input = bundle (butterflyHighOutput, butterflyLowOutpu
     butterflyHighOutput = butterflyHighInput + twiddled
     butterflyLowOutput  = butterflyHighInput - twiddled 
 
+-- | Example serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
 fftSerial
     :: forall a. Num a
-    => Vec 4 (Complex a)
-    -> Signal Bool
-    -> Signal (Complex a, Complex a)
-    -> Signal (Complex a, Complex a)
+    => Vec 4 (Complex a)             -- ^ Precomputed twiddle factors
+    -> Signal Bool                   -- ^ Input enable signal
+    -> Signal (Complex a, Complex a) -- ^ Pair of input samples
+    -> Signal (Complex a, Complex a) -- ^ Pair of output samples
 fftSerial twiddles en input = 
     fftSerialStep twiddles (de . de . de . de $ en) $ 
     fftSerialStep cexp2    (de en) $ 
