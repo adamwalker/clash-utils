@@ -298,10 +298,10 @@ difInputReorder (a :> b :> c :> d :> e :> f :> g :> h :> Nil) = (a, e) :> (b, f)
 difOutputReorder :: [(a, a)] -> [a]
 difOutputReorder ((a, b) : (c, d) : (e, f) : (g, h) : _) = a : e : c : g : b : f : d : h : []
 
-prop_fftSerial :: Vec 8 (C.Complex Double) -> Bool
-prop_fftSerial vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex result) (FFT.fft (toList vec))
+prop_fftSerialDIT :: Vec 8 (C.Complex Double) -> Bool
+prop_fftSerialDIT vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex result) (FFT.fft (toList vec))
     where
-    result = ditOutputReorder $ Prelude.drop 8 $ simulate_lazy (fftSerial twiddles4 (pure True)) $ (toList (ditInputReorder (map fromComplex vec))) Prelude.++ Prelude.repeat (0, 0)
+    result = ditOutputReorder $ Prelude.drop 8 $ simulate_lazy (fftSerialDIT twiddles4 (pure True)) $ (toList (ditInputReorder (map fromComplex vec))) Prelude.++ Prelude.repeat (0, 0)
 
 prop_fftSerialDIF :: Vec 8 (C.Complex Double) -> Bool
 prop_fftSerialDIF vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex result) (FFT.fft (toList vec))
