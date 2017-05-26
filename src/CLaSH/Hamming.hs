@@ -5,7 +5,7 @@ import qualified Prelude as P
 import qualified Data.List as L
 import CLaSH.Prelude
 
--- | Generator matrix for the Hamming parity bits. It's a lazy list of lazy lists, so use `Prelude.take` to make a generator matrix of the desired size. See the tests for an example.
+-- | Generator matrix for the Hamming parity bits. Intended for use from template Haskell to ensure the matrix is generated a compile time. It's a lazy list of lazy lists, so use `Prelude.take` to make a generator matrix of the desired size. See the tests for an example.
 generator :: [[Bool]]
 generator = L.transpose $ P.map generatorRow [0..]
     where
