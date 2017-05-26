@@ -1,5 +1,10 @@
 {-| Hamming code encoding and decoding. https://en.wikipedia.org/wiki/Hamming_code. -}
-module CLaSH.Hamming where
+module CLaSH.Hamming (
+    generator,
+    hammingParity,
+    correctError',
+    correctError
+    ) where
 
 import qualified Prelude as P
 import qualified Data.List as L
@@ -19,7 +24,7 @@ generator = L.transpose $ P.map generatorRow [0..]
         notPow2 :: Int -> Bool
         notPow2 n = n .&. (n - 1) /= 0
 
--- | Calculate hamming parity bits
+-- | Calculate hamming parity bits given the generator matrix and data
 hammingParity
     :: forall m n. (KnownNat m, KnownNat n)
     => Vec (m + 1) (BitVector n) -- ^ Parity bits generator matrix
@@ -32,16 +37,27 @@ hammingParity table input = fold xor $ zipWith func (unpack input) table
 
 --TODO: there is probably a smarter way of doing this
 -- | Correct a single bit error in a hamming code word
-correctError 
+correctError'
     :: forall n. (KnownNat n)
     => Vec n (BitVector (CLog 2 n)) -- ^ Parity bits generator matrix
-    -> BitVector (CLog 2 n)         -- ^ Error parity bits
+    -> BitVector (CLog 2 n)         -- ^ Parity bits which are wrong
     -> BitVector n                  -- ^ Data bits
     -> BitVector n                  -- ^ Corrected data word
-correctError nonPows parity dat = pack $ zipWith (func parity) nonPows (unpack dat)
+correctError' nonPows parity dat = pack $ zipWith (func parity) nonPows (unpack dat)
     where 
     func :: BitVector (CLog 2 n) -> BitVector (CLog 2 n) -> Bool -> Bool
     func parity thisIdx dat
         | parity == thisIdx = not dat
         | otherwise         = dat
+
+-- | Correct a single bit error in a hamming code word
+correctError 
+    :: forall n m. (KnownNat n, n ~ (m + 1))
+    => Vec n (BitVector (CLog 2 n)) -- ^ Parity bits generator matrix
+    -> BitVector (CLog 2 n)         -- ^ Parity bits
+    -> BitVector n                  -- ^ Data bits
+    -> BitVector n                  -- ^ Corrected data word
+correctError gen parity dat = correctError' gen parityBitsInError dat
+    where
+    parityBitsInError = hammingParity gen dat `xor` parity
 

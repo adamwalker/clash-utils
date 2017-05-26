@@ -323,8 +323,7 @@ prop_hamming mutIdx dat = dat == corrected
     --flip a single bit
     mutated     = complementBit encoded (fromIntegral mutIdx)
     --decode
-    parityBits' = hammingParity hammingGen (slice d14 d4 mutated) `xor` (slice d3 d0 mutated)
-    corrected   = correctError hammingGen parityBits' (slice d14 d4 mutated)
+    corrected   = correctError hammingGen (slice d3 d0 mutated) (slice d14 d4 mutated)
         
 --Run the tests
 return []
