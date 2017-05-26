@@ -13,6 +13,11 @@ import CLaSH.Prelude
 import CLaSH.Complex
 import CLaSH.FFT(halveTwiddles)
 
+fftBase :: Num a => Signal Bool -> Signal (Complex a, Complex a) -> Signal (Complex a, Complex a)
+fftBase en = regEn (0, 0) en . fmap func
+    where
+    func (x, y) = (x + y, x - y)
+
 --Decimation in time
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
 -- | A step in the serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. 
@@ -75,11 +80,6 @@ fftSerialDIT twiddles en input =
     cexp2 :: Vec 2 (Complex a)
     cexp2 = halveTwiddles twiddles
 
-    fftBase :: Signal Bool -> Signal (Complex a, Complex a) -> Signal (Complex a, Complex a)
-    fftBase en = regEn (0, 0) en . fmap func
-        where
-        func (x, y) = (x + y, x - y)
-
 --Decimation in frequency
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
 -- | A step in the serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. 
@@ -140,9 +140,4 @@ fftSerialDIF twiddles en input =
 
     cexp2 :: Vec 2 (Complex a)
     cexp2 = halveTwiddles twiddles
-
-    fftBase :: Signal Bool -> Signal (Complex a, Complex a) -> Signal (Complex a, Complex a)
-    fftBase en = regEn (0, 0) en . fmap func
-        where
-        func (x, y) = (x + y, x - y)
 
