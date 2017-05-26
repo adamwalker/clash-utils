@@ -292,10 +292,21 @@ ditInputReorder (a :> b :> c :> d :> e :> f :> g :> h :> Nil) = (a, e) :> (c, g)
 ditOutputReorder :: [(a, a)] -> [a]
 ditOutputReorder ((a, b) : (c, d) : (e, f) : (g, h) : _) = a : c : e : g : b : d : f : h : []
 
+difInputReorder :: Vec 8 a -> Vec 4 (a, a)
+difInputReorder (a :> b :> c :> d :> e :> f :> g :> h :> Nil) = (a, e) :> (b, f) :> (c, g) :> (d, h) :> Nil
+
+difOutputReorder :: [(a, a)] -> [a]
+difOutputReorder ((a, b) : (c, d) : (e, f) : (g, h) : _) = a : e : c : g : b : f : d : h : []
+
 prop_fftSerial :: Vec 8 (C.Complex Double) -> Bool
 prop_fftSerial vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex result) (FFT.fft (toList vec))
     where
     result = ditOutputReorder $ Prelude.drop 8 $ simulate_lazy (fftSerial twiddles4 (pure True)) $ (toList (ditInputReorder (map fromComplex vec))) Prelude.++ Prelude.repeat (0, 0)
+
+prop_fftSerialDIF :: Vec 8 (C.Complex Double) -> Bool
+prop_fftSerialDIF vec = and $ Prelude.zipWith approxEqualComplex (Prelude.map toComplex result) (FFT.fft (toList vec))
+    where
+    result = difOutputReorder $ Prelude.drop 8 $ simulate_lazy (fftSerialDIF twiddles4 (pure True)) $ (toList (difInputReorder (map fromComplex vec))) Prelude.++ Prelude.repeat (0, 0)
 
 --Hamming codes
 --Test the (15, 11) code

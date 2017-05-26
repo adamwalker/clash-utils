@@ -3,7 +3,9 @@
 -}
 module CLaSH.FFTSerial (
     fftSerialStep,
-    fftSerial
+    fftSerial,
+    fftSerialDIFStep,
+    fftSerialDIF
     ) where
 
 import CLaSH.Prelude
@@ -65,6 +67,72 @@ fftSerial twiddles en input =
     fftSerialStep twiddles (de . de . de . de $ en) $ 
     fftSerialStep cexp2    (de en) $ 
     fftBase en input
+
+    where
+
+    de = register False
+
+    cexp2 :: Vec 2 (Complex a)
+    cexp2 = halveTwiddles twiddles
+
+    fftBase :: Signal Bool -> Signal (Complex a, Complex a) -> Signal (Complex a, Complex a)
+    fftBase en = regEn (0, 0) en . fmap func
+        where
+        func (x, y) = (x + y, x - y)
+
+--Decimation in frequency
+--2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
+-- | A step in the serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. 
+fftSerialDIFStep
+    :: forall n a. (KnownNat n, Num a)
+    => Vec (2 ^ (n + 1)) (Complex a) -- ^ Precomputed twiddle factors
+    -> Signal Bool                   -- ^ Input enable signal
+    -> Signal (Complex a, Complex a) -- ^ Pair of input samples
+    -> Signal (Complex a, Complex a) -- ^ Pair of output samples
+fftSerialDIFStep twiddles en input = bundle (upperRamReadResult, regEn 0 en lowerData)
+    where
+
+    --The state
+    counter :: Signal (BitVector (n + 1))
+    counter = regEn 0 en (counter + 1)
+
+    (stage' :: Signal (BitVector 1), address' :: Signal (BitVector n)) = unbundle $ split <$> counter
+
+    stage :: Signal Bool
+    stage = unpack <$> stage'
+
+    address :: Signal (Unsigned n)
+    address = unpack <$> address'
+
+    --The butterfly
+    butterflyHighOutput          = fmap fst input + fmap snd input
+    butterflyLowOutputPreTwiddle = fmap fst input - fmap snd input
+
+    twiddle            = (twiddles !!) <$> counter
+    butterflyLowOutput = butterflyLowOutputPreTwiddle * twiddle
+
+    --The FIFOs
+    upperData = mux (not <$> regEn False en stage) (regEn 0 en butterflyHighOutput) lowerRamReadResult
+
+    lowerData = mux (not <$> regEn False en stage) lowerRamReadResult (regEn 0 en butterflyHighOutput)
+
+    lowerRamReadResult = blockRamPow2 (repeat 0 :: Vec (2 ^ n) (Complex a)) address 
+        $ mux en (Just <$> bundle (address, butterflyLowOutput)) (pure Nothing)
+
+    upperRamReadResult = blockRamPow2 (repeat 0 :: Vec (2 ^ n) (Complex a)) (regEn 0 en address)
+        $ mux en (Just <$> bundle (regEn 0 en address, upperData)) (pure Nothing)
+
+-- | Example serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
+fftSerialDIF
+    :: forall a. Num a
+    => Vec 4 (Complex a)             -- ^ Precomputed twiddle factors
+    -> Signal Bool                   -- ^ Input enable signal
+    -> Signal (Complex a, Complex a) -- ^ Pair of input samples
+    -> Signal (Complex a, Complex a) -- ^ Pair of output samples
+fftSerialDIF twiddles en input = 
+    fftBase (de . de . de . de . de . de . de $ en) $
+    fftSerialDIFStep cexp2    (de . de . de . de $ en) $ 
+    fftSerialDIFStep twiddles en input
 
     where
 
