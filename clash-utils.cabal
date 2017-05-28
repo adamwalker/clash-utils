@@ -16,14 +16,37 @@ extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
 library
-    exposed-modules:     CLaSH.BCD, CLaSH.CRC, CLaSH.FIFO, CLaSH.FIRFilter, CLaSH.CORDIC, CLaSH.Sort, CLaSH.Divide, CLaSH.IIRFilter, CLaSH.GrayCode, CLaSH.FFT, CLaSH.Complex, CLaSH.FFTSerial, CLaSH.Hamming, CLaSH.LFSR
+    exposed-modules:     
+        CLaSH.BCD, 
+        CLaSH.CRC, 
+        CLaSH.FIFO, 
+        CLaSH.FIRFilter, 
+        CLaSH.CORDIC, 
+        CLaSH.Sort, 
+        CLaSH.Divide, 
+        CLaSH.IIRFilter, 
+        CLaSH.GrayCode, 
+        CLaSH.FFT, 
+        CLaSH.Complex, 
+        CLaSH.FFTSerial, 
+        CLaSH.Hamming, 
+        CLaSH.LFSR
     -- other-modules:       
-    default-extensions:  ScopedTypeVariables, NoImplicitPrelude, TypeOperators, DataKinds, FlexibleContexts, TypeApplications, BinaryLiterals, GADTs
-    build-depends:       base          >=4.8 && <4.10, 
-                         clash-prelude >=0.11 && <0.12, 
-                         singletons    >=2.2   && <2.3,
-                         ghc-typelits-natnormalise,
-                         ghc-typelits-knownnat
+    default-extensions:  
+        ScopedTypeVariables, 
+        NoImplicitPrelude, 
+        TypeOperators, 
+        DataKinds, 
+        FlexibleContexts, 
+        TypeApplications, 
+        BinaryLiterals, 
+        GADTs
+    build-depends:       
+        base          >=4.8 && <4.10, 
+        clash-prelude >=0.11 && <0.12, 
+        singletons    >=2.2   && <2.3,
+        ghc-typelits-natnormalise,
+        ghc-typelits-knownnat
     hs-source-dirs:      src
     default-language:    Haskell2010
     ghc-options:         -fplugin=GHC.TypeLits.Normalise -fplugin=GHC.TypeLits.KnownNat.Solver
