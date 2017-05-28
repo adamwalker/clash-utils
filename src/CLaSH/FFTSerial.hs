@@ -1,4 +1,4 @@
-{-# LANGUAGE KindSignatures, TypeFamilies, UndecidableInstances #-}
+{-# LANGUAGE KindSignatures, TypeFamilies, UndecidableInstances, RankNTypes #-}
 {-| Radix 2 complex-to-complex Cooley-Tukey FFTs. https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm.
     The FFTs in this module are serial, saving multiplers and routing resources. They operate on and produce two complex numbers at a time. 
 -}
@@ -144,6 +144,19 @@ fftSerialDIF twiddles en input =
     cexp2 :: Vec 2 (Complex a)
     cexp2 = halveTwiddles twiddles
 
+dfold' :: forall p k a . KnownNat k
+      => Proxy (p :: TyFun Nat * -> *) -- ^ The /motive/
+      -> (forall l . (l <= k) => SNat l -> a -> (p @@ l) -> (p @@ (l + 1)))
+      -- ^ Function to fold.
+      --
+      -- __NB__: The @SNat l@ is __not__ the index (see (`!!`)) to the
+      -- element /a/. @SNat l@ is the number of elements that occur to the
+      -- right of /a/.
+      -> (p @@ 0) -- ^ Initial element
+      -> Vec k a -- ^ Vector to fold over
+      -> (p @@ k)
+dfold' = dfold'
+
 data FFTStep (n :: Nat) (a :: *) (f :: TyFun Nat *) :: *
 type instance Apply (FFTStep n a) k = (Signal Bool -> Signal (Complex a, Complex a) -> Signal (Complex a, Complex a), Vec (2 ^ (n - k + 1)) (Complex a))
 
@@ -153,9 +166,9 @@ fftGeneral
     -> Signal Bool
     -> Signal (Complex a, Complex a)
     -> Signal (Complex a, Complex a)
-fftGeneral twiddles = fst $ dfold (Proxy @ (FFTStep n a)) step base (replicate (SNat @ n) ())
+fftGeneral twiddles = fst $ dfold' (Proxy @ (FFTStep n a)) step base (replicate (SNat @ n) ())
     where
-    step :: forall l. SNat l -> () -> FFTStep n a @@ l -> FFTStep n a @@ (l + 1)
+    step :: forall l. (l <= n) => SNat l -> () -> FFTStep n a @@ l -> FFTStep n a @@ (l + 1)
     step SNat _ (stepsToRight, twiddles) = (
             \en inp -> fftSerialDITStep twiddles en $ stepsToRight en inp, 
             halveTwiddles twiddles
