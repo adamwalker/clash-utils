@@ -33,6 +33,7 @@ import CLaSH.FFT
 import CLaSH.FFTSerial
 import CLaSH.Complex
 import CLaSH.Hamming
+import CLaSH.Misc
 
 {-# ANN module ("HLint: ignore Avoid reverse") #-}
 
@@ -324,6 +325,17 @@ prop_hamming mutIdx dat = dat == corrected
     mutated     = complementBit encoded (fromIntegral mutIdx)
     --decode
     corrected   = correctError hammingGen (slice d3 d0 mutated) (slice d14 d4 mutated)
+
+--Slicing
+refSlice :: Int -> [a] -> [a] -> [a]
+refSlice idx dat vec
+    | idx + Prelude.length dat > Prelude.length vec
+        = Prelude.take idx vec Prelude.++ Prelude.take (Prelude.length vec - idx) dat
+    | otherwise
+        = Prelude.take idx vec Prelude.++ dat Prelude.++ Prelude.drop (idx + Prelude.length dat) vec
+
+prop_slice :: Index 253 -> Vec 21 Int -> Vec 253 Int -> Bool
+prop_slice startIdx dat vec = toList (replaceSlice startIdx dat vec) == refSlice (fromIntegral startIdx) (toList dat) (toList vec)
         
 --Run the tests
 return []
