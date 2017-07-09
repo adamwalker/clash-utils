@@ -1,4 +1,8 @@
-module CLaSH.Misc where
+module CLaSH.Misc(
+    replaceSlice, 
+    revBV,
+    swapEndian
+    ) where
 
 import CLaSH.Prelude
 
@@ -16,3 +20,16 @@ replaceSlice startIdx dat vec = imap func vec
             = dat !! (idx - startIdx)
         | otherwise 
             = val
+
+revBV :: forall n. KnownNat n => BitVector n -> BitVector n
+revBV = pack . reverse . (unpack :: BitVector n -> Vec n Bit)
+
+swapEndian 
+    :: forall n. KnownNat n
+    => BitVector (8 * n)
+    -> BitVector (8 * n)
+swapEndian x = pack $ reverse bytes
+    where
+    bytes :: Vec n (BitVector 8)
+    bytes = unpack x 
+

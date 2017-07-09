@@ -134,9 +134,6 @@ prop_Divider x y = q == q' && r == r'
     (q', r') = combDivide x y
 
 --Check that the CRC implementation agrees with a known goood implementation of CRC32
-revBV :: forall n. KnownNat n => BitVector n -> BitVector n
-revBV = pack . reverse . (unpack :: BitVector n -> Vec n Bit)
-
 reverseByte :: Word8 -> Word8
 reverseByte = unpack . revBV . pack
 
@@ -326,7 +323,7 @@ prop_hamming mutIdx dat = dat == corrected
     --decode
     corrected   = correctError hammingGen (slice d3 d0 mutated) (slice d14 d4 mutated)
 
---Slicing
+--Misc
 refSlice :: Int -> [a] -> [a] -> [a]
 refSlice idx dat vec
     | idx + Prelude.length dat > Prelude.length vec
@@ -336,6 +333,12 @@ refSlice idx dat vec
 
 prop_slice :: Index 253 -> Vec 21 Int -> Vec 253 Int -> Bool
 prop_slice startIdx dat vec = toList (replaceSlice startIdx dat vec) == refSlice (fromIntegral startIdx) (toList dat) (toList vec)
+
+prop_revBV :: BitVector 253 -> Bool
+prop_revBV x = x == revBV (revBV x)
+
+prop_swapEndian :: BitVector 256 -> Bool
+prop_swapEndian x = x == swapEndian (swapEndian x)
         
 --Run the tests
 return []
