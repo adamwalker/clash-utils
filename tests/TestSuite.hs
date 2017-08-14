@@ -70,6 +70,18 @@ prop_FilterTransposedSymmetric coeffs input =
        Prelude.take (Prelude.length input) (simulate (fir (coeffs ++ reverse coeffs) (pure True)) input) 
     == Prelude.take (Prelude.length input) (Prelude.drop 1 $ simulate (firTransposedSymmetric coeffs (pure True)) input)
 
+prop_systolicSymmetric :: Vec 16 (Signed 32) -> Signed 32 -> [Signed 32] -> Bool
+prop_systolicSymmetric coeffs mid input = 
+       Prelude.take (Prelude.length input) (simulate (fir (coeffs ++ singleton mid ++ reverse coeffs) (pure True)) input)
+    == Prelude.take (Prelude.length input) (Prelude.drop 17 $ simulate (firSystolicSymmetricOdd (coeffs ++ singleton mid) (pure True)) input)
+
+prop_systolicHalfBand :: Vec 16 (Signed 32) -> Signed 32 -> [Signed 32] -> Bool
+prop_systolicHalfBand coeffs mid input = 
+       Prelude.take (Prelude.length input) (simulate (fir (coeffs' ++ singleton mid ++ reverse coeffs') (pure True)) input)
+    == Prelude.take (Prelude.length input) (Prelude.drop 17 $ simulate (firSystolicHalfBand (coeffs ++ singleton mid) (pure True)) input)
+    where
+    coeffs' = init (merge coeffs (repeat 0))
+
 --IIR filter testing
 --Check that both direct forms are equivalent
 prop_IIRDirect :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Bool

@@ -7,7 +7,9 @@ module CLaSH.FIRFilter (
     firSystolic,
     firSymmetric,
     firTransposedSymmetric,
-    firSystolicSymmetric
+    firSystolicSymmetric,
+    firSystolicSymmetricOdd,
+    firSystolicHalfBand
     ) where
 
 import CLaSH.Prelude
@@ -84,3 +86,30 @@ firSystolicSymmetric coeffs en x = foldl func 0 $ zip (map pure coeffs) folded
     folded                    = map (+ lastDelayLine) delayLine
     func accum (coeff, input) = regEn 0 en $ accum + input * coeff
     
+firSystolicSymmetricOdd
+    :: (KnownNat n, Num a) 
+    => Vec (n + 2) a -- ^ Coefficients
+    -> Signal Bool   -- ^ Input enable
+    -> Signal a      -- ^ Input samples
+    -> Signal a      -- ^ Output samples
+firSystolicSymmetricOdd coeffs en x = foldl func 0 $ zip (map pure coeffs) folded
+    where
+    delayLine                 = iterateI (regEn 0 en . regEn 0 en) x
+    lastDelayLine             = regEn 0 en $ regEn 0 en $ last delayLine
+    folded                    = map (+ lastDelayLine) delayLine ++ singleton lastDelayLine
+    func accum (coeff, input) = regEn 0 en $ accum + input * coeff
+    
+firSystolicHalfBand
+    :: (KnownNat n, Num a) 
+    => Vec (n + 2) a -- ^ Coefficients
+    -> Signal Bool   -- ^ Input enable
+    -> Signal a      -- ^ Input samples
+    -> Signal a      -- ^ Output samples
+firSystolicHalfBand coeffs en x = foldl func 0 $ zip (map pure coeffs) folded
+    where
+    delayLine                 = iterateI (regEn 0 en . regEn 0 en . regEn 0 en) x
+    lastDelayLine             = regEn 0 en $ regEn 0 en $ last delayLine
+    delayedReturn             = iterateI (regEn 0 en) lastDelayLine
+    folded                    = zipWith (+) delayLine (reverse delayedReturn) ++ singleton lastDelayLine
+    func accum (coeff, input) = regEn 0 en $ accum + input * coeff
+
