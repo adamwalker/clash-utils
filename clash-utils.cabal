@@ -31,7 +31,8 @@ library
         CLaSH.FFTSerial, 
         CLaSH.Hamming, 
         CLaSH.LFSR,
-        CLaSH.Misc
+        CLaSH.Misc, 
+        CLaSH.Scrambler
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 
