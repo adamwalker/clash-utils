@@ -6,6 +6,8 @@ module CLaSH.Misc(
 
 import CLaSH.Prelude
 
+import Data.Bool
+
 replaceSlice
     :: forall m n a. (KnownNat n, KnownNat m)
     => Index n
@@ -33,3 +35,13 @@ swapEndian x = pack $ reverse bytes
     bytes :: Vec n (BitVector 8)
     bytes = unpack x 
 
+mealyEn 
+    :: (s -> i -> (s, o)) 
+    -> s 
+    -> Signal Bool 
+    -> Signal i 
+    -> Signal o
+mealyEn step initial enable input = mealy step' initial (bundle (enable, input))
+    where
+    step' state (enable, input) = (bool state state' enable, output)
+        where (state', output) = step state input
