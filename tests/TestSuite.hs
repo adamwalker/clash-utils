@@ -45,22 +45,22 @@ prop_BCDConversion =
 
 --FIR filter testing
 --Check that both optimised filters return the same results as the unoptimised one
-prop_FilterTransposed :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_FilterTransposed :: Vec 16 (Signed 32) -> [Signed 32] -> Bool
 prop_FilterTransposed coeffs input = 
        Prelude.take (Prelude.length input) (simulate (fir coeffs (pure True)) input) 
     == Prelude.take (Prelude.length input) (Prelude.drop 1 (simulate (firTransposed (reverse coeffs) (pure True)) input))
 
-prop_FilterSystolic :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_FilterSystolic :: Vec 16 (Signed 32) -> [Signed 32] -> Bool
 prop_FilterSystolic coeffs input = 
        Prelude.take (Prelude.length input) (simulate (fir coeffs (pure True)) input) 
-    == Prelude.take (Prelude.length input) (Prelude.drop 64 $ simulate (firSystolic coeffs (pure True)) input)
+    == Prelude.take (Prelude.length input) (Prelude.drop 16 $ simulate (firSystolic coeffs (pure True)) input)
 
-prop_FilterSystolicSymmetric :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_FilterSystolicSymmetric :: Vec 16 (Signed 32) -> [Signed 32] -> Bool
 prop_FilterSystolicSymmetric coeffs input = 
        Prelude.take (Prelude.length input) (simulate (fir (coeffs ++ reverse coeffs) (pure True)) input) 
-    == Prelude.take (Prelude.length input) (Prelude.drop 64 $ simulate (firSystolicSymmetric coeffs (pure True)) input)
+    == Prelude.take (Prelude.length input) (Prelude.drop 16 $ simulate (firSystolicSymmetric coeffs (pure True)) input)
 
-prop_FilterSymmetric :: Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_FilterSymmetric :: Vec 16 (Signed 32) -> [Signed 32] -> Bool
 prop_FilterSymmetric coeffs input = 
        Prelude.take (Prelude.length input) (simulate (register 0 . fir (reverse coeffs ++ coeffs) (pure True)) input) 
     == Prelude.take (Prelude.length input) (simulate (firSymmetric coeffs (pure True)) input)
