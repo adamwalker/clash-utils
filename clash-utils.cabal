@@ -65,6 +65,7 @@ Test-Suite test
         tuple                      >=0.3   && <0.4,
         pure-fft                   >=0.2.0,
         clash-prelude              >=0.11  && <0.12,
+        split                      >=0.2,
         ghc-typelits-natnormalise,
         ghc-typelits-knownnat,
         ghc-typelits-extra,

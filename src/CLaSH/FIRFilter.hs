@@ -9,7 +9,8 @@ module CLaSH.FIRFilter (
     firTransposedSymmetric,
     firSystolicSymmetric,
     firSystolicSymmetricOdd,
-    firSystolicHalfBand
+    firSystolicHalfBand,
+    semiParallelFIR
     ) where
 
 import CLaSH.Prelude
@@ -112,4 +113,60 @@ firSystolicHalfBand coeffs en x = foldl func 0 $ zip (map pure coeffs) folded
     delayedReturn             = iterateI (regEn 0 en) lastDelayLine
     folded                    = zipWith (+) delayLine (reverse delayedReturn) ++ singleton lastDelayLine
     func accum (coeff, input) = regEn 0 en $ accum + input * coeff
+
+semiParallelFIR 
+    :: forall a n m n' m'. (Num a, KnownNat n, KnownNat m, n ~ (n' + 1), m ~ (m' + 1))
+    => Vec n (Vec m a)
+    -> Signal Bool
+    -> Signal a
+    -- -> Signal (Bool, Vec n (Vec m a), Vec n (Index m), Vec n a, a, Bool, a)
+    -> Signal a
+semiParallelFIR coeffs en x = accum
+--semiParallelFIR coeffs en x = bundle $ (stepChunk, sequenceA inputChunks, sequenceA addresses, sequenceA currentSamples, outputStream, dumpIt, accum)
+    where
+
+    --Hopefully this will be implemented in SRL16s
+    inputChunks :: Vec n (Signal (Vec m a))
+    inputChunks = zipWith (regEn (repeat 0)) stepChunks $ zipWith (liftA2 (+>>)) lastInChunk inputChunks 
+
+    lastInChunk :: Vec n (Signal a)
+    lastInChunk = x +>> currentSamples 
+
+    address :: Signal (Index m)
+    address = regEn 0 en (wrappingInc <$> address)
+        where
+        wrappingInc x
+            | x == maxBound = 0
+            | otherwise     = x + 1
+
+    stepChunk :: Signal Bool
+    stepChunk = (address .==. 0) .&&. en
+
+    stepChunks :: Vec n (Signal Bool)
+    stepChunks = iterateI (regEn False en) stepChunk
+
+    addresses :: Vec n (Signal (Index m))
+    addresses = tail $ iterateI (regEn 0 en) address
+
+    currentSamples :: Vec n (Signal a)
+    currentSamples = map (regEn 0 en) $ zipWith (liftA2 (!!)) inputChunks addresses
+
+    currentCoefficients :: Vec n (Signal a)
+    currentCoefficients = map (regEn 0 en) $ zipWith func coeffs addresses
+        where
+        func coeffs idx = (coeffs !!) <$> idx
+
+    multiplied :: Vec n (Signal a)
+    multiplied = map (regEn 0 en) $ zipWith (*) currentCoefficients currentSamples
+
+    outputStream :: Signal a
+    outputStream = foldl func 0 multiplied
+        where
+        func accum x = regEn 0 en $ accum + x
+
+    dumpIt :: Signal Bool
+    dumpIt = last $ iterate (SNat @ (4 + n + m)) (regEn False en) stepChunk
+
+    accum :: Signal a
+    accum = regEn 0 en (mux dumpIt (pure 0) accum + outputStream)
 

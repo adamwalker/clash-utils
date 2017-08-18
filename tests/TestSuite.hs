@@ -15,10 +15,12 @@ import qualified Numeric.FFT as FFT
 
 import CLaSH.Prelude
 import qualified Prelude
+import qualified Prelude as P
 import qualified Data.List as Prelude
 import Data.Word
 import Data.Tuple.All
 import Data.Maybe
+import qualified Data.List.Split as S
 
 import CLaSH.BCD
 import CLaSH.FIRFilter
@@ -81,6 +83,34 @@ prop_systolicHalfBand coeffs mid input =
     == Prelude.take (Prelude.length input) (Prelude.drop 17 $ simulate (firSystolicHalfBand (coeffs ++ singleton mid) (pure True)) input)
     where
     coeffs' = init (merge coeffs (repeat 0))
+
+--Semi-parallel FIR filter has lots of tests because it is confusing
+prop_semiParallelFIR1 :: Vec 9 (Signed 32) -> [Signed 32] -> Bool
+prop_semiParallelFIR1 coeffs input = res1 == res2
+    where
+    coeffs2 :: Vec 3 (Vec 3 (Signed 32))
+    coeffs2 =  unconcatI coeffs
+    input'  =  input P.++ P.repeat 0
+    res1    =  P.take 50 $ simulate (fir coeffs (pure True)) input'
+    res2    =  P.take 50 $ P.map P.head $ S.chunksOf 3 $ P.drop 9 $ simulate (semiParallelFIR coeffs2 (pure True)) (P.concatMap ((P.++ [0, 0]) . pure) input' P.++ P.repeat 0)
+
+prop_semiParallelFIR2 :: Vec 15 (Signed 32) -> [Signed 32] -> Bool
+prop_semiParallelFIR2 coeffs input = res1 == res2
+    where
+    coeffs2 :: Vec 5 (Vec 3 (Signed 32))
+    coeffs2 =  unconcatI coeffs
+    input'  =  input P.++ P.repeat 0
+    res1    =  P.take 50 $ simulate (fir coeffs (pure True)) input'
+    res2    =  P.take 50 $ P.map P.head $ S.chunksOf 3 $ P.drop 11 $ simulate (semiParallelFIR coeffs2 (pure True)) (P.concatMap ((P.++ [0, 0]) . pure) input' P.++ P.repeat 0)
+
+prop_semiParallelFIR3 :: Vec 20 (Signed 32) -> [Signed 32] -> Bool
+prop_semiParallelFIR3 coeffs input = res1 == res2
+    where
+    coeffs2 :: Vec 5 (Vec 4 (Signed 32))
+    coeffs2 =  unconcatI coeffs
+    input'  =  input P.++ P.repeat 0
+    res1    =  P.take 50 $ simulate (fir coeffs (pure True)) input'
+    res2    =  P.take 50 $ P.map P.head $ S.chunksOf 4 $ P.drop 12 $ simulate (semiParallelFIR coeffs2 (pure True)) (P.concatMap ((P.++ [0, 0, 0]) . pure) input' P.++ P.repeat 0)
 
 --IIR filter testing
 --Check that both direct forms are equivalent
