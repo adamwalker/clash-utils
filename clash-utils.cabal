@@ -32,7 +32,8 @@ library
         CLaSH.Hamming, 
         CLaSH.LFSR,
         CLaSH.Misc, 
-        CLaSH.Scrambler
+        CLaSH.Scrambler,
+        CLaSH.Serialize
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 
@@ -48,7 +49,8 @@ library
         clash-prelude >=0.11 && <0.12, 
         singletons    >=2.2   && <2.3,
         ghc-typelits-natnormalise,
-        ghc-typelits-knownnat
+        ghc-typelits-knownnat,
+        cereal        >=0.5 && <0.6
     hs-source-dirs:      src
     default-language:    Haskell2010
     ghc-options:         -fplugin=GHC.TypeLits.Normalise -fplugin=GHC.TypeLits.KnownNat.Solver
@@ -66,6 +68,7 @@ Test-Suite test
         pure-fft                   >=0.2.0,
         clash-prelude              >=0.11  && <0.12,
         split                      >=0.2,
+        cereal                     >=0.5 && <0.6,
         ghc-typelits-natnormalise,
         ghc-typelits-knownnat,
         ghc-typelits-extra,

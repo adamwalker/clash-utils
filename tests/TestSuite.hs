@@ -21,6 +21,7 @@ import Data.Word
 import Data.Tuple.All
 import Data.Maybe
 import qualified Data.List.Split as S
+import Data.Serialize (runGet, runPut)
 
 import CLaSH.BCD
 import CLaSH.FIRFilter
@@ -37,6 +38,7 @@ import CLaSH.Complex
 import CLaSH.Hamming
 import CLaSH.Misc
 import CLaSH.Scrambler
+import CLaSH.Serialize
 
 {-# ANN module ("HLint: ignore Avoid reverse") #-}
 
@@ -387,6 +389,13 @@ prop_swapEndian x = x == swapEndian (swapEndian x)
 prop_scrambler initial (poly :: BitVector 19) input = Prelude.take (Prelude.length input) (simulate combined input) == input
     where
     combined = descrambler initial poly . scrambler initial poly 
+
+--BitVector serialization
+prop_serialize :: BitVector 256 -> Bool
+prop_serialize bv = Right bv == result
+    where
+    result = runGet getBV $ runPut $ putBV bv
+
         
 --Run the tests
 return []
