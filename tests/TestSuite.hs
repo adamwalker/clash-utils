@@ -39,6 +39,7 @@ import CLaSH.Hamming
 import CLaSH.Misc
 import CLaSH.Scrambler
 import CLaSH.Serialize
+import CLaSH.PseudoLRUTree
 
 {-# ANN module ("HLint: ignore Avoid reverse") #-}
 
@@ -396,6 +397,20 @@ prop_serialize bv = Right bv == result
     where
     result = runGet getBV $ runPut $ putBV bv
 
+--Pseudu lru tree pseudo-tests
+prop_plru :: Bool
+prop_plru = reordered == [0..15]
+    where
+    trees     = iterate (SNat @ 16) (snd . updateOldestNWay) $ replicate (SNat @ 15) False
+    reordered = Prelude.sort $ toList $ map (fromIntegral . pack) $ map getOldestNWay trees
+
+prop_plru2 :: Bool
+prop_plru2 = reordered == [0..15]
+    where
+    trees     = iterate (SNat @ 16) func $ replicate (SNat @ 15) False
+        where
+        func tree = updateNWay (getOldestNWay tree) tree
+    reordered = Prelude.sort $ toList $ map (fromIntegral . pack) $ map getOldestNWay trees
         
 --Run the tests
 return []

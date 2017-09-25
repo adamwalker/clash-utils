@@ -33,7 +33,8 @@ library
         CLaSH.LFSR,
         CLaSH.Misc, 
         CLaSH.Scrambler,
-        CLaSH.Serialize
+        CLaSH.Serialize,
+        CLaSH.PseudoLRUTree
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 
@@ -43,7 +44,9 @@ library
         FlexibleContexts, 
         TypeApplications, 
         BinaryLiterals, 
-        GADTs
+        GADTs,
+        KindSignatures,
+        TypeFamilies
     build-depends:       
         base          >=4.8 && <4.10, 
         clash-prelude >=0.11 && <0.12, 
