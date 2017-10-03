@@ -401,16 +401,16 @@ prop_serialize bv = Right bv == result
 prop_plru :: Vec 15 Bool -> Bool
 prop_plru tree = reordered == [0..15]
     where
-    trees     = iterate (SNat @ 16) (snd . updateOldestWay) tree
-    reordered = Prelude.sort $ toList $ map (fromIntegral . pack) $ map getOldestWay trees
-
-prop_plru2 :: Vec 15 Bool -> Bool
-prop_plru2 tree = reordered == [0..15]
-    where
     trees     = iterate (SNat @ 16) func tree
         where
         func tree = updateWay (getOldestWay tree) tree
     reordered = Prelude.sort $ toList $ map (fromIntegral . pack) $ map getOldestWay trees
+
+prop_plruSame :: Vec 15 Bool -> Bool
+prop_plruSame tree = updateOldestWay tree == (oldest, newTree)
+    where
+    oldest  = getOldestWay tree
+    newTree = updateWay oldest tree
 
 prop_plruIdempotent :: Vec 15 Bool -> Vec 4 Bool -> Bool
 prop_plruIdempotent tree idx = updateWay idx tree == updateWay idx (updateWay idx tree)
