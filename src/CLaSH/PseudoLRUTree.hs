@@ -9,12 +9,12 @@ import Data.Proxy
 --Combined get and update oldest
 --
 
-updateOldestNWay' 
+updateOldestWay' 
     :: forall n m. (n ~ (m + 1), KnownNat n) => 
        (Vec ((2 ^ n) - 1) Bool -> (Vec n Bool, Vec ((2 ^ n) - 1) Bool)) 
     -> Vec ((2 ^ (n + 1)) - 1) Bool 
     -> (Vec (n + 1) Bool, Vec ((2 ^ (n + 1)) - 1) Bool)
-updateOldestNWay' recurse (node :> tree) = (node :> oldestIdx', updatedTree)
+updateOldestWay' recurse (node :> tree) = (node :> oldestIdx', updatedTree)
     where
     branches :: Vec 2 (Vec ((2 ^ n) - 1) Bool) = unconcat (subSNat (powSNat (SNat @ 2) (SNat @ n)) (SNat @ 1)) tree
     (oldestIdx', updatedSubTree)               = recurse (branches !! node)
@@ -27,26 +27,26 @@ updateOldestBaseCase x = (x, map not x)
 data Step (f :: TyFun Nat *) :: *
 type instance Apply Step n = Vec ((2 ^ (n + 1)) - 1) Bool -> (Vec (n + 1) Bool, Vec ((2 ^ (n + 1)) - 1) Bool)
 
-updateOldestNWay :: forall m n. (n ~ (m + 1), KnownNat m) => Vec ((2 ^ n) - 1) Bool -> (Vec n Bool, Vec ((2 ^ n) - 1) Bool)
-updateOldestNWay = dfold (Proxy :: Proxy Step) func updateOldestBaseCase (replicate (SNat @ m) ())
+updateOldestWay :: forall m n. (n ~ (m + 1), KnownNat m) => Vec ((2 ^ n) - 1) Bool -> (Vec n Bool, Vec ((2 ^ n) - 1) Bool)
+updateOldestWay = dfold (Proxy :: Proxy Step) func updateOldestBaseCase (replicate (SNat @ m) ())
     where
     func 
         :: forall n1. SNat n1
         -> ()
         -> (Step @@ n1)
         -> (Step @@ (n1 + 1))
-    func SNat () = updateOldestNWay'
+    func SNat () = updateOldestWay'
 
 --
 --Get oldest
 --
 
-getOldestNWay' 
+getOldestWay' 
     :: forall n m. (n ~ (m + 1), KnownNat n) => 
        (Vec ((2 ^ n) - 1) Bool -> Vec n Bool)
     -> Vec ((2 ^ (n + 1)) - 1) Bool 
     -> Vec (n + 1) Bool
-getOldestNWay' recurse (node :> tree) = node :> oldestIdx'
+getOldestWay' recurse (node :> tree) = node :> oldestIdx'
     where
     branches :: Vec 2 (Vec ((2 ^ n) - 1) Bool) = unconcat (subSNat (powSNat (SNat @ 2) (SNat @ n)) (SNat @ 1)) tree
     oldestIdx'                                 = recurse (branches !! node)
@@ -54,27 +54,27 @@ getOldestNWay' recurse (node :> tree) = node :> oldestIdx'
 data Step2 (f :: TyFun Nat *) :: *
 type instance Apply Step2 n = Vec ((2 ^ (n + 1)) - 1) Bool -> Vec (n + 1) Bool
 
-getOldestNWay :: forall m n. (n ~ (m + 1), KnownNat m) => Vec ((2 ^ n) - 1) Bool -> Vec n Bool
-getOldestNWay = dfold (Proxy :: Proxy Step2) func id (replicate (SNat @ m) ())
+getOldestWay :: forall m n. (n ~ (m + 1), KnownNat m) => Vec ((2 ^ n) - 1) Bool -> Vec n Bool
+getOldestWay = dfold (Proxy :: Proxy Step2) func id (replicate (SNat @ m) ())
     where
     func 
         :: forall n1. SNat n1
         -> ()
         -> (Step2 @@ n1)
         -> (Step2 @@ (n1 + 1))
-    func SNat () = getOldestNWay'
+    func SNat () = getOldestWay'
 
 --
 --Update
 --
 
-updateNWay' 
+updateWay' 
     :: forall n m. (n ~ (m + 1), KnownNat n) => 
        (Vec n Bool -> Vec ((2 ^ n) - 1) Bool -> Vec ((2 ^ n) - 1) Bool) 
     -> Vec (n + 1) Bool
     -> Vec ((2 ^ (n + 1)) - 1) Bool 
     -> Vec ((2 ^ (n + 1)) - 1) Bool
-updateNWay' recurse (this :> rest) (node :> tree) = updatedTree
+updateWay' recurse (this :> rest) (node :> tree) = updatedTree
     where
     branches :: Vec 2 (Vec ((2 ^ n) - 1) Bool) = unconcat (subSNat (powSNat (SNat @ 2) (SNat @ n)) (SNat @ 1)) tree
     updatedSubTree                             = recurse rest (branches !! node)
@@ -83,13 +83,13 @@ updateNWay' recurse (this :> rest) (node :> tree) = updatedTree
 data Step3 (f :: TyFun Nat *) :: *
 type instance Apply Step3 n = Vec (n + 1) Bool -> Vec ((2 ^ (n + 1)) - 1) Bool -> Vec ((2 ^ (n + 1)) - 1) Bool
 
-updateNWay :: forall m n. (n ~ (m + 1), KnownNat m) => Vec n Bool -> Vec ((2 ^ n) - 1) Bool -> Vec ((2 ^ n) - 1) Bool
-updateNWay = dfold (Proxy :: Proxy Step3) func (\idx tree -> map not idx) (replicate (SNat @ m) ())
+updateWay :: forall m n. (n ~ (m + 1), KnownNat m) => Vec n Bool -> Vec ((2 ^ n) - 1) Bool -> Vec ((2 ^ n) - 1) Bool
+updateWay = dfold (Proxy :: Proxy Step3) func (\idx tree -> map not idx) (replicate (SNat @ m) ())
     where
     func 
         :: forall n1. SNat n1
         -> ()
         -> (Step3 @@ n1)
         -> (Step3 @@ (n1 + 1))
-    func SNat () = updateNWay'
+    func SNat () = updateWay'
 

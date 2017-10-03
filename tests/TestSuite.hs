@@ -398,19 +398,19 @@ prop_serialize bv = Right bv == result
     result = runGet getBV $ runPut $ putBV bv
 
 --Pseudu lru tree pseudo-tests
-prop_plru :: Bool
-prop_plru = reordered == [0..15]
+prop_plru :: Vec 15 Bool -> Bool
+prop_plru tree = reordered == [0..15]
     where
-    trees     = iterate (SNat @ 16) (snd . updateOldestNWay) $ replicate (SNat @ 15) False
-    reordered = Prelude.sort $ toList $ map (fromIntegral . pack) $ map getOldestNWay trees
+    trees     = iterate (SNat @ 16) (snd . updateOldestWay) tree
+    reordered = Prelude.sort $ toList $ map (fromIntegral . pack) $ map getOldestWay trees
 
-prop_plru2 :: Bool
-prop_plru2 = reordered == [0..15]
+prop_plru2 :: Vec 15 Bool -> Bool
+prop_plru2 tree = reordered == [0..15]
     where
-    trees     = iterate (SNat @ 16) func $ replicate (SNat @ 15) False
+    trees     = iterate (SNat @ 16) func tree
         where
-        func tree = updateNWay (getOldestNWay tree) tree
-    reordered = Prelude.sort $ toList $ map (fromIntegral . pack) $ map getOldestNWay trees
+        func tree = updateWay (getOldestWay tree) tree
+    reordered = Prelude.sort $ toList $ map (fromIntegral . pack) $ map getOldestWay trees
         
 --Run the tests
 return []
