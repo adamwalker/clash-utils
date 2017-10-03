@@ -14,6 +14,7 @@ A random collection of reusable [Clash](http://www.clash-lang.org/) designs/exam
 * Gray code conversion
 * Hamming code encoding/decoding
 * LFSRs
+* Pseudo LRU trees
 
 ## Features:
 
