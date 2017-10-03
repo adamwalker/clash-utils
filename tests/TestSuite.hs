@@ -414,6 +414,9 @@ prop_plruSame tree = updateOldestWay tree == (oldest, newTree)
 
 prop_plruIdempotent :: Vec 15 Bool -> Vec 4 Bool -> Bool
 prop_plruIdempotent tree idx = updateWay idx tree == updateWay idx (updateWay idx tree)
+
+prop_plruSimpleCase :: Vec 1 Bool -> Bool
+prop_plruSimpleCase tree = updateWay (getOldestWay tree) tree == map not tree
         
 --Run the tests
 return []
