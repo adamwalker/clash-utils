@@ -411,6 +411,9 @@ prop_plru2 tree = reordered == [0..15]
         where
         func tree = updateWay (getOldestWay tree) tree
     reordered = Prelude.sort $ toList $ map (fromIntegral . pack) $ map getOldestWay trees
+
+prop_plruIdempotent :: Vec 15 Bool -> Vec 4 Bool -> Bool
+prop_plruIdempotent tree idx = updateWay idx tree == updateWay idx (updateWay idx tree)
         
 --Run the tests
 return []

@@ -74,10 +74,10 @@ updateWay'
     -> Vec (n + 1) Bool
     -> Vec ((2 ^ (n + 1)) - 1) Bool 
     -> Vec ((2 ^ (n + 1)) - 1) Bool
-updateWay' recurse (this :> rest) (node :> tree) = updatedTree
+updateWay' recurse (this :> rest) (_ :> tree) = updatedTree
     where
     branches :: Vec 2 (Vec ((2 ^ n) - 1) Bool) = unconcat (subSNat (powSNat (SNat @ 2) (SNat @ n)) (SNat @ 1)) tree
-    updatedSubTree                             = recurse rest (branches !! node)
+    updatedSubTree                             = recurse rest (branches !! this)
     updatedTree                                = not this :> concat (replace this updatedSubTree branches)
 
 data Step3 (f :: TyFun Nat *) :: *
