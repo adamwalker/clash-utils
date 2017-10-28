@@ -1,5 +1,5 @@
 {-| Hamming code encoding and decoding. https://en.wikipedia.org/wiki/Hamming_code. -}
-module CLaSH.Hamming (
+module Clash.Hamming (
     generator,
     hammingParity,
     correctError',
@@ -8,7 +8,7 @@ module CLaSH.Hamming (
 
 import qualified Prelude as P
 import qualified Data.List as L
-import CLaSH.Prelude
+import Clash.Prelude
 
 -- | Generator matrix for the Hamming parity bits. Intended for use from template Haskell to ensure the matrix is generated a compile time. It's a lazy list of lazy lists, so use `Prelude.take` to make a generator matrix of the desired size. See the tests for an example.
 generator :: [[Bool]]

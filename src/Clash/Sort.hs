@@ -1,14 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables, KindSignatures, TypeFamilies, UndecidableInstances #-}
 
 {-| Bitonic sorting network. See <https://en.wikipedia.org/wiki/Bitonic_sorter> and <http://www.iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/bitonicen.htm>. -}
-module CLaSH.Sort (
+module Clash.Sort (
     bitonicMerge,
     bitonicSort, 
     bitonicSorterExample,
     bitonicSorter
     ) where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 import Data.Singletons.Prelude
 import Data.Proxy

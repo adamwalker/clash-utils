@@ -1,19 +1,19 @@
 {-| Radix 2 complex-to-complex Cooley-Tukey FFTs. https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm.
     The FFTs in this module are serial, saving multiplers and routing resources. They operate on and produce two complex numbers at a time. 
 -}
-module CLaSH.FFTSerial (
+module Clash.FFTSerial (
     fftSerialDITStep,
     fftSerialDIT,
     fftSerialDIFStep,
     fftSerialDIF
     ) where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
-import CLaSH.Complex
-import CLaSH.FFT(halveTwiddles)
+import Clash.Complex
+import Clash.FFT(halveTwiddles)
 
-fftBase :: Num a => Signal Bool -> Signal (Complex a, Complex a) -> Signal (Complex a, Complex a)
+fftBase :: (HasClockReset dom gated sync, Num a) => Signal dom Bool -> Signal dom (Complex a, Complex a) -> Signal dom (Complex a, Complex a)
 fftBase en = regEn (0, 0) en . fmap func
     where
     func (x, y) = (x + y, x - y)
@@ -22,23 +22,23 @@ fftBase en = regEn (0, 0) en . fmap func
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
 -- | A step in the serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. 
 fftSerialDITStep
-    :: forall n a. (KnownNat n, Num a)
+    :: forall dom gated sync n a. (HasClockReset dom gated sync, KnownNat n, Num a)
     => Vec (2 ^ (n + 1)) (Complex a) -- ^ Precomputed twiddle factors
-    -> Signal Bool                   -- ^ Input enable signal
-    -> Signal (Complex a, Complex a) -- ^ Pair of input samples
-    -> Signal (Complex a, Complex a) -- ^ Pair of output samples
+    -> Signal dom Bool                   -- ^ Input enable signal
+    -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
+    -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
 fftSerialDITStep twiddles en input = bundle (butterflyHighOutput, butterflyLowOutput)
     where
 
-    counter :: Signal (BitVector (n + 1))
+    counter :: Signal dom (BitVector (n + 1))
     counter = regEn 0 en (counter + 1)
 
-    (stage' :: Signal (BitVector 1), address' :: Signal (BitVector n)) = unbundle $ split <$> counter
+    (stage' :: Signal dom (BitVector 1), address' :: Signal dom (BitVector n)) = unbundle $ split <$> counter
 
-    stage :: Signal Bool
+    stage :: Signal dom Bool
     stage = unpack <$> stage'
 
-    address :: Signal (Unsigned n)
+    address :: Signal dom (Unsigned n)
     address = unpack <$> address'
 
     upperData = mux (not <$> regEn False en stage) (regEn 0 en $ fst <$> input) lowerRamReadResult
@@ -63,11 +63,11 @@ fftSerialDITStep twiddles en input = bundle (butterflyHighOutput, butterflyLowOu
 
 -- | Example serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
 fftSerialDIT
-    :: forall a. Num a
+    :: forall dom gated sync a. (HasClockReset dom gated sync, Num a)
     => Vec 4 (Complex a)             -- ^ Precomputed twiddle factors
-    -> Signal Bool                   -- ^ Input enable signal
-    -> Signal (Complex a, Complex a) -- ^ Pair of input samples
-    -> Signal (Complex a, Complex a) -- ^ Pair of output samples
+    -> Signal dom Bool                   -- ^ Input enable signal
+    -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
+    -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
 fftSerialDIT twiddles en input = 
     fftSerialDITStep twiddles (de . de . de . de $ en) $ 
     fftSerialDITStep cexp2    (de en) $ 
@@ -84,24 +84,24 @@ fftSerialDIT twiddles en input =
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
 -- | A step in the serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. 
 fftSerialDIFStep
-    :: forall n a. (KnownNat n, Num a)
+    :: forall dom gated sync n a. (HasClockReset dom gated sync, KnownNat n, Num a)
     => Vec (2 ^ (n + 1)) (Complex a) -- ^ Precomputed twiddle factors
-    -> Signal Bool                   -- ^ Input enable signal
-    -> Signal (Complex a, Complex a) -- ^ Pair of input samples
-    -> Signal (Complex a, Complex a) -- ^ Pair of output samples
+    -> Signal dom Bool                   -- ^ Input enable signal
+    -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
+    -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
 fftSerialDIFStep twiddles en input = bundle (upperRamReadResult, regEn 0 en lowerData)
     where
 
     --The state
-    counter :: Signal (BitVector (n + 1))
+    counter :: Signal dom (BitVector (n + 1))
     counter = regEn 0 en (counter + 1)
 
-    (stage' :: Signal (BitVector 1), address' :: Signal (BitVector n)) = unbundle $ split <$> counter
+    (stage' :: Signal dom (BitVector 1), address' :: Signal dom (BitVector n)) = unbundle $ split <$> counter
 
-    stage :: Signal Bool
+    stage :: Signal dom Bool
     stage = unpack <$> stage'
 
-    address :: Signal (Unsigned n)
+    address :: Signal dom (Unsigned n)
     address = unpack <$> address'
 
     --The butterfly
@@ -124,11 +124,11 @@ fftSerialDIFStep twiddles en input = bundle (upperRamReadResult, regEn 0 en lowe
 
 -- | Example serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
 fftSerialDIF
-    :: forall a. Num a
+    :: forall dom gated sync a. (HasClockReset dom gated sync, Num a)
     => Vec 4 (Complex a)             -- ^ Precomputed twiddle factors
-    -> Signal Bool                   -- ^ Input enable signal
-    -> Signal (Complex a, Complex a) -- ^ Pair of input samples
-    -> Signal (Complex a, Complex a) -- ^ Pair of output samples
+    -> Signal dom Bool                   -- ^ Input enable signal
+    -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
+    -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
 fftSerialDIF twiddles en input = 
     fftBase (de . de . de . de . de . de . de $ en) $
     fftSerialDIFStep cexp2    (de . de . de . de $ en) $ 

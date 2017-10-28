@@ -1,14 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables, RecordWildCards #-}
 
 {-| A hardware divider -}
-module CLaSH.Divide (
+module Clash.Divide (
     Divide(..),
     initialDivide,
     divideStep,
     combDivide
     ) where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 import Control.Arrow
 

@@ -2,12 +2,12 @@
 
     WARNING: this module has no tests so probably has bugs.
  -}
-module CLaSH.LFSR (
+module Clash.LFSR (
     fibonacciLFSR,
     galoisLFSR
     ) where
 
-import CLaSH.Prelude
+import Clash.Prelude
 import Data.Bool
 
 -- | Fibonacci LFSR
@@ -30,7 +30,7 @@ galoisLFSR poly state = zipWith selectIn (unpack poly) $ 0 +>> state
     where
     selectIn sel bit = bool bit (bit `xor` last state) sel
 
-lfsr :: KnownNat n => (Vec (n + 1) Bit -> Vec (n + 1) Bit) -> BitVector (n + 1) -> Signal Bit
+lfsr :: (HasClockReset dom gated sync, KnownNat n) => (Vec (n + 1) Bit -> Vec (n + 1) Bit) -> BitVector (n + 1) -> Signal dom Bit
 lfsr step seed = msb <$> reg
     where 
     reg = register (unpack seed) (step <$> reg)

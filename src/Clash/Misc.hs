@@ -1,10 +1,10 @@
-module CLaSH.Misc(
+module Clash.Misc(
     replaceSlice, 
     revBV,
     swapEndian
     ) where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 import Data.Bool
 
@@ -36,11 +36,12 @@ swapEndian x = pack $ reverse bytes
     bytes = unpack x 
 
 mealyEn 
-    :: (s -> i -> (s, o)) 
+    :: HasClockReset dom gated sync
+    => (s -> i -> (s, o)) 
     -> s 
-    -> Signal Bool 
-    -> Signal i 
-    -> Signal o
+    -> Signal dom Bool 
+    -> Signal dom i 
+    -> Signal dom o
 mealyEn step initial enable input = mealy step' initial (bundle (enable, input))
     where
     step' state (enable, input) = (bool state state' enable, output)

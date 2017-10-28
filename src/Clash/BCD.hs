@@ -1,14 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 {-| Binary to BCD conversion using the <https://en.wikipedia.org/wiki/Double_dabble Double Dabble> algorithm. -}
-module CLaSH.BCD (
+module Clash.BCD (
     BCDDigit,
     convertStep,
     convertSteps,
     toDec
     ) where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 type BCDDigit = Unsigned 4
 

@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances, UndecidableInstances #-}
-module CLaSH.Serialize where
+module Clash.Serialize where
 
-import CLaSH.Prelude
+import Clash.Prelude
 import Data.Serialize
 import Data.Word
 import Data.Foldable (sequenceA_)

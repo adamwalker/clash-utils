@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 {-| Compute trigonometric functions using <https://en.wikipedia.org/wiki/CORDIC CODRIC>. See also the Wikibook: <https://en.wikibooks.org/wiki/Digital_Circuits/CORDIC>. -}
-module CLaSH.CORDIC (
+module Clash.CORDIC (
     arctans,
     kValue,
     Complex(..),
@@ -12,10 +12,10 @@ module CLaSH.CORDIC (
     cordicSteps
     ) where
 
-import CLaSH.Prelude
+import Clash.Prelude
 import qualified Prelude as P
 
-import CLaSH.Complex
+import Clash.Complex
 
 {-| The gamma constants as described on the Wikipedia page -}
 arctans :: [Double]

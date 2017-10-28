@@ -1,7 +1,7 @@
 {-# LANGUAGE UndecidableInstances #-}
-module CLaSH.PseudoLRUTree where
+module Clash.PseudoLRUTree where
 
-import CLaSH.Prelude
+import Clash.Prelude
 import Data.Singletons.Prelude
 import Data.Proxy
 

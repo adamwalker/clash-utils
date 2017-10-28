@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveLift, DeriveGeneric, DeriveAnyClass #-}
-module CLaSH.Complex where
+module Clash.Complex where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 import GHC.Generics
 

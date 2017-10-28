@@ -17,7 +17,7 @@
     Each method is verified to be equivalent to the standard LFSR algorithm (the first one) in the testsuite.
 
 -}
-module CLaSH.CRC (
+module Clash.CRC (
     crc32Poly,
     crcStep,
     crcSteps,
@@ -31,7 +31,7 @@ module CLaSH.CRC (
     crcTableMultiStep
     ) where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 import Data.Bool
 
@@ -41,22 +41,22 @@ crc32Poly = 0b10011000001000111011011011
 
 {-| Calculates CRC one bit / clock cycle -}
 serialCRC 
-    :: forall n. KnownNat n
+    :: forall dom gated sync n. (HasClockReset dom gated sync, KnownNat n)
     => BitVector (n + 1)          -- ^ Initial value of shift register
     -> BitVector n                -- ^ The polynomial. The low order bit is assumed to be 1 so is not included.
-    -> Signal Bit                 -- ^ Input bit
-    -> Signal (BitVector (n + 1)) -- ^ CRC
+    -> Signal dom Bit                 -- ^ Input bit
+    -> Signal dom (BitVector (n + 1)) -- ^ CRC
 serialCRC init polynomial input = pack <$> mealy step' (unpack init) input
     where
     step' st inp = (x, x) where x = crcStep polynomial st inp
 
 {-| Calculates CRC m bits / clock cycle -}
 parallelCRC 
-    :: forall n m. (KnownNat n, KnownNat m)
+    :: forall dom gated sync n m. (HasClockReset dom gated sync, KnownNat n, KnownNat m)
     => BitVector (n + 1)          -- ^ Initial value of shift register
     -> BitVector n                -- ^ The polynomial. The low order bit is assumed to be 1 so is not included.
-    -> Signal (BitVector m)       -- ^ Input bits
-    -> Signal (BitVector (n + 1)) -- ^ CRC
+    -> Signal dom (BitVector m)       -- ^ Input bits
+    -> Signal dom (BitVector (n + 1)) -- ^ CRC
 parallelCRC init polynomial input = pack <$> mealy step' (unpack init) input
     where
     step' st inp = (x, x) where x = crcSteps polynomial st inp

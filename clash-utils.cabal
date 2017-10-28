@@ -3,7 +3,7 @@
 
 name:                clash-utils
 version:             0.1.0.0
-synopsis:            CLaSH utility library
+synopsis:            Clash utility library
 description:         A collection of reusable Clash example designs
 license:             BSD3
 license-file:        LICENSE
@@ -17,24 +17,24 @@ cabal-version:       >=1.10
 
 library
     exposed-modules:     
-        CLaSH.BCD, 
-        CLaSH.CRC, 
-        CLaSH.FIFO, 
-        CLaSH.FIRFilter, 
-        CLaSH.CORDIC, 
-        CLaSH.Sort, 
-        CLaSH.Divide, 
-        CLaSH.IIRFilter, 
-        CLaSH.GrayCode, 
-        CLaSH.FFT, 
-        CLaSH.Complex, 
-        CLaSH.FFTSerial, 
-        CLaSH.Hamming, 
-        CLaSH.LFSR,
-        CLaSH.Misc, 
-        CLaSH.Scrambler,
-        CLaSH.Serialize,
-        CLaSH.PseudoLRUTree
+        Clash.BCD, 
+        Clash.CRC, 
+        Clash.FIFO, 
+        Clash.FIRFilter, 
+        Clash.CORDIC, 
+        Clash.Sort, 
+        Clash.Divide, 
+        Clash.IIRFilter, 
+        Clash.GrayCode, 
+        Clash.FFT, 
+        Clash.Complex, 
+        Clash.FFTSerial, 
+        Clash.Hamming, 
+        Clash.LFSR,
+        Clash.Misc, 
+        Clash.Scrambler,
+        Clash.Serialize,
+        Clash.PseudoLRUTree
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 
@@ -48,9 +48,9 @@ library
         KindSignatures,
         TypeFamilies
     build-depends:       
-        base          >=4.8 && <4.10, 
-        clash-prelude >=0.11 && <0.12, 
-        singletons    >=2.2   && <2.3,
+        base          >=4.8 && <5, 
+        clash-prelude >=0.99 && <1, 
+        singletons    >=2.3   && <2.4,
         ghc-typelits-natnormalise,
         ghc-typelits-knownnat,
         cereal        >=0.5 && <0.6
@@ -63,13 +63,13 @@ Test-Suite test
     main-is:             TestSuite.hs
     build-depends:       
         base                       >=4.6   && <5, 
-        QuickCheck                 >=2.8   && <2.10, 
+        QuickCheck                 >=2.8   && <2.11, 
         digits                     >=0.3   && <0.4,
         digest                     >=0.0.1 && <0.0.2,
         containers                 >=0.5   && <0.6,
         tuple                      >=0.3   && <0.4,
         pure-fft                   >=0.2.0,
-        clash-prelude              >=0.11  && <0.12,
+        clash-prelude              >=0.99  && <1,
         split                      >=0.2,
         cereal                     >=0.5 && <0.6,
         ghc-typelits-natnormalise,

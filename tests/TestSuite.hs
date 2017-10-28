@@ -13,7 +13,7 @@ import Data.Sequence (Seq, (|>))
 import qualified Data.Sequence as Seq
 import qualified Numeric.FFT as FFT
 
-import CLaSH.Prelude
+import Clash.Prelude
 import qualified Prelude
 import qualified Prelude as P
 import qualified Data.List as Prelude
@@ -23,23 +23,23 @@ import Data.Maybe
 import qualified Data.List.Split as S
 import Data.Serialize (runGet, runPut)
 
-import CLaSH.BCD
-import CLaSH.FIRFilter
-import CLaSH.IIRFilter
-import CLaSH.CORDIC
-import CLaSH.Sort
-import CLaSH.Divide
-import CLaSH.CRC
-import CLaSH.FIFO
-import CLaSH.GrayCode
-import CLaSH.FFT
-import CLaSH.FFTSerial
-import CLaSH.Complex
-import CLaSH.Hamming
-import CLaSH.Misc
-import CLaSH.Scrambler
-import CLaSH.Serialize
-import CLaSH.PseudoLRUTree
+import Clash.BCD
+import Clash.FIRFilter
+import Clash.IIRFilter
+import Clash.CORDIC
+import Clash.Sort
+import Clash.Divide
+import Clash.CRC
+import Clash.FIFO
+import Clash.GrayCode
+import Clash.FFT
+import Clash.FFTSerial
+import Clash.Complex
+import Clash.Hamming
+import Clash.Misc
+import Clash.Scrambler
+import Clash.Serialize
+import Clash.PseudoLRUTree
 
 {-# ANN module ("HLint: ignore Avoid reverse") #-}
 
@@ -287,7 +287,7 @@ prop_FIFOs signals = Prelude.and $ Prelude.zipWith compareOutputs expect result
     where
     expect = Prelude.take (Prelude.length signals) $ simulate_lazy (mealy (fifoStep 5) Seq.empty) signals
     result = Prelude.take (Prelude.length signals) $ simulate_lazy hackedFIFO signals
-    hackedFIFO :: Signal (Bool, BitVector 32, Bool) -> Signal (BitVector 32, Bool, Bool)
+    hackedFIFO :: HasClockReset dom gated sync => Signal dom (Bool, BitVector 32, Bool) -> Signal dom (BitVector 32, Bool, Bool)
     hackedFIFO = bundle . uncurryN (blockRamFIFO (SNat @ 5)) . unbundle 
 
 prop_FIFOMaybe :: [(Bool, BitVector 32, Bool)] -> Bool
@@ -295,7 +295,7 @@ prop_FIFOMaybe signals = Prelude.and $ Prelude.zipWith compareOutputs expect res
     where
     expect = Prelude.take (Prelude.length signals) $ simulate_lazy (mealy (fifoStep 5) Seq.empty) signals
     result = Prelude.take (Prelude.length signals) $ simulate_lazy hackedFIFO signals
-    hackedFIFO :: Signal (Bool, BitVector 32, Bool) -> Signal (BitVector 32, Bool, Bool)
+    hackedFIFO :: HasClockReset dom gated sync => Signal dom (Bool, BitVector 32, Bool) -> Signal dom (BitVector 32, Bool, Bool)
     hackedFIFO inputs = bundle $ (fromJust <$> readDataM, (not . isJust) <$> readDataM, full)
         where
         (readReq, writeData, writeReq) = unbundle inputs

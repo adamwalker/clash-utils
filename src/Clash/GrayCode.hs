@@ -1,10 +1,10 @@
 {-| Conversion between binary and Gray code. https://en.wikipedia.org/wiki/Gray_code. -}
-module CLaSH.GrayCode (
+module Clash.GrayCode (
     binaryToGray,
     grayToBinary
     ) where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 {-| Binary to Gray code conversion -}
 binaryToGray 

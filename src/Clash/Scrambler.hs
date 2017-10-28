@@ -1,16 +1,16 @@
-module CLaSH.Scrambler (
+module Clash.Scrambler (
     scrambler,
     descrambler
     ) where
 
-import CLaSH.Prelude
+import Clash.Prelude
 
 scrambler 
-    :: forall n. KnownNat n
+    :: forall dom gated sync n. (HasClockReset dom gated sync, KnownNat n)
     => BitVector (n + 1)
     -> BitVector n 
-    -> Signal Bool 
-    -> Signal Bool
+    -> Signal dom Bool 
+    -> Signal dom Bool
 scrambler initial poly input = mealy scramblerStep (unpack initial) input
     where 
     scramblerStep :: Vec (n + 1) Bool -> Bool -> (Vec (n + 1) Bool, Bool)
@@ -20,11 +20,11 @@ scrambler initial poly input = mealy scramblerStep (unpack initial) input
         output = foldl1 xor $ zipWith (.&.) (init state) (unpack poly) ++ singleton (last state) ++ singleton input
 
 descrambler 
-    :: forall n. KnownNat n
+    :: forall dom gated sync n. (HasClockReset dom gated sync, KnownNat n)
     => BitVector (n + 1)
     -> BitVector n
-    -> Signal Bool
-    -> Signal Bool
+    -> Signal dom Bool
+    -> Signal dom Bool
 descrambler initial poly input = mealy descramblerStep (unpack initial) input
     where
     descramblerStep :: Vec (n + 1) Bool -> Bool -> (Vec (n + 1) Bool, Bool)
