@@ -72,6 +72,7 @@ Test-Suite test
         clash-prelude              >=0.99  && <1,
         split                      >=0.2,
         cereal                     >=0.5 && <0.6,
+        hspec                      >=2.4 && < 3,
         ghc-typelits-natnormalise,
         ghc-typelits-knownnat,
         ghc-typelits-extra,
