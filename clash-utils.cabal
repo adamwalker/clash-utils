@@ -60,7 +60,24 @@ library
 
 Test-Suite test
     type:                exitcode-stdio-1.0
-    main-is:             TestSuite.hs
+    main-is:             Spec.hs
+    other-modules:       
+        BCDSpec, 
+        FIRFilterSpec, 
+        IIRFilterSpec, 
+        CORDICSpec, 
+        SortSpec, 
+        DivideSpec,
+        CRCSpec,
+        FIFOSpec,
+        GrayCodeSpec,
+        FFTSpec,
+        FFTSerialSpec,
+        HammingSpec,
+        MiscSpec,
+        ScramblerSpec,
+        SerializeSpec,
+        PseudoLRUTreeSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.8   && <2.11, 
@@ -73,6 +90,7 @@ Test-Suite test
         split                      >=0.2,
         cereal                     >=0.5 && <0.6,
         hspec                      >=2.4 && < 3,
+        hspec-discover             >=2.4 && < 3,
         ghc-typelits-natnormalise,
         ghc-typelits-knownnat,
         ghc-typelits-extra,
@@ -80,3 +98,15 @@ Test-Suite test
     hs-source-dirs:      tests
     default-language:    Haskell2010
     ghc-options:         -fplugin=GHC.TypeLits.Normalise -fplugin=GHC.TypeLits.KnownNat.Solver -fplugin GHC.TypeLits.Extra.Solver
+    default-extensions:  
+        ScopedTypeVariables, 
+        TypeOperators, 
+        DataKinds, 
+        FlexibleContexts, 
+        TypeApplications, 
+        BinaryLiterals, 
+        GADTs,
+        KindSignatures,
+        TypeFamilies,
+        TemplateHaskell
+
