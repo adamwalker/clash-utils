@@ -17,9 +17,7 @@ A random collection of reusable [Clash](http://www.clash-lang.org/) designs/exam
 * [Scrambler](https://en.wikipedia.org/wiki/Scrambler)
 * [Pseudo LRU trees](https://en.wikipedia.org/wiki/Pseudo-LRU)
 
-## Features:
-
-Haddock documentation and QuickCheck tests.
+Each design has a [HSpec](https://hspec.github.io/) testsuite in the [/tests](https://github.com/adamwalker/clash-utils/tree/master/tests) subdirectory.
 
 ## Status
 
