@@ -1,4 +1,6 @@
 {-# LANGUAGE UndecidableInstances #-}
+
+{-| A pseudo LRU tree: https://en.wikipedia.org/wiki/Pseudo-LRU -}
 module Clash.PseudoLRUTree where
 
 import Clash.Prelude
