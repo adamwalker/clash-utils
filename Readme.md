@@ -3,18 +3,19 @@
 A random collection of reusable [Clash](http://www.clash-lang.org/) designs/examples.
 
 ## Includes:
-* Binary to BCD conversion
-* CORDIC for calculating trigonometric functions
-* CRC calculation
+* [Binary to BCD conversion](https://en.wikipedia.org/wiki/Double_dabble)
+* [CORDIC](https://en.wikipedia.org/wiki/CORDIC) for calculating trigonometric functions
+* [CRC](https://en.wikipedia.org/wiki/Cyclic_redundancy_check) calculation
 * A FIFO
-* FIR, IIR filters
-* A bitonic sorting network
+* [FIR](https://en.wikipedia.org/wiki/Finite_impulse_response), [IIR](https://en.wikipedia.org/wiki/Infinite_impulse_response) filters
+* A [bitonic sorting network](https://en.wikipedia.org/wiki/Bitonic_sorter)
 * Divider
-* FFTs
-* Gray code conversion
-* Hamming code encoding/decoding
-* LFSRs
-* Pseudo LRU trees
+* [FFTs](https://en.wikipedia.org/wiki/Fast_Fourier_transform)
+* [Gray code](https://en.wikipedia.org/wiki/Gray_code) conversion
+* [Hamming code](https://en.wikipedia.org/wiki/Hamming_code) encoding/decoding
+* [LFSRs](https://en.wikipedia.org/wiki/Linear-feedback_shift_register)
+* [Scrambler](https://en.wikipedia.org/wiki/Scrambler)
+* [Pseudo LRU trees](https://en.wikipedia.org/wiki/Pseudo-LRU)
 
 ## Features:
 
