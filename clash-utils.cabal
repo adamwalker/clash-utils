@@ -34,7 +34,8 @@ library
         Clash.Misc, 
         Clash.Scrambler,
         Clash.Serialize,
-        Clash.PseudoLRUTree
+        Clash.PseudoLRUTree,
+        Clash.Cuckoo
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 
@@ -77,7 +78,8 @@ Test-Suite test
         MiscSpec,
         ScramblerSpec,
         SerializeSpec,
-        PseudoLRUTreeSpec
+        PseudoLRUTreeSpec,
+        CuckooSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.8   && <2.11, 
@@ -91,6 +93,7 @@ Test-Suite test
         cereal                     >=0.5 && <0.6,
         hspec                      >=2.4 && < 3,
         hspec-discover             >=2.4 && < 3,
+        hashable                   >=1.2,
         ghc-typelits-natnormalise,
         ghc-typelits-knownnat,
         ghc-typelits-extra,
