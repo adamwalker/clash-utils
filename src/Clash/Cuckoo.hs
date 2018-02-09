@@ -18,11 +18,11 @@ data TableEntry k v = TableEntry {
 
 {-| The lookup side of a Cuckoo hashtable. Uses split tables. -}
 cuckoo 
-    :: forall dom gated sync m n k v. (HasClockReset dom gated sync, KnownNat n, Eq k)
+    :: forall dom gated sync m n k v. (HasClockReset dom gated sync, KnownNat m, KnownNat n, Eq k)
     => Vec (m + 1) (k -> Unsigned n)                                         -- ^ Vector of hash functions, one for each table. CRCs make good hash functions.
     -> Vec (m + 1) (Signal dom (Maybe (Unsigned n, Maybe (TableEntry k v)))) -- ^ Table updates from software. A vector of (row number, row value) pair updates, one for each table. 
     -> Signal dom k                                                          -- ^ The key to lookup.
-    -> Signal dom (Maybe v)                                                  -- ^ The result of the lookup. Will be ready one cycle after the key is input. 
+    -> Signal dom (Maybe (Index (m + 1), v))                                 -- ^ The result of the lookup. Will be ready one cycle after the key is input. 
 cuckoo hashFunctions tableUpdates lookupKey = fold (liftA2 (<|>)) candidates
     where
 
@@ -35,13 +35,13 @@ cuckoo hashFunctions tableUpdates lookupKey = fold (liftA2 (<|>)) candidates
     fromMem = zipWith (blockRamPow2 (repeat Nothing)) readAddresses tableUpdates
 
     --Check if each item returned from memory matches
-    candidates :: Vec (m + 1) (Signal dom (Maybe v))
-    candidates = map (liftA2 checkCandidate (register (errorX "key") lookupKey)) fromMem
+    candidates :: Vec (m + 1) (Signal dom (Maybe (Index (m + 1), v)))
+    candidates = imap (\idx -> liftA2 (checkCandidate idx) (register (errorX "key") lookupKey)) fromMem
         where
         --Get rid of signals
-        checkCandidate :: k -> Maybe (TableEntry k v) -> Maybe v
-        checkCandidate lookupKey Nothing = Nothing
-        checkCandidate lookupKey (Just TableEntry{..})
-            | lookupKey == key = Just value
+        checkCandidate :: Index (m + 1) -> k -> Maybe (TableEntry k v) -> Maybe (Index (m + 1), v)
+        checkCandidate _   lookupKey Nothing = Nothing
+        checkCandidate idx lookupKey (Just TableEntry{..})
+            | lookupKey == key = Just (idx, value)
             | otherwise        = Nothing
 
