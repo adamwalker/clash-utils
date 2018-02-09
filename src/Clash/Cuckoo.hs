@@ -19,7 +19,7 @@ data TableEntry k v = TableEntry {
 {-| The lookup side of a Cuckoo hashtable. Uses split tables. -}
 cuckoo 
     :: forall dom gated sync m n k v. (HasClockReset dom gated sync, KnownNat n, Eq k)
-    => Vec (m + 1) (k -> Unsigned n)                                         -- ^ Vector of hash functions, one for each table. 
+    => Vec (m + 1) (k -> Unsigned n)                                         -- ^ Vector of hash functions, one for each table. CRCs make good hash functions.
     -> Vec (m + 1) (Signal dom (Maybe (Unsigned n, Maybe (TableEntry k v)))) -- ^ Table updates from software. A vector of (row number, row value) pair updates, one for each table. 
     -> Signal dom k                                                          -- ^ The key to lookup.
     -> Signal dom (Maybe v)                                                  -- ^ The result of the lookup. Will be ready one cycle after the key is input. 
