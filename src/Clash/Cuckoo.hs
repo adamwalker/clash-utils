@@ -22,7 +22,7 @@ cuckoo
     => Vec (m + 1) (k -> Unsigned n)                                         -- ^ Vector of hash functions, one for each table. CRCs make good hash functions.
     -> Vec (m + 1) (Signal dom (Maybe (Unsigned n, Maybe (TableEntry k v)))) -- ^ Table updates from software. A vector of (row number, row value) pair updates, one for each table. 
     -> Signal dom k                                                          -- ^ The key to lookup.
-    -> Signal dom (Maybe (Index (m + 1), Unsigned n, v))                                 -- ^ The result of the lookup. Will be ready one cycle after the key is input. 
+    -> Signal dom (Maybe (Index (m + 1), Unsigned n, v))                     -- ^ The result of the lookup. Will be ready one cycle after the key is input. The table index and hash of the matching entry are also returned so that future table updates can be made from hardware.
 cuckoo hashFunctions tableUpdates lookupKey = fold (liftA2 (<|>)) candidates
     where
 
