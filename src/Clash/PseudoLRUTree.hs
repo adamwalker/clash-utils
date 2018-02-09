@@ -1,7 +1,11 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 {-| A pseudo LRU tree: https://en.wikipedia.org/wiki/Pseudo-LRU -}
-module Clash.PseudoLRUTree where
+module Clash.PseudoLRUTree (
+    updateOldestWay,
+    getOldestWay,
+    updateWay
+    ) where
 
 import Clash.Prelude
 import Data.Singletons.Prelude
