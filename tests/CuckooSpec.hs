@@ -15,12 +15,12 @@ import Clash.Cuckoo
 spec = describe "Cuckoo hash table" $ do
 
     specify "Retreives inserted elements" $ property $ forAll (choose (0, 2)) $ \idx k v -> 
-        simulate_lazy system (testVec idx k v) !! 2 == Just (fromIntegral idx, v)
+        simulate_lazy system (testVec idx k v) !! 2 == Just (fromIntegral idx, hashFunc idx k, v)
 
     specify "Retreives inserted elements with collision" $ property $ forAll (choose (0, 2)) $ \idx -> 
         forAll (elements $ [0..2] \\ [idx]) $ \collidingIdx k v k' -> 
             (k /= k') ==> 
-                simulate_lazy system (testVecCollision idx collidingIdx k v k') !! 3 == Just (fromIntegral idx, v)
+                simulate_lazy system (testVecCollision idx collidingIdx k v k') !! 3 == Just (fromIntegral idx, hashFunc idx k, v)
 
     specify "Deletes elements" $ property $ forAll (choose (0, 2)) $ \idx k v -> 
         simulate_lazy system (testVecDelete idx k v) !! 3 == Nothing
@@ -31,7 +31,7 @@ system
             Vec 3 (Maybe (Unsigned 12, Maybe (TableEntry String String))), 
             String
         ) 
-    -> Signal dom (Maybe (Index 3, String))
+    -> Signal dom (Maybe (Index 3, Unsigned 12, String))
 system inp = cuckoo (Clash.map hashFunc (0 :> 1 :> 2 :> Nil)) (sequenceA writes) req
     where
     (writes, req) = unbundle inp
