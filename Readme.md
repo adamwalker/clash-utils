@@ -16,6 +16,7 @@ A random collection of reusable [Clash](http://www.clash-lang.org/) designs/exam
 * [LFSRs](https://en.wikipedia.org/wiki/Linear-feedback_shift_register)
 * [Scrambler](https://en.wikipedia.org/wiki/Scrambler)
 * [Pseudo LRU trees](https://en.wikipedia.org/wiki/Pseudo-LRU)
+* The lookup side of a [Cuckoo hash table](https://en.wikipedia.org/wiki/Cuckoo_hashing)
 
 Each design has a [Hspec](https://hspec.github.io/) testsuite/specification in the [/tests](https://github.com/adamwalker/clash-utils/tree/master/tests) subdirectory.
 
