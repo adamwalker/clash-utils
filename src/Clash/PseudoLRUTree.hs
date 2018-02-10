@@ -33,7 +33,11 @@ updateOldestBaseCase x = (x, map not x)
 data Step (f :: TyFun Nat *) :: *
 type instance Apply Step n = Vec ((2 ^ (n + 1)) - 1) Bool -> (Vec (n + 1) Bool, Vec ((2 ^ (n + 1)) - 1) Bool)
 
-updateOldestWay :: forall m n. (n ~ (m + 1), KnownNat m) => Vec ((2 ^ n) - 1) Bool -> (Vec n Bool, Vec ((2 ^ n) - 1) Bool)
+-- | Simultaneously get the oldest way and set it to be the most recently used.
+updateOldestWay 
+    :: forall m n. (n ~ (m + 1), KnownNat m) 
+    => Vec ((2 ^ n) - 1) Bool               -- ^ Flattened tree
+    -> (Vec n Bool, Vec ((2 ^ n) - 1) Bool) -- ^ (Oldest way, updated tree)
 updateOldestWay = dfold (Proxy :: Proxy Step) func updateOldestBaseCase (replicate (SNat @ m) ())
     where
     func 
@@ -60,7 +64,11 @@ getOldestWay' recurse (node :> tree) = node :> oldestIdx'
 data Step2 (f :: TyFun Nat *) :: *
 type instance Apply Step2 n = Vec ((2 ^ (n + 1)) - 1) Bool -> Vec (n + 1) Bool
 
-getOldestWay :: forall m n. (n ~ (m + 1), KnownNat m) => Vec ((2 ^ n) - 1) Bool -> Vec n Bool
+-- | Get the oldest way
+getOldestWay 
+    :: forall m n. (n ~ (m + 1), KnownNat m) 
+    => Vec ((2 ^ n) - 1) Bool -- ^ Flattened tree
+    -> Vec n Bool             -- ^ Oldest way
 getOldestWay = dfold (Proxy :: Proxy Step2) func id (replicate (SNat @ m) ())
     where
     func 
@@ -89,7 +97,12 @@ updateWay' recurse (this :> rest) (_ :> tree) = updatedTree
 data Step3 (f :: TyFun Nat *) :: *
 type instance Apply Step3 n = Vec (n + 1) Bool -> Vec ((2 ^ (n + 1)) - 1) Bool -> Vec ((2 ^ (n + 1)) - 1) Bool
 
-updateWay :: forall m n. (n ~ (m + 1), KnownNat m) => Vec n Bool -> Vec ((2 ^ n) - 1) Bool -> Vec ((2 ^ n) - 1) Bool
+-- | Update a way
+updateWay 
+    :: forall m n. (n ~ (m + 1), KnownNat m) 
+    => Vec n Bool             -- ^ Way to set as most recently used
+    -> Vec ((2 ^ n) - 1) Bool -- ^ Flattened tree
+    -> Vec ((2 ^ n) - 1) Bool -- ^ Output tree
 updateWay = dfold (Proxy :: Proxy Step3) func (\idx tree -> map not idx) (replicate (SNat @ m) ())
     where
     func 
