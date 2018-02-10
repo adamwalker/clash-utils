@@ -35,7 +35,8 @@ library
         Clash.Scrambler,
         Clash.Serialize,
         Clash.PseudoLRUTree,
-        Clash.Cuckoo
+        Clash.Cuckoo,
+        Clash.Stream
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 
@@ -79,7 +80,8 @@ Test-Suite test
         ScramblerSpec,
         SerializeSpec,
         PseudoLRUTreeSpec,
-        CuckooSpec
+        CuckooSpec,
+        StreamSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.8   && <2.11, 
