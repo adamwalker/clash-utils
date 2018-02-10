@@ -1,5 +1,8 @@
 {-# LAnGUAGE RecordWildCards #-}
-module Clash.Stream where
+module Clash.Stream (
+    StreamIn(..),
+    deserialize
+    ) where
 
 import Clash.Prelude
 
@@ -12,8 +15,8 @@ data StreamIn a = StreamIn {
 
 deserialize 
     :: forall dom gated sync m a. (HasClockReset dom gated sync, KnownNat m)
-    => Signal dom (StreamIn a)
-    -> Signal dom (Maybe (Vec m a))
+    => Signal dom (StreamIn a)      -- ^ Input data stream
+    -> Signal dom (Maybe (Vec m a)) -- ^ Received data chunks
 deserialize streamIn = mux lastDone (Just <$> buf) (pure Nothing)
     where
 
