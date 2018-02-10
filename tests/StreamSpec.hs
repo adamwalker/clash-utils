@@ -30,6 +30,11 @@ streamNoNop pkt = intersperse nopStream $ intersperse nopStream $ streamize pkt
 nopStream :: StreamIn Int
 nopStream = StreamIn False False False 0
 
+pktGen :: Gen [[Int]]
+pktGen = do
+    numMessages <- choose (1, 10)
+    replicateM numMessages $ vectorOf 4 arbitrary
+
 spec :: SpecWith ()
 spec = describe "Message receiver" $ do
 
@@ -45,9 +50,9 @@ spec = describe "Message receiver" $ do
 
     it "Multiple packets with multiple messages" $ 
         property $ forAll (choose (1, 10)) $ \numPackets -> 
-            forAll (choose (1, 10)) $ \numMessages -> 
-                forAll (replicateM numMessages $ vectorOf 4 arbitrary) $ \messages ->
-                    fmap Clash.toList (catMaybes (take (numPackets * 4 * 4 * numMessages + 10) $ simulate_lazy deserialize ((concat $ replicate numPackets $ streamNoNop (concat messages)) ++ repeat nopStream) :: [Maybe (Vec 4 Int)])) == (concat $ replicate numPackets messages)
+            forAll (vectorOf numPackets pktGen) $ \(messages :: [[[Int]]]) ->
+                let pkts = map concat messages
+                in  fmap Clash.toList (catMaybes (take (4 * length (concat pkts) + 10) $ simulate_lazy deserialize ((concat $ map streamNoNop pkts) ++ repeat nopStream) :: [Maybe (Vec 4 Int)])) == (concat messages)
 
     it "Selected single message" $ 
         property $ \pkt ->  
