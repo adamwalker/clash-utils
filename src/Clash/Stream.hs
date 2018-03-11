@@ -7,7 +7,9 @@ module Clash.Stream (
     byteExtractAccum,
     fieldExtractAccum,
     byteExtractAccumComb,
-    fieldExtractAccumComb
+    fieldExtractAccumComb,
+    StreamOut(..),
+    serialize
     ) where
 
 import Clash.Prelude
@@ -154,4 +156,33 @@ fieldExtractAccumComb offset ptr valid dat = sequenceA $ map (\offset -> byteExt
     where 
     offsets :: Vec n num
     offsets = iterateI (+1) offset
+
+----------------------------------------------------------
+--Serialization
+----------------------------------------------------------
+
+data StreamOut a = StreamOut {
+    sofOut   :: Bool,
+    eofOut   :: Bool,
+    datOut   :: a
+} deriving (Show)
+
+serialize 
+    :: forall dom gated sync m a. (HasClockReset dom gated sync, KnownNat m)
+    => Signal dom (Vec m a)
+    -> Signal dom Bool
+    -> Signal dom (StreamOut a)
+serialize toSend ready = mealy step 0 $ bundle (toSend, ready)
+    where
+    step :: Index m -> (Vec m a, Bool) -> (Index m, StreamOut a)
+    step idx (toSend, ready) = (nextState, StreamOut sof eof dat)
+        where
+        nextState
+            | not ready = idx
+            | eof       = 0
+            | otherwise = idx + 1
+
+        eof = idx == maxBound
+        dat = toSend !! idx
+        sof = idx == 0
 

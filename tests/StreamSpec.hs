@@ -2,8 +2,8 @@ module StreamSpec where
 
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
-                      simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HasClockReset)
+                      simulate, simulate_lazy, sampleN_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
+                      HasClockReset, toList)
 import Test.Hspec
 import Test.QuickCheck
 
@@ -63,6 +63,17 @@ testParser func inp = out
     counter = Clash.register 0 (counter + 4)
 
     out     = func counter (pure True) inp
+
+getStream :: [StreamOut a] -> [[a]]
+getStream []                               = []
+getStream ((StreamOut False _     _) : _)  = error "Stream does not start with sof"
+getStream ((StreamOut True  True  x) : ss) = [x] : getStream ss
+getStream ((StreamOut True  False x) : ss) = 
+    let (beforeEof, includingEof) = break eofOut ss
+    in  case includingEof of
+        []                            -> error "Stream ends without eof"
+        (StreamOut True  _    _ : _)  -> error "Sof without eof"
+        (StreamOut False True y : xs) -> (x : map datOut beforeEof ++ [y]) : getStream xs
 
 spec :: SpecWith ()
 spec = describe "Message receiver" $ do
@@ -132,4 +143,7 @@ spec = describe "Message receiver" $ do
             forAll (choose ((offset + 3) `quot` 4 + 1, 64)) $ \pktLen -> 
                 \(v@(x :> y :> z :> w :> Nil) :: Vec 4 (BitVector 8)) -> 
                     ((simulate_lazy (testParser (fieldExtractAccumComb (fromIntegral offset))) $ streamBytes $ fieldAtIdx (pktLen * 4) offset [x, y, z, w]) !! (pktLen - 1)) == v
+    
+    it "serialize" $ 
+        property $ \(vec :: Vec 4 Int) -> getStream (sampleN_lazy 4 $ serialize (pure vec) (pure True)) == [toList vec]
 
