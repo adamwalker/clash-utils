@@ -96,6 +96,7 @@ Test-Suite test
         hspec                      >=2.4 && < 3,
         hspec-discover             >=2.4 && < 3,
         hashable                   >=1.2,
+        data-default,
         ghc-typelits-natnormalise,
         ghc-typelits-knownnat,
         ghc-typelits-extra,

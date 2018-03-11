@@ -7,6 +7,7 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck
 
+import Data.Default
 import Data.List
 import Data.Maybe
 import Control.Monad
@@ -34,6 +35,34 @@ pktGen :: Gen [[Int]]
 pktGen = do
     numMessages <- choose (1, 10)
     replicateM numMessages $ vectorOf 4 arbitrary
+
+streamBytes :: [BitVector 8] -> [BitVector 32]
+streamBytes (x : y : z : w : rest) = x ++# y ++# z ++# w : streamBytes rest
+streamBytes []                     = []
+streamBytes r                      = error $ "streamBytes: " ++ show r
+
+valAtIdx :: Default a => Int -> Int -> a -> [a]
+valAtIdx len idx val = map func [0..len-1]
+    where
+    func x
+        | x == idx  = val
+        | otherwise = def
+
+fieldAtIdx :: Default a => Int -> Int -> [a] -> [a]
+fieldAtIdx len idx val = replicate idx def ++ val ++ replicate (len - idx - (length val)) def
+
+testParser 
+    :: forall dom gated sync a. HasClockReset dom gated sync 
+    => (Signal dom (Unsigned 8) -> Signal dom Bool -> Signal dom (BitVector 32) -> Signal dom a)
+    -> Signal dom (BitVector 32) 
+    -> Signal dom a
+testParser func inp = out
+    where
+
+    counter :: Signal dom (Unsigned 8)
+    counter = Clash.register 0 (counter + 4)
+
+    out     = func counter (pure True) inp
 
 spec :: SpecWith ()
 spec = describe "Message receiver" $ do
@@ -79,4 +108,28 @@ spec = describe "Message receiver" $ do
                 \tag -> 
                     forAll (suchThat arbitrary (/= tag)) $ \tag' -> 
                         fmap Clash.toList (catMaybes (take (4 * 4 * numMessages + 10) $ simulate_lazy (deserialize . selectStream (==tag)) (stream (tag' : concat messages)) :: [Maybe (Vec 4 Int)])) == []
+
+    it "byteExtract" $ 
+        property $ forAll (choose (0, 255)) $ \offset -> 
+            forAll (choose (offset `quot` 4 + 1, 64)) $ \pktLen -> 
+                \val -> 
+                    ((simulate_lazy (testParser (byteExtractAccum (fromIntegral offset))) $ streamBytes $ valAtIdx ((pktLen + 1) * 4) offset val) !! pktLen) == val
+
+    it "fieldExtract" $
+        property $ forAll (choose (0, 252)) $ \offset -> 
+                forAll (choose ((offset + 3) `quot` 4 + 1, 64)) $ \pktLen -> 
+                    \(v@(x :> y :> z :> w :> Nil) :: Vec 4 (BitVector 8)) -> 
+                        ((simulate_lazy (testParser (fieldExtractAccum (fromIntegral offset))) $ streamBytes $ fieldAtIdx ((pktLen + 1) * 4) offset [x, y, z, w]) !! pktLen) == v
+
+    it "byteExtractComb" $ 
+        property $ forAll (choose (0, 255)) $ \offset -> 
+            forAll (choose (offset `quot` 4 + 1, 64)) $ \pktLen -> 
+                \val -> 
+                    ((simulate_lazy (testParser (byteExtractAccumComb (fromIntegral offset))) $ streamBytes $ valAtIdx (pktLen * 4) offset val) !! (pktLen - 1)) == val
+
+    it "fieldExtractComb" $
+        property $ forAll (choose (0, 252)) $ \offset -> 
+            forAll (choose ((offset + 3) `quot` 4 + 1, 64)) $ \pktLen -> 
+                \(v@(x :> y :> z :> w :> Nil) :: Vec 4 (BitVector 8)) -> 
+                    ((simulate_lazy (testParser (fieldExtractAccumComb (fromIntegral offset))) $ streamBytes $ fieldAtIdx (pktLen * 4) offset [x, y, z, w]) !! (pktLen - 1)) == v
 
