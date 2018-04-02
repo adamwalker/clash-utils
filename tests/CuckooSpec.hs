@@ -3,7 +3,7 @@ module CuckooSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HasClockReset)
+                      HiddenClockReset)
 
 import Test.Hspec
 import Test.QuickCheck
@@ -26,7 +26,7 @@ spec = describe "Cuckoo hash table" $ do
         simulate_lazy system (testVecDelete idx k v) !! 3 == Nothing
 
 system 
-    :: HasClockReset dom gated sync 
+    :: HiddenClockReset dom gated sync 
     => Signal dom (
             Vec 3 (Maybe (Unsigned 12, Maybe (TableEntry String String))), 
             String

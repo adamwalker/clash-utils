@@ -41,7 +41,7 @@ swapEndian x = pack $ reverse bytes
 
 -- Same as mealy, but with an enable signal
 mealyEn 
-    :: HasClockReset dom gated sync
+    :: HiddenClockReset dom gated sync
     => (s -> i -> (s, o)) -- ^ State update function
     -> s                  -- ^ Initial state
     -> Signal dom Bool    -- ^ Enable signal

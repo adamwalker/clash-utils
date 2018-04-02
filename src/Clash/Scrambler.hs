@@ -7,7 +7,7 @@ module Clash.Scrambler (
 import Clash.Prelude
 
 scrambler 
-    :: forall dom gated sync n. (HasClockReset dom gated sync, KnownNat n)
+    :: forall dom gated sync n. (HiddenClockReset dom gated sync, KnownNat n)
     => BitVector (n + 1) -- ^ Initial state
     -> BitVector n       -- ^ Polynomial
     -> Signal dom Bool   -- ^ Input bit
@@ -21,7 +21,7 @@ scrambler initial poly input = mealy scramblerStep (unpack initial) input
         output = foldl1 xor $ zipWith (.&.) (init state) (unpack poly) ++ singleton (last state) ++ singleton input
 
 descrambler 
-    :: forall dom gated sync n. (HasClockReset dom gated sync, KnownNat n)
+    :: forall dom gated sync n. (HiddenClockReset dom gated sync, KnownNat n)
     => BitVector (n + 1) -- ^ Initial state
     -> BitVector n       -- ^ Polynomial
     -> Signal dom Bool   -- ^ Input bit

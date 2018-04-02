@@ -10,7 +10,7 @@ import Clash.Prelude
 
 {- | Direct form I: <https://www.dsprelated.com/freebooks/filters/Direct_Form_I.html> -}
 iirDirectI
-    :: (HasClockReset dom gated sync, Num a, KnownNat n)
+    :: (HiddenClockReset dom gated sync, Num a, KnownNat n)
     => Vec (n + 2) a -- ^ Numerator coefficients
     -> Vec (n + 1) a -- ^ Denominator coefficients
     -> Signal dom Bool   -- ^ Input enable
@@ -25,7 +25,7 @@ iirDirectI coeffsN coeffsD en x = res
 
 {- | Direct form II: <https://www.dsprelated.com/freebooks/filters/Direct_Form_II.html> -}
 iirDirectII
-    :: (HasClockReset dom gated sync, Num a, KnownNat n)
+    :: (HiddenClockReset dom gated sync, Num a, KnownNat n)
     => Vec (n + 2) a -- ^ Numerator coefficients
     -> Vec (n + 1) a -- ^ Denominator coefficients
     -> Signal dom Bool   -- ^ Input enable
@@ -39,7 +39,7 @@ iirDirectII coeffsN coeffsD en x = dotP (map pure coeffsN) delayed
 
 {- | Transposed form I: <https://www.dsprelated.com/freebooks/filters/Transposed_Direct_Forms.html> -}
 iirTransposedI
-    :: (HasClockReset dom gated sync, Num a, KnownNat n)
+    :: (HiddenClockReset dom gated sync, Num a, KnownNat n)
     => Vec (n + 2) a -- ^ Numerator coefficients
     -> Vec (n + 1) a -- ^ Denominator coefficients
     -> Signal dom Bool   -- ^ Input enable
@@ -52,7 +52,7 @@ iirTransposedI coeffsN coeffsD en x = foldl1 func $ reverse $ map (* v) (pure <$
 
 {- | Transposed form II: <https://www.dsprelated.com/freebooks/filters/Transposed_Direct_Forms.html> -}
 iirTransposedII
-    :: (HasClockReset dom gated sync, Num a, KnownNat n)
+    :: (HiddenClockReset dom gated sync, Num a, KnownNat n)
     => Vec (n + 2) a -- ^ Numerator coefficients
     -> Vec (n + 1) a -- ^ Denominator coefficients
     -> Signal dom Bool   -- ^ Input enable

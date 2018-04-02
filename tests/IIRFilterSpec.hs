@@ -3,7 +3,7 @@ module IIRFilterSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HasClockReset)
+                      HiddenClockReset)
 import Test.Hspec
 import Test.QuickCheck
 

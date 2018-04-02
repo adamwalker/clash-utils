@@ -3,7 +3,7 @@ module FIFOSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HasClockReset)
+                      HiddenClockReset)
 import GHC.TypeLits
 import Test.Hspec
 import Test.QuickCheck
@@ -47,7 +47,7 @@ prop_FIFOs signals = and $ zipWith compareOutputs expect result
     where
     expect = take (length signals) $ simulate_lazy (mealy (fifoStep 5) Seq.empty) signals
     result = take (length signals) $ simulate_lazy hackedFIFO signals
-    hackedFIFO :: HasClockReset dom gated sync => Signal dom (Bool, BitVector 32, Bool) -> Signal dom (BitVector 32, Bool, Bool)
+    hackedFIFO :: HiddenClockReset dom gated sync => Signal dom (Bool, BitVector 32, Bool) -> Signal dom (BitVector 32, Bool, Bool)
     hackedFIFO = bundle . uncurryN (blockRamFIFO (SNat @ 5)) . unbundle 
 
 prop_FIFOMaybe :: [(Bool, BitVector 32, Bool)] -> Bool
@@ -55,7 +55,7 @@ prop_FIFOMaybe signals = Prelude.and $ Prelude.zipWith compareOutputs expect res
     where
     expect = take (length signals) $ simulate_lazy (mealy (fifoStep 5) Seq.empty) signals
     result = take (length signals) $ simulate_lazy hackedFIFO signals
-    hackedFIFO :: HasClockReset dom gated sync => Signal dom (Bool, BitVector 32, Bool) -> Signal dom (BitVector 32, Bool, Bool)
+    hackedFIFO :: HiddenClockReset dom gated sync => Signal dom (Bool, BitVector 32, Bool) -> Signal dom (BitVector 32, Bool, Bool)
     hackedFIFO inputs = bundle $ (fromJust <$> readDataM, (not . isJust) <$> readDataM, full)
         where
         (readReq, writeData, writeReq) = unbundle inputs
