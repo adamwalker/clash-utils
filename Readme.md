@@ -17,6 +17,7 @@ A random collection of reusable [Clash](http://www.clash-lang.org/) designs/exam
 * [Scrambler](https://en.wikipedia.org/wiki/Scrambler)
 * [Pseudo LRU trees](https://en.wikipedia.org/wiki/Pseudo-LRU)
 * The lookup side of a [Cuckoo hash table](https://en.wikipedia.org/wiki/Cuckoo_hashing)
+* Utilities for streaming data
 
 Each design has a [Hspec](https://hspec.github.io/) testsuite/specification in the [/tests](https://github.com/adamwalker/clash-utils/tree/master/tests) subdirectory.
 
@@ -25,4 +26,5 @@ Each design has a [Hspec](https://hspec.github.io/) testsuite/specification in t
 Most of these designs are not FPGA proven (yet). Designs that have actually been tested on an FPGA are:
 * the CRCs
 * the FIFOs
-
+* the cuckoo hashtable
+* the streaming functions
