@@ -10,7 +10,6 @@ import Test.QuickCheck
 
 import Data.Sequence (Seq, (|>))
 import qualified Data.Sequence as Seq
-import Data.Tuple.All
 import Data.Maybe
 import Clash.FIFO
 
@@ -48,7 +47,7 @@ prop_FIFOs signals = and $ zipWith compareOutputs expect result
     expect = take (length signals) $ simulate_lazy (mealy (fifoStep 5) Seq.empty) signals
     result = take (length signals) $ simulate_lazy hackedFIFO signals
     hackedFIFO :: HiddenClockReset dom gated sync => Signal dom (Bool, BitVector 32, Bool) -> Signal dom (BitVector 32, Bool, Bool)
-    hackedFIFO = bundle . uncurryN (blockRamFIFO (SNat @ 5)) . unbundle 
+    hackedFIFO = bundle . (\(x, y, z) ->  (blockRamFIFO (SNat @ 5)) x y z) . unbundle 
 
 prop_FIFOMaybe :: [(Bool, BitVector 32, Bool)] -> Bool
 prop_FIFOMaybe signals = Prelude.and $ Prelude.zipWith compareOutputs expect result

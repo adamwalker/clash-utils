@@ -10,7 +10,7 @@ module Clash.Sort (
 
 import Clash.Prelude
 
-import Data.Singletons.Prelude
+import Data.Singletons.Prelude (Apply, TyFun, type (@@))
 import Data.Proxy
 
 compareAndSwap :: (Ord a) => a -> a -> (a, a)

@@ -8,7 +8,7 @@ module Clash.PseudoLRUTree (
     ) where
 
 import Clash.Prelude
-import Data.Singletons.Prelude
+import Data.Singletons.Prelude (Apply, TyFun, type (@@))
 import Data.Proxy
 
 --
