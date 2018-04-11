@@ -3,7 +3,7 @@ module CRCSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset)
+                      HiddenClockReset, lift)
 import GHC.TypeLits
 import Test.Hspec
 import Test.QuickCheck
@@ -101,4 +101,10 @@ prop_crc32_multistep_verify x = unpack result == expect
     words = unpack x 
     result :: BitVector 32
     result = foldl step 0 words
+
+prop_crc32_table_th :: BitVector 128 -> Bool
+prop_crc32_table_th x = result == expect
+    where
+    expect = pack $ crcSteps crc32Poly (Clash.repeat 0) x
+    result = crcTable $(lift $ (makeCRCTable (pack . crcSteps crc32Poly (Clash.repeat 0)) :: Vec 128 (BitVector 32))) x
 
