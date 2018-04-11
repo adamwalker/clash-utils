@@ -32,7 +32,7 @@ system
             String
         ) 
     -> Signal dom (Maybe (Index 3, Unsigned 12, String))
-system inp = cuckoo (Clash.map hashFunc (0 :> 1 :> 2 :> Nil)) (sequenceA writes) req
+system inp = cuckoo (\val -> Clash.map (flip hashFunc val) (0 :> 1 :> 2 :> Nil)) (sequenceA writes) req
     where
     (writes, req) = unbundle inp
 
