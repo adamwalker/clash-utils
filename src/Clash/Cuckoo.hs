@@ -1,4 +1,4 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards, StandaloneDeriving, DeriveAnyClass, DeriveGeneric #-}
 
 {-| Implements the lookup side of a <https://en.wikipedia.org/wiki/Cuckoo_hashing Cuckoo hashtable>.
 
@@ -10,12 +10,15 @@ module Clash.Cuckoo (
     cuckoo
     ) where
 
+import GHC.Generics
 import Clash.Prelude
 
 data TableEntry k v = TableEntry {
     key   :: k,
     value :: v
-}
+} deriving (Generic)
+
+deriving instance (BitPack k, BitPack v, KnownNat (BitSize v)) => BitPack (TableEntry k v)
 
 {-| The lookup side of a Cuckoo hashtable. Uses split tables. Allows the hashes to be computed in advance, possibly over multiple cycles. -}
 cuckoo' 
