@@ -25,17 +25,18 @@ blockRamFIFO
 blockRamFIFO size rReq wData wReq = (ramOut, empty, full)
     where
     --The backing ram
-    ramOut = readNew (blockRam (repeat def :: Vec size a)) rAddr' (mux wEn (Just <$> bundle (wAddr, wData)) (pure Nothing))
+    ramOut = blockRam (repeat def :: Vec size a) rAddr' (mux wEn (Just <$> bundle (wAddr, wData)) (pure Nothing))
     --The status signals
-    empty  = wAddr .==. rAddr
+    empty  = (register 0 wAddr) .==. rAddr
     full   = rAddr .==. (wrappingInc <$> wAddr)
     --Only write if there is space
     wEn    = wReq .&&. fmap not full
+    rEn    = rReq .&&. fmap not empty
     --The read and write pointers
     wAddr, rAddr :: Signal dom (Index size)
-    wAddr = register 0 $ mux wEn            (wrappingInc <$> wAddr) wAddr
-    rAddr' = mux (rReq .&&. fmap not empty) (wrappingInc <$> rAddr) rAddr
-    rAddr = register 0 rAddr'
+    wAddr  = register 0 $ mux wEn (wrappingInc <$> wAddr) wAddr
+    rAddr' = mux rEn (wrappingInc <$> rAddr) rAddr
+    rAddr  = register 0 rAddr'
 
     wrappingInc :: Index size -> Index size
     wrappingInc val
@@ -61,17 +62,18 @@ blockRamFIFOMaybe size rReq write = (mux empty (pure Nothing) (Just <$> ramOut),
         func _     Nothing    _     = Nothing
         func _     (Just dat) wAddr = Just (wAddr, dat)
     --The backing ram
-    ramOut = readNew (blockRam (repeat def :: Vec size a)) rAddr' writeCommand
+    ramOut = blockRam (repeat def :: Vec size a) rAddr' writeCommand
     --The status signals
-    empty  = wAddr .==. rAddr
+    empty  = (register 0 wAddr) .==. rAddr
     full   = rAddr .==. (wrappingInc <$> wAddr)
     --Only write if there is space
     wEn    = fmap not full
+    rEn    = rReq .&&. fmap not empty
     --The read and write pointers
     wAddr, rAddr :: Signal dom (Index size)
-    wAddr = register 0 $ mux (isJust <$> writeCommand) (wrappingInc <$> wAddr) wAddr
-    rAddr' = mux (rReq .&&. fmap not empty)   (wrappingInc <$> rAddr) rAddr
-    rAddr = register 0 rAddr'
+    wAddr  = register 0 $ mux (isJust <$> writeCommand) (wrappingInc <$> wAddr) wAddr
+    rAddr' = mux rEn (wrappingInc <$> rAddr) rAddr
+    rAddr  = register 0 rAddr'
 
     wrappingInc :: Index size -> Index size
     wrappingInc val
