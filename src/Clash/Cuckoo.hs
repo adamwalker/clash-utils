@@ -8,7 +8,7 @@ module Clash.Cuckoo (
     TableEntry(..),
     cuckoo',
     cuckoo,
-    cuckooWithInsert
+    fullCuckoo
     ) where
 
 import GHC.Generics
@@ -61,18 +61,19 @@ cuckoo hashFunctions tableUpdates lookupKey = cuckoo' tableUpdates hashes lookup
     hashes :: Vec (m + 1) (Signal dom (Unsigned n))
     hashes = sequenceA $ hashFunctions <$> lookupKey
 
-cuckooWithInsert
+fullCuckoo 
     :: forall dom gated sync m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
     -> Signal dom v
+    -> Signal dom Bool
     -> Signal dom Bool
     -> (
         Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
         Signal dom Bool, 
         Signal dom Bool
         )
-cuckooWithInsert hashFunctions key' value' insert = (lookupResult, isJust <$> writebackStage, insertingDone)
+fullCuckoo hashFunctions key' value' insert delete = (lookupResult, isJust <$> writebackStage, insertingDone)
     where
 
     --------------------------------------------------------------------------------
@@ -130,23 +131,37 @@ cuckooWithInsert hashFunctions key' value' insert = (lookupResult, isJust <$> wr
         selectIndex _    _                  (Just freeSlot) _       = freeSlot --We found a free slot
         selectIndex _    _                  _               toEvict = toEvict  --No free slots, so we are evicting
 
+    deleting = register False delete
+
     --Save the hashes of the evicted entry
     hashesD :: Vec (m + 1) (Signal dom (Unsigned n))
     hashesD =  map (register (errorX "initial registered hashes")) hashes
 
     --Update the chosen index if we are inserting with either the data to insert or the previously evicted table entry
     tableUpdates :: Vec (m + 1) (Signal dom (Maybe (Unsigned n, Maybe (TableEntry k v))))
-    tableUpdates =  map (\idx -> genTableUpdate idx <$> indexToUpdate <*> writebackStage <*> sequenceA hashesD) $ iterateI (+1) 0
+    tableUpdates =  map (\idx -> genTableUpdate idx <$> indexToUpdate <*> writebackStage <*> deleting <*> lookupResult <*> sequenceA hashesD) $ iterateI (+1) 0
         where
         genTableUpdate
             :: Index (m + 1) 
             -> Index (m + 1) 
             -> Maybe (TableEntry k v)
+            -> Bool
+            -> Maybe (Index (m + 1), Unsigned n, v)
             -> Vec (m + 1) (Unsigned n)
             -> Maybe (Unsigned n, Maybe (TableEntry k v))
-        genTableUpdate currIdx idxToUpdate toInsert tableRow
-            | Just toInsert <- toInsert, currIdx == idxToUpdate = Just (tableRow !! currIdx, Just toInsert)
-            | otherwise                                         = Nothing
+        genTableUpdate currIdx idxToUpdate toInsert deleting lookupResult tableRow
+
+            | Just toInsert <- toInsert
+            , currIdx == idxToUpdate 
+            = Just (tableRow !! currIdx, Just toInsert)
+
+            | deleting
+            , Just (foundIndex, foundRow, _) <- lookupResult
+            , currIdx == foundIndex 
+            = Just (foundRow, Nothing)
+
+            | otherwise 
+            = Nothing
 
     --------------------------------------------------------------------------------
     --This stuff is common to lookups, deletes and inserts
