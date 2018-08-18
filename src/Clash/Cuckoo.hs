@@ -8,6 +8,7 @@ module Clash.Cuckoo (
     TableEntry(..),
     cuckoo',
     cuckoo,
+    fullCuckoo',
     fullCuckoo
     ) where
 
@@ -61,9 +62,9 @@ cuckoo hashFunctions tableUpdates lookupKey = cuckoo' tableUpdates hashes lookup
     hashes :: Vec (m + 1) (Signal dom (Unsigned n))
     hashes = sequenceA $ hashFunctions <$> lookupKey
 
-fullCuckoo 
+fullCuckoo'
     :: forall dom gated sync m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k)
-    => (k -> Vec (m + 1) (Unsigned n))                                       
+    => Vec (m + 1) (Signal dom (Unsigned n))
     -> Signal dom k                                                          
     -> Signal dom v
     -> Signal dom Bool
@@ -71,29 +72,23 @@ fullCuckoo
     -> (
         Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
         Signal dom Bool, 
-        Signal dom Bool
+        Signal dom Bool,
+        Signal dom (TableEntry k v)
         )
-fullCuckoo hashFunctions key' value' insert delete = (lookupResult, isJust <$> writebackStage, insertingDone)
+fullCuckoo' hashes key' value' insert delete = (lookupResult, isJust <$> writebackStage, insertingDone, evictedEntry)
     where
 
     --------------------------------------------------------------------------------
     --Insertion logic
     --------------------------------------------------------------------------------
 
-    --Insert/modify/delete begin by looking up the entry
-    lookupStage :: Signal dom (TableEntry k v)
-    lookupStage =  mux
-        ((isJust <$> writebackStage) .&&. not <$> insertingDone)
-        evictedEntry
-        (TableEntry <$> key' <*> value')
-
     writebackStage :: Signal dom (Maybe (TableEntry k v))
-    writebackStage =  medvedevB step Nothing (insert, insertingDone, lookupStage)
+    writebackStage =  medvedevB step Nothing (insert, insertingDone, evictedEntry, TableEntry <$> key' <*> value')
         where
-        step Nothing  (True,   _,     lookupStage) = Just lookupStage
-        step Nothing  (False,  _,     _)           = Nothing
-        step (Just _) (_,      True,  _)           = Nothing
-        step (Just _) (_,      False, lookupStage) = Just lookupStage
+        step Nothing  (True,   _,     _,            insertEntry) = Just insertEntry
+        step Nothing  (False,  _,     _,            _          ) = Nothing
+        step (Just _) (_,      True,  _,            _          ) = Nothing
+        step (Just _) (_,      False, evictedEntry, _          ) = Just evictedEntry
 
     insertingDone :: Signal dom Bool
     insertingDone =  (isJust <$> freeSlot) .||. (firstInsertCycle .&&. isJust <$> lookupResult)
@@ -167,10 +162,6 @@ fullCuckoo hashFunctions key' value' insert delete = (lookupResult, isJust <$> w
     --This stuff is common to lookups, deletes and inserts
     --------------------------------------------------------------------------------
 
-    --Calculate the lookup hashes
-    hashes :: Vec (m + 1) (Signal dom (Unsigned n))
-    hashes =  sequenceA $ hashFunctions . key <$> lookupStage
-
     --Do the lookups
     fromMem :: Vec (m + 1) (Signal dom (Maybe (TableEntry k v)))
     fromMem =  zipWith (blockRamPow2 (repeat Nothing)) hashes tableUpdates
@@ -188,4 +179,32 @@ fullCuckoo hashFunctions key' value' insert delete = (lookupResult, isJust <$> w
 
     lookupResult :: Signal dom (Maybe (Index (m + 1), Unsigned n, v))
     lookupResult =  fold (liftA2 (<|>)) candidates
+
+fullCuckoo 
+    :: forall dom gated sync m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k)
+    => (k -> Vec (m + 1) (Unsigned n))                                       
+    -> Signal dom k                                                          
+    -> Signal dom v
+    -> Signal dom Bool
+    -> Signal dom Bool
+    -> (
+        Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
+        Signal dom Bool, 
+        Signal dom Bool
+        )
+fullCuckoo hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone)
+    where
+
+    --Mux the key to lookup
+    toLookup :: Signal dom k
+    toLookup =  mux
+        (inserting .&&. not <$> insertingDone)
+        (key <$> evictedEntry)
+        key'
+
+    --Calculate the lookup hashes
+    hashes :: Vec (m + 1) (Signal dom (Unsigned n))
+    hashes =  sequenceA $ hashFunctions <$> toLookup
+
+    (lookupResult, inserting, insertingDone, evictedEntry) = fullCuckoo' hashes key' value' insert delete
 
