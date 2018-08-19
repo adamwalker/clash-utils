@@ -69,29 +69,40 @@ fullCuckoo'
     -> Signal dom v
     -> Signal dom Bool
     -> Signal dom Bool
+    -> Signal dom Bool
     -> (
         Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
         Signal dom Bool, 
         Signal dom Bool,
-        Signal dom (TableEntry k v)
+        Signal dom (TableEntry k v),
+        Signal dom Bool
         )
-fullCuckoo' hashes key' value' insert delete = (lookupResult, isJust <$> writebackStage, insertingDone, evictedEntry)
+fullCuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, isJust <$> writebackStage, insertingDone, evictedEntry, hashRequest)
     where
 
     --------------------------------------------------------------------------------
     --Insertion logic
     --------------------------------------------------------------------------------
+    hashRequest = (isJust <$> writebackStage) .&&. (not <$> insertingDone) .&&. (evictedHashesDoneD .||. firstInsertCycle)
+
+    --Is the memory read data (which depends on the computed hashes during eviction) ready?
+    evictedHashesDoneD :: Signal dom Bool
+    evictedHashesDoneD =  register False evictedHashesDone
 
     writebackStage :: Signal dom (Maybe (TableEntry k v))
-    writebackStage =  medvedevB step Nothing (insert, insertingDone, evictedEntry, TableEntry <$> key' <*> value')
+    writebackStage =  medvedevB step Nothing (evictedHashesDoneD .||. firstInsertCycle, insert, insertingDone, evictedEntry, TableEntry <$> key' <*> value')
         where
-        step Nothing  (True,   _,     _,            insertEntry) = Just insertEntry
-        step Nothing  (False,  _,     _,            _          ) = Nothing
-        step (Just _) (_,      True,  _,            _          ) = Nothing
-        step (Just _) (_,      False, evictedEntry, _          ) = Just evictedEntry
+        step Nothing   (_,      True,   _,     _,            insertEntry) = Just insertEntry   --Insert request and we are idle
+        step Nothing   (_,      False,  _,     _,            _          ) = Nothing            --No requests and we are idle
+        step (Just _)  (_,      _,      True,  _,            _          ) = Nothing            --We are finished inserting
+        step (Just st) (False,  _,      _,     _,            _          ) = Just st            --We are evicting but the hashes aren't done yet
+        step (Just _)  (True,   _,      False, evictedEntry, _          ) = Just evictedEntry  --We are evicting and the hashes are done but we didnt find a slot
 
     insertingDone :: Signal dom Bool
-    insertingDone =  (isJust <$> freeSlot) .||. (firstInsertCycle .&&. isJust <$> lookupResult)
+    insertingDone 
+        = mux firstInsertCycle 
+              (isJust <$> freeSlot .||. isJust <$> lookupResult)
+              (isJust <$> freeSlot .&&. evictedHashesDoneD) 
 
     --Find a free slot to replace, if any
     freeSlot :: Signal dom (Maybe (Index (m + 1)))
@@ -134,7 +145,15 @@ fullCuckoo' hashes key' value' insert delete = (lookupResult, isJust <$> writeba
 
     --Update the chosen index if we are inserting with either the data to insert or the previously evicted table entry
     tableUpdates :: Vec (m + 1) (Signal dom (Maybe (Unsigned n, Maybe (TableEntry k v))))
-    tableUpdates =  map (\idx -> genTableUpdate idx <$> indexToUpdate <*> writebackStage <*> deleting <*> lookupResult <*> sequenceA hashesD) $ iterateI (+1) 0
+    tableUpdates =  map (\idx -> 
+        genTableUpdate idx 
+            <$> indexToUpdate 
+            <*> writebackStage 
+            <*> deleting 
+            <*> lookupResult 
+            <*> sequenceA hashesD 
+            <*> (firstInsertCycle .||. evictedHashesDoneD)
+            ) $ iterateI (+1) 0
         where
         genTableUpdate
             :: Index (m + 1) 
@@ -143,11 +162,13 @@ fullCuckoo' hashes key' value' insert delete = (lookupResult, isJust <$> writeba
             -> Bool
             -> Maybe (Index (m + 1), Unsigned n, v)
             -> Vec (m + 1) (Unsigned n)
+            -> Bool
             -> Maybe (Unsigned n, Maybe (TableEntry k v))
-        genTableUpdate currIdx idxToUpdate toInsert deleting lookupResult tableRow
+        genTableUpdate currIdx idxToUpdate toInsert deleting lookupResult tableRow hashesReady
 
             | Just toInsert <- toInsert
             , currIdx == idxToUpdate 
+            , hashesReady
             = Just (tableRow !! currIdx, Just toInsert)
 
             | deleting
@@ -168,7 +189,7 @@ fullCuckoo' hashes key' value' insert delete = (lookupResult, isJust <$> writeba
 
     --Check if each item returned from memory matches
     candidates :: Vec (m + 1) (Signal dom (Maybe (Index (m + 1), Unsigned n, v)))
-    candidates =  izipWith (\idx -> liftA3 (checkCandidate idx) (register (errorX "key") key')) (map (register (errorX "initial hashes")) hashes) fromMem 
+    candidates =  izipWith (\idx -> liftA3 (checkCandidate idx) (register (errorX "key") key')) hashesD fromMem 
         where
         --Get rid of signals
         checkCandidate :: Index (m + 1) -> k -> Unsigned n -> Maybe (TableEntry k v) -> Maybe (Index (m + 1), Unsigned n, v)
@@ -196,15 +217,21 @@ fullCuckoo hashFunctions key' value' insert delete = (lookupResult, inserting, i
     where
 
     --Mux the key to lookup
-    toLookup :: Signal dom k
-    toLookup =  mux
-        (inserting .&&. not <$> insertingDone)
-        (key <$> evictedEntry)
+    hashRequestD :: Signal dom Bool
+    hashRequestD = register False hashRequest
+
+    keyD :: Signal dom k
+    keyD =  regEn (errorX "initial key") hashRequest $ key <$> evictedEntry
+
+    toHash :: Signal dom k
+    toHash =  mux
+        hashRequestD
+        keyD
         key'
 
     --Calculate the lookup hashes
     hashes :: Vec (m + 1) (Signal dom (Unsigned n))
-    hashes =  sequenceA $ hashFunctions <$> toLookup
+    hashes =  sequenceA $ hashFunctions <$> toHash
 
-    (lookupResult, inserting, insertingDone, evictedEntry) = fullCuckoo' hashes key' value' insert delete
+    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest) = fullCuckoo' hashes key' value' insert delete hashRequestD
 
