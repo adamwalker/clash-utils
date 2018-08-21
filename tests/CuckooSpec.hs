@@ -28,7 +28,7 @@ spec = describe "Cuckoo hash table" $ do
     specify "Deletes elements" $ property $ forAll (choose (0, 2)) $ \idx k v -> 
         simulate_lazy system (testVecDelete idx k v) !! 3 == Nothing
 
-    specify "fullCuckoo works with randomised operations" $ forAll genOps $ \ops -> Prelude.last (sampleN 8000 (testHarness (Prelude.take 4000 ops))) == Just True
+    specify "fullCuckoo works with randomised operations" $ forAll genOps $ \ops -> Prelude.last (sampleN 50000 (testHarness (Prelude.take 4000 ops))) == Just True
     specify "fullCuckoo works with high load"             $ property testInserts
 
 system 
@@ -95,7 +95,7 @@ insertTestHarness
     :: forall dom gated sync. HiddenClockReset dom gated sync
     => [(Int, String)]
     -> Signal dom (Bool, Bool)
-insertTestHarness vals = bundle (register True insertingPhase .||. success, done)
+insertTestHarness vals = bundle (register True (register True insertingPhase) .||. success, done)
     where
 
     inserted :: Signal dom Int
@@ -122,7 +122,7 @@ insertTestHarness vals = bundle (register True insertingPhase .||. success, done
         func True  lookupsRemaining = (False, lookupsRemaining, 0)
         func False []               = (True,  [], 0)
         func False (x:xs)           = (False, xs, fst x)
-    expect                   = register Nothing $ flip Map.lookup (Map.fromList (Prelude.take 2800 vals)) <$> insertKey
+    expect                   = register Nothing $ register Nothing $ flip Map.lookup (Map.fromList (Prelude.take 2800 vals)) <$> insertKey
     success                  = expect .==. fmap (fmap sel3) lookupResult
 
 testInserts (InfiniteList insertSeq _) = finished && success
@@ -193,7 +193,7 @@ genOps = genOps' $ Map.empty
             return (Delete key, Map.delete key accum)
 
 data OpState 
-    = LookupState (Maybe String)
+    = LookupState (Maybe String) Bool
     | InsertState 
     | IdleState
 
@@ -233,14 +233,15 @@ testHarness ops = result
         | insertDone = (st,                       (Nothing, emptyControlSigs))
         | otherwise  = (InProgress IdleState ops, (Nothing, emptyControlSigs))
 
-    step (InProgress (LookupState val) ops) (lookupVal, _) 
+    step (InProgress (LookupState val lookupReady) ops) (lookupVal, _) 
+        | not lookupReady  = (InProgress (LookupState val True) ops, (Nothing, emptyControlSigs))
         | val == lookupVal = (ns,      (Nothing, out))
         | otherwise        = (Failure, (Nothing, emptyControlSigs)) 
         where (out, ns) = nextState ops
 
     nextState []                     = (emptyControlSigs,         Success)
-    nextState (Lookup key val : ops) = ((key, "",  False, False), InProgress (LookupState val) ops)
-    nextState (Insert key val : ops) = ((key, val, True,  False), InProgress InsertState       ops)
-    nextState (Delete key     : ops) = ((key, "",  False, True),  InProgress IdleState         (Idle : ops))
-    nextState (Idle           : ops) = (emptyControlSigs,         InProgress IdleState         ops)
+    nextState (Lookup key val : ops) = ((key, "",  False, False), InProgress (LookupState val False) ops)
+    nextState (Insert key val : ops) = ((key, val, True,  False), InProgress InsertState             ops)
+    nextState (Delete key     : ops) = ((key, "",  False, True),  InProgress IdleState               (Idle : Idle : Idle : ops))
+    nextState (Idle           : ops) = (emptyControlSigs,         InProgress IdleState               ops)
 

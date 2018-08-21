@@ -80,29 +80,30 @@ fullCuckoo'
 fullCuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, isJust <$> writebackStage, insertingDone, evictedEntry, hashRequest)
     where
 
+    progressInsert :: Signal dom Bool
+    progressInsert = register False $ register False $ evictedHashesDone .||. firstInsertCycle
+
     --------------------------------------------------------------------------------
     --Insertion logic
     --------------------------------------------------------------------------------
-    hashRequest = (isJust <$> writebackStage) .&&. (not <$> insertingDone) .&&. (evictedHashesDoneD .||. firstInsertCycle)
+    hashRequest = (isJust <$> writebackStage) .&&. (not <$> insertingDone) .&&. progressInsert
 
-    --Is the memory read data (which depends on the computed hashes during eviction) ready?
-    evictedHashesDoneD :: Signal dom Bool
-    evictedHashesDoneD =  register False evictedHashesDone
+    --Track if this is the first insert writeback cycle. If it is we must consider the case where the key was already in the hashtable
+    firstInsertCycle   = insert .&&. ((isNothing <$> writebackStage) .||. insertingDone)
+    firstInsertCycleD  = register False firstInsertCycle
+    firstInsertCycleDD = register False firstInsertCycleD
 
     writebackStage :: Signal dom (Maybe (TableEntry k v))
-    writebackStage =  medvedevB step Nothing (evictedHashesDoneD .||. firstInsertCycle, insert, insertingDone, evictedEntry, TableEntry <$> key' <*> value')
+    writebackStage =  medvedevB step Nothing (progressInsert, insert, insertingDone, evictedEntry, TableEntry <$> key' <*> value')
         where
         step Nothing   (_,      True,   _,     _,            insertEntry) = Just insertEntry   --Insert request and we are idle
         step Nothing   (_,      False,  _,     _,            _          ) = Nothing            --No requests and we are idle
-        step (Just _)  (_,      _,      True,  _,            _          ) = Nothing            --We are finished inserting
         step (Just st) (False,  _,      _,     _,            _          ) = Just st            --We are evicting but the hashes aren't done yet
-        step (Just _)  (True,   _,      False, evictedEntry, _          ) = Just evictedEntry  --We are evicting and the hashes are done but we didnt find a slot
+        step (Just _)  (_,      _,      True,  _,            _          ) = Nothing            --We are finished inserting
+        step (Just _)  (_,      _,      False, evictedEntry, _          ) = Just evictedEntry  --We are evicting and the hashes are done but we didnt find a slot
 
     insertingDone :: Signal dom Bool
-    insertingDone 
-        = mux firstInsertCycle 
-              (isJust <$> freeSlot .||. isJust <$> lookupResult)
-              (isJust <$> freeSlot .&&. evictedHashesDoneD) 
+    insertingDone = progressInsert .&&. ((isJust <$> freeSlot) .||. (isJust <$> lookupResult .&&. firstInsertCycleDD))
 
     --Find a free slot to replace, if any
     freeSlot :: Signal dom (Maybe (Index (m + 1)))
@@ -114,7 +115,7 @@ fullCuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, 
 
     --Freerunning counter for randomly choosing table to evict from
     toEvict :: Signal dom (Index (m + 1))
-    toEvict =  register 0 $ func <$> toEvict
+    toEvict =  regEn 0 progressInsert $ func <$> toEvict
         where
         func x
             | x == maxBound = 0
@@ -126,22 +127,23 @@ fullCuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, 
     evictedEntry :: Signal dom (TableEntry k v)
     evictedEntry =  fmap fromJust $ (!!) <$> sequenceA fromMem <*> toEvict
 
-    --Track if this is the first insert writeback cycle. If it is we must consider the case where the key was already in the hashtable
-    firstInsertCycle = register False $ insert .&&. ((isNothing <$> writebackStage) .||. insertingDone)
-
     --Calculate the index to update. Prefer free slot, otherwise evict.
     indexToUpdate :: Signal dom (Index (m + 1))
-    indexToUpdate =  selectIndex <$> firstInsertCycle <*> lookupResult <*> freeSlot <*> toEvict
+    indexToUpdate =  selectIndex <$> firstInsertCycleDD <*> lookupResult <*> freeSlot <*> toEvict
         where
         selectIndex True (Just (idx, _, _)) _               _       = idx      --We are modifying an existing entry
         selectIndex _    _                  (Just freeSlot) _       = freeSlot --We found a free slot
         selectIndex _    _                  _               toEvict = toEvict  --No free slots, so we are evicting
 
-    deleting = register False delete
+    deleteD  = register False delete
+    deleteDD = register False deleteD
 
     --Save the hashes of the evicted entry
     hashesD :: Vec (m + 1) (Signal dom (Unsigned n))
     hashesD =  map (register (errorX "initial registered hashes")) hashes
+
+    hashesDD :: Vec (m + 1) (Signal dom (Unsigned n))
+    hashesDD =  map (register (errorX "initial registered hashes")) hashesD
 
     --Update the chosen index if we are inserting with either the data to insert or the previously evicted table entry
     tableUpdates :: Vec (m + 1) (Signal dom (Maybe (Unsigned n, Maybe (TableEntry k v))))
@@ -149,10 +151,10 @@ fullCuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, 
         genTableUpdate idx 
             <$> indexToUpdate 
             <*> writebackStage 
-            <*> deleting 
-            <*> lookupResult 
-            <*> sequenceA hashesD 
-            <*> (firstInsertCycle .||. evictedHashesDoneD)
+            <*> deleteDD
+            <*> lookupResult
+            <*> sequenceA hashesDD
+            <*> progressInsert
             ) $ iterateI (+1) 0
         where
         genTableUpdate
@@ -166,9 +168,9 @@ fullCuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, 
             -> Maybe (Unsigned n, Maybe (TableEntry k v))
         genTableUpdate currIdx idxToUpdate toInsert deleting lookupResult tableRow hashesReady
 
-            | Just toInsert <- toInsert
+            | hashesReady
+            , Just toInsert <- toInsert
             , currIdx == idxToUpdate 
-            , hashesReady
             = Just (tableRow !! currIdx, Just toInsert)
 
             | deleting
@@ -185,11 +187,17 @@ fullCuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, 
 
     --Do the lookups
     fromMem :: Vec (m + 1) (Signal dom (Maybe (TableEntry k v)))
-    fromMem =  zipWith (blockRamPow2 (repeat Nothing)) hashes tableUpdates
+    fromMem =  map (register undefined) $ zipWith (blockRamPow2 (repeat Nothing)) hashes tableUpdates
+
+    keyD :: Signal dom k
+    keyD =  register (errorX "key") key'
+
+    keyDD :: Signal dom k
+    keyDD =  register (errorX "key") keyD
 
     --Check if each item returned from memory matches
     candidates :: Vec (m + 1) (Signal dom (Maybe (Index (m + 1), Unsigned n, v)))
-    candidates =  izipWith (\idx -> liftA3 (checkCandidate idx) (register (errorX "key") key')) hashesD fromMem 
+    candidates =  izipWith (\idx -> liftA3 (checkCandidate idx) keyDD) hashesDD fromMem 
         where
         --Get rid of signals
         checkCandidate :: Index (m + 1) -> k -> Unsigned n -> Maybe (TableEntry k v) -> Maybe (Index (m + 1), Unsigned n, v)
