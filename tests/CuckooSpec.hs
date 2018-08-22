@@ -28,8 +28,8 @@ spec = describe "Cuckoo hash table" $ do
     specify "Deletes elements" $ property $ forAll (choose (0, 2)) $ \idx k v -> 
         simulate_lazy system (testVecDelete idx k v) !! 3 == Nothing
 
-    specify "fullCuckoo works with randomised operations" $ forAll genOps $ \ops -> Prelude.last (sampleN 50000 (testHarness (Prelude.take 4000 ops))) == Just True
-    specify "fullCuckoo works with high load"             $ property testInserts
+    specify "Cuckoo works with randomised operations" $ forAll genOps $ \ops -> Prelude.last (sampleN 50000 (testHarness (Prelude.take 4000 ops))) == Just True
+    specify "Cuckoo works with high load"             $ property testInserts
 
 system 
     :: HiddenClockReset dom gated sync 
@@ -38,7 +38,7 @@ system
             String
         ) 
     -> Signal dom (Maybe (Index 3, Unsigned 12, String))
-system inp = cuckoo (\val -> Clash.map (flip hashFunc val) (0 :> 1 :> 2 :> Nil)) (sequenceA writes) req
+system inp = cuckooLookup (\val -> Clash.map (flip hashFunc val) (0 :> 1 :> 2 :> Nil)) (sequenceA writes) req
     where
     (writes, req) = unbundle inp
 
@@ -101,7 +101,7 @@ insertTestHarness vals = bundle (register True (register True insertingPhase) .|
     inserted :: Signal dom Int
     inserted = regEn 0 (inserting .&&. insertingDone) (inserted + 1)
     
-    (lookupResult, inserting, insertingDone) = fullCuckoo hashFuncs insertKey insertValue insert (pure False)
+    (lookupResult, inserting, insertingDone) = cuckoo hashFuncs insertKey insertValue insert (pure False)
 
     hashFuncs :: Int -> Vec 3 (Unsigned 10)
     hashFuncs x = Clash.map (\idx -> fromIntegral $ (`mod` 1024) $ hashWithSalt idx x) (iterateI (+1) 0)
@@ -210,7 +210,7 @@ testHarness ops = result
     where
 
     --DUT
-    (lookupVal, insertDone, _) = fullCuckoo hashFuncs key value insert delete
+    (lookupVal, insertDone, _) = cuckoo hashFuncs key value insert delete
 
     hashFuncs :: String -> Vec 3 (Unsigned 10)
     hashFuncs x = Clash.map (\idx -> fromIntegral $ (`mod` 1024) $ hashWithSalt idx x) (iterateI (+1) 0)
