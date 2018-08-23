@@ -3,17 +3,21 @@ module CuckooSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN)
+                      HiddenClockReset, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice)
 
 import Test.Hspec
 import Test.QuickCheck hiding ((.||.), (.&&.), Success, Failure)
 
 import Data.Hashable
 import Data.List
-import Clash.Cuckoo
 import qualified Data.Map as Map
 import Data.Map (Map)
 import Data.Tuple.All
+import qualified Data.ByteString as BS
+import Data.Digest.CRC32
+
+import Clash.CRC
+import Clash.Cuckoo
 
 spec = describe "Cuckoo hash table" $ do
 
@@ -93,7 +97,7 @@ testVecDelete idx k v = [write, delete, lookup, null]
 
 insertTestHarness
     :: forall dom gated sync. HiddenClockReset dom gated sync
-    => [(Int, String)]
+    => [(BitVector 32, BitVector 32)]
     -> Signal dom (Bool, Bool)
 insertTestHarness vals = bundle (register True (register True insertingPhase) .||. success, done)
     where
@@ -103,26 +107,31 @@ insertTestHarness vals = bundle (register True (register True insertingPhase) .|
     
     (lookupResult, inserting, insertingDone) = cuckoo hashFuncs insertKey insertValue insert (pure False)
 
-    hashFuncs :: Int -> Vec 3 (Unsigned 10)
-    hashFuncs x = Clash.map (\idx -> fromIntegral $ (`mod` 1024) $ hashWithSalt idx x) (iterateI (+1) 0)
+    hashFuncs :: BitVector 32 -> Vec 3 (Unsigned 10)
+    hashFuncs x = unpack (slice (SNat @ 9) (SNat @ 0) crc) :> unpack (slice (SNat @ 19) (SNat @ 10) crc) :> unpack (slice (SNat @ 29) (SNat @ 20) crc) :> Nil
+        where
+        crc :: Unsigned 32
+        crc = fromIntegral $ crc32 $ BS.pack $ Prelude.map fromIntegral [slice (SNat @ 31) (SNat @24) x, slice (SNat @ 23) (SNat @ 16) x, slice (SNat @ 15) (SNat @ 8) x, slice (SNat @ 7) (SNat @ 0) x]
 
     (insertKey', insertValue, insert') = unbundle $ mealy step vals inserting
         where
-        step :: [(Int, String)] -> Bool -> ([(Int, String)], (Int, String, Bool))
-        step []             _     = ([],   (0, "", False))
-        step ((k,v) : rest) False = (rest, (k,   v, True))
-        step st             True  = (st,   (0, "", False))
+        step :: [(BitVector 32, BitVector 32)] -> Bool -> ([(BitVector 32, BitVector 32)], (BitVector 32, BitVector 32, Bool))
+        step []             _     = ([],   (0, 0, False))
+        step ((k,v) : rest) False = (rest, (k, v, True))
+        step st             True  = (st,   (0, 0, False))
 
-    insertingPhase = (inserted .<. 2800) .||. inserting
+    numItems = 2700
+
+    insertingPhase = (inserted .<. pure numItems) .||. inserting
     insert         = insert' .&&. insertingPhase
     insertKey      = mux insertingPhase insertKey' toLookup
 
-    (done, lookupsRemaining, toLookup) = unbundle $ register (False, Prelude.take 2800 vals, 0) $ func <$> insertingPhase <*> lookupsRemaining
+    (done, lookupsRemaining, toLookup) = unbundle $ register (False, Prelude.take numItems vals, 0) $ func <$> insertingPhase <*> lookupsRemaining
         where
         func True  lookupsRemaining = (False, lookupsRemaining, 0)
         func False []               = (True,  [], 0)
         func False (x:xs)           = (False, xs, fst x)
-    expect                   = register Nothing $ register Nothing $ flip Map.lookup (Map.fromList (Prelude.take 2800 vals)) <$> insertKey
+    expect                   = register Nothing $ register Nothing $ flip Map.lookup (Map.fromList (Prelude.take numItems vals)) <$> insertKey
     success                  = expect .==. fmap (fmap sel3) lookupResult
 
 testInserts (InfiniteList insertSeq _) = finished && success

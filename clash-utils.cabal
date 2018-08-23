@@ -97,6 +97,7 @@ Test-Suite test
         hashable                   >=1.2,
         data-default,
         tuple,
+        bytestring,
         ghc-typelits-natnormalise,
         ghc-typelits-knownnat,
         ghc-typelits-extra,
