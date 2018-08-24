@@ -1,9 +1,10 @@
+{-# LANGUAGE RankNTypes #-}
 module CuckooSpec where
 
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice)
+                      HiddenClockReset, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice, type (+), errorX)
 
 import Test.Hspec
 import Test.QuickCheck hiding ((.||.), (.&&.), Success, Failure)
@@ -32,8 +33,10 @@ spec = describe "Cuckoo hash table" $ do
     specify "Deletes elements" $ property $ forAll (choose (0, 2)) $ \idx k v -> 
         simulate_lazy system (testVecDelete idx k v) !! 3 == Nothing
 
-    specify "Cuckoo works with randomised operations" $ forAll genOps $ \ops -> Prelude.last (sampleN 50000 (testHarness (Prelude.take 4000 ops))) == Just True
-    specify "Cuckoo works with high load"             $ property testInserts
+    specify "Cuckoo works with randomised operations"   $ forAll genOps $ \ops -> Prelude.last (sampleN 50000 (testHarness cuckoo  (Prelude.take 4000 ops))) == Just True
+    specify "Cuckoo works with randomised operations 2" $ forAll genOps $ \ops -> Prelude.last (sampleN 50000 (testHarness cuckoo2 (Prelude.take 4000 ops))) == Just True
+    specify "Cuckoo works with high load"               $ property $ testInserts cuckoo
+    specify "Cuckoo works with high load 2"             $ property $ testInserts cuckoo2
 
 system 
     :: HiddenClockReset dom gated sync 
@@ -95,11 +98,57 @@ testVecDelete idx k v = [write, delete, lookup, null]
     lookup = (Clash.repeat Nothing, k)
     null   = (Clash.repeat Nothing, "")
 
+type Cuckoo = forall dom gated sync m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k)
+    => (k -> Vec (m + 1) (Unsigned n))                                       
+    -> Signal dom k                                                          
+    -> Signal dom v
+    -> Signal dom Bool
+    -> Signal dom Bool
+    -> (
+        Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
+        Signal dom Bool, 
+        Signal dom Bool
+        )
+cuckoo2
+    :: forall dom gated sync m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k)
+    => (k -> Vec (m + 1) (Unsigned n))                                       
+    -> Signal dom k                                                          
+    -> Signal dom v
+    -> Signal dom Bool
+    -> Signal dom Bool
+    -> (
+        Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
+        Signal dom Bool, 
+        Signal dom Bool
+        )
+cuckoo2 hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone)
+    where
+
+    --Mux the key to lookup
+    hashRequestD :: Signal dom Bool
+    hashRequestD = register False hashRequest
+
+    keyD :: Signal dom k
+    keyD =  regEn (errorX "initial key") hashRequest $ key <$> evictedEntry
+
+    toHash :: Signal dom k
+    toHash =  mux
+        hashRequestD
+        keyD
+        key'
+
+    --Calculate the lookup hashes
+    hashes :: Vec (m + 1) (Signal dom (Unsigned n))
+    hashes =  sequenceA $ hashFunctions <$> toHash
+
+    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest) = cuckoo' hashes key' value' insert delete hashRequestD
+
 insertTestHarness
     :: forall dom gated sync. HiddenClockReset dom gated sync
-    => [(BitVector 32, BitVector 32)]
+    => Cuckoo
+    -> [(BitVector 32, BitVector 32)]
     -> Signal dom (Bool, Bool)
-insertTestHarness vals = bundle (register True (register True insertingPhase) .||. success, done)
+insertTestHarness cuckoo vals = bundle (register True (register True insertingPhase) .||. success, done)
     where
 
     inserted :: Signal dom Int
@@ -134,9 +183,10 @@ insertTestHarness vals = bundle (register True (register True insertingPhase) .|
     expect                   = register Nothing $ register Nothing $ flip Map.lookup (Map.fromList (Prelude.take numItems vals)) <$> insertKey
     success                  = expect .==. fmap (fmap sel3) lookupResult
 
-testInserts (InfiniteList insertSeq _) = finished && success
+testInserts :: Cuckoo -> InfiniteList (BitVector 32, BitVector 32) -> Bool
+testInserts cuckoo (InfiniteList insertSeq _) = finished && success
     where
-    res      = sampleN_lazy 50000 $ insertTestHarness insertSeq
+    res      = sampleN_lazy 50000 $ insertTestHarness cuckoo insertSeq
     finished = elem True $ Prelude.map snd res
     success  = all id $ Prelude.map fst res
 
@@ -213,9 +263,10 @@ data TestbenchState
 
 testHarness 
     :: HiddenClockReset dom gated sync 
-    => [Op] 
+    => Cuckoo
+    -> [Op] 
     -> Signal dom (Maybe Bool)
-testHarness ops = result
+testHarness cuckoo ops = result
     where
 
     --DUT

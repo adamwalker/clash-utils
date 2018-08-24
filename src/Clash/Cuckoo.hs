@@ -223,23 +223,15 @@ cuckoo
         )
 cuckoo hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone)
     where
-
-    --Mux the key to lookup
-    hashRequestD :: Signal dom Bool
-    hashRequestD = register False hashRequest
-
-    keyD :: Signal dom k
-    keyD =  regEn (errorX "initial key") hashRequest $ key <$> evictedEntry
-
     toHash :: Signal dom k
     toHash =  mux
-        hashRequestD
-        keyD
+        hashRequest
+        (key <$> evictedEntry)
         key'
 
     --Calculate the lookup hashes
     hashes :: Vec (m + 1) (Signal dom (Unsigned n))
     hashes =  sequenceA $ hashFunctions <$> toHash
 
-    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest) = cuckoo' hashes key' value' insert delete hashRequestD
+    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest) = cuckoo' hashes key' value' insert delete hashRequest
 
