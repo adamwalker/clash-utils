@@ -98,7 +98,7 @@ testVecDelete idx k v = [write, delete, lookup, null]
     lookup = (Clash.repeat Nothing, k)
     null   = (Clash.repeat Nothing, "")
 
-type Cuckoo = forall dom gated sync m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k)
+type Cuckoo = forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
     -> Signal dom v
@@ -107,10 +107,11 @@ type Cuckoo = forall dom gated sync m n k v. (HiddenClockReset dom gated sync, K
     -> (
         Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
         Signal dom Bool, 
-        Signal dom Bool
+        Signal dom Bool,
+        Signal dom (Unsigned cnt)
         )
 cuckoo2
-    :: forall dom gated sync m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k)
+    :: forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
     -> Signal dom v
@@ -119,9 +120,10 @@ cuckoo2
     -> (
         Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
         Signal dom Bool, 
-        Signal dom Bool
+        Signal dom Bool,
+        Signal dom (Unsigned cnt)
         )
-cuckoo2 hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone)
+cuckoo2 hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone, insertIters)
     where
 
     --Mux the key to lookup
@@ -141,20 +143,26 @@ cuckoo2 hashFunctions key' value' insert delete = (lookupResult, inserting, inse
     hashes :: Vec (m + 1) (Signal dom (Unsigned n))
     hashes =  sequenceA $ hashFunctions <$> toHash
 
-    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest) = cuckoo' hashes key' value' insert delete hashRequestD
+    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest, insertIters) = cuckoo' hashes key' value' insert delete hashRequestD
 
 insertTestHarness
     :: forall dom gated sync. HiddenClockReset dom gated sync
     => Cuckoo
     -> [(BitVector 32, BitVector 32)]
-    -> Signal dom (Bool, Bool)
-insertTestHarness cuckoo vals = bundle (register True (register True insertingPhase) .||. success, done)
+    -> Signal dom ((Bool, Bool), Unsigned 16)
+insertTestHarness cuckoo vals = bundle (bundle (register True (register True insertingPhase) .||. success, done), numIters)
     where
 
     inserted :: Signal dom Int
     inserted = regEn 0 (inserting .&&. insertingDone) (inserted + 1)
+
+    maxInserts :: Signal dom (Unsigned 16)
+    maxInserts =  register 0 $ func <$> insertingDone <*> numIters <*> maxInserts
+        where
+        func False _ max' = max'
+        func True  n max' = max n max'
     
-    (lookupResult, inserting, insertingDone) = cuckoo hashFuncs insertKey insertValue insert (pure False)
+    (lookupResult, inserting, insertingDone, numIters) = cuckoo hashFuncs insertKey insertValue insert (pure False)
 
     hashFuncs :: BitVector 32 -> Vec 3 (Unsigned 10)
     hashFuncs x = unpack (slice (SNat @ 9) (SNat @ 0) crc) :> unpack (slice (SNat @ 19) (SNat @ 10) crc) :> unpack (slice (SNat @ 29) (SNat @ 20) crc) :> Nil
@@ -183,12 +191,12 @@ insertTestHarness cuckoo vals = bundle (register True (register True insertingPh
     expect                   = register Nothing $ register Nothing $ flip Map.lookup (Map.fromList (Prelude.take numItems vals)) <$> insertKey
     success                  = expect .==. fmap (fmap sel3) lookupResult
 
-testInserts :: Cuckoo -> InfiniteList (BitVector 32, BitVector 32) -> Bool
-testInserts cuckoo (InfiniteList insertSeq _) = finished && success
+testInserts :: Cuckoo -> InfiniteList (BitVector 32, BitVector 32) -> Property
+testInserts cuckoo (InfiniteList insertSeq _) = collect (last maxIterations) $ finished && success
     where
-    res      = sampleN_lazy 50000 $ insertTestHarness cuckoo insertSeq
-    finished = elem True $ Prelude.map snd res
-    success  = all id $ Prelude.map fst res
+    (res, maxIterations) = unzip $ sampleN_lazy 50000 $ insertTestHarness cuckoo insertSeq
+    finished             = elem True $ Prelude.map snd res
+    success              = all id $ Prelude.map fst res
 
 data Op
     = Lookup String (Maybe String)
@@ -262,7 +270,7 @@ data TestbenchState
     | InProgress OpState [Op] --State of current operation, remaining operations
 
 testHarness 
-    :: HiddenClockReset dom gated sync 
+    :: forall dom gated sync. HiddenClockReset dom gated sync 
     => Cuckoo
     -> [Op] 
     -> Signal dom (Maybe Bool)
@@ -270,7 +278,7 @@ testHarness cuckoo ops = result
     where
 
     --DUT
-    (lookupVal, insertDone, _) = cuckoo hashFuncs key value insert delete
+    (lookupVal, insertDone, _, _ :: Signal dom (Unsigned 16)) = cuckoo hashFuncs key value insert delete
 
     hashFuncs :: String -> Vec 3 (Unsigned 10)
     hashFuncs x = Clash.map (\idx -> fromIntegral $ (`mod` 1024) $ hashWithSalt idx x) (iterateI (+1) 0)

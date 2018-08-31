@@ -63,7 +63,7 @@ cuckooLookup hashFunctions tableUpdates lookupKey = cuckooLookup' tableUpdates h
     hashes = sequenceA $ hashFunctions <$> lookupKey
 
 cuckoo'
-    :: forall dom gated sync m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k)
+    :: forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt)
     => Vec (m + 1) (Signal dom (Unsigned n))
     -> Signal dom k                                                          
     -> Signal dom v
@@ -75,11 +75,24 @@ cuckoo'
         Signal dom Bool, 
         Signal dom Bool,
         Signal dom (TableEntry k v),
-        Signal dom Bool
+        Signal dom Bool,
+        Signal dom (Unsigned cnt)
         )
-cuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, isJust <$> writebackStage, insertingDone, evictedEntry, hashRequest)
+cuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, isJust <$> writebackStage, insertingDone, evictedEntry, hashRequest, insertIters)
     where
 
+    --------------------------------------------------------------------------------
+    --Stats
+    --------------------------------------------------------------------------------
+    insertIters = register 0 $ func <$> firstInsertCycle <*> (progressInsert .&&. isJust <$> writebackStage) <*> insertIters
+        where
+        func True  _    _ = 0
+        func _     True i = i + 1
+        func _     _    i = i
+
+    --------------------------------------------------------------------------------
+    --Insertion logic
+    --------------------------------------------------------------------------------
     progressInsert :: Signal dom Bool
     progressInsert = register False $ register False $ evictedHashesDone .||. firstInsertCycle
 
@@ -210,7 +223,7 @@ cuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, isJu
     lookupResult =  fold (liftA2 (<|>)) candidates
 
 cuckoo 
-    :: forall dom gated sync m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k)
+    :: forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
     -> Signal dom v
@@ -219,9 +232,10 @@ cuckoo
     -> (
         Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
         Signal dom Bool, 
-        Signal dom Bool
+        Signal dom Bool,
+        Signal dom (Unsigned cnt)
         )
-cuckoo hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone)
+cuckoo hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone, insertIters)
     where
     toHash :: Signal dom k
     toHash =  mux
@@ -233,5 +247,5 @@ cuckoo hashFunctions key' value' insert delete = (lookupResult, inserting, inser
     hashes :: Vec (m + 1) (Signal dom (Unsigned n))
     hashes =  sequenceA $ hashFunctions <$> toHash
 
-    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest) = cuckoo' hashes key' value' insert delete hashRequest
+    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest, insertIters) = cuckoo' hashes key' value' insert delete hashRequest
 
