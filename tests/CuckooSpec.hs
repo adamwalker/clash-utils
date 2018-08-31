@@ -35,8 +35,8 @@ spec = describe "Cuckoo hash table" $ do
 
     specify "Cuckoo works with randomised operations"   $ forAll genOps $ \ops -> Prelude.last (sampleN 50000 (testHarness cuckoo  (Prelude.take 4000 ops))) == Just True
     specify "Cuckoo works with randomised operations 2" $ forAll genOps $ \ops -> Prelude.last (sampleN 50000 (testHarness cuckoo2 (Prelude.take 4000 ops))) == Just True
-    specify "Cuckoo works with high load"               $ property $ testInserts cuckoo
-    specify "Cuckoo works with high load 2"             $ property $ testInserts cuckoo2
+    specify "Cuckoo works with high load"               $ property $ noShrinking $ testInserts cuckoo
+    specify "Cuckoo works with high load 2"             $ property $ noShrinking $ testInserts cuckoo2
 
 system 
     :: HiddenClockReset dom gated sync 
