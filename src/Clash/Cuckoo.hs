@@ -222,7 +222,7 @@ cuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, isJu
     lookupResult :: Signal dom (Maybe (Index (m + 1), Unsigned n, v))
     lookupResult =  fold (liftA2 (<|>)) candidates
 
-cuckoo 
+cuckoo
     :: forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
@@ -237,15 +237,24 @@ cuckoo
         )
 cuckoo hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone, insertIters)
     where
+
+    --Mux the key to lookup
+    hashRequestD :: Signal dom Bool
+    hashRequestD = register False hashRequest
+
+    keyD :: Signal dom k
+    keyD =  regEn (errorX "initial key") hashRequest $ key <$> evictedEntry
+
     toHash :: Signal dom k
     toHash =  mux
-        hashRequest
-        (key <$> evictedEntry)
+        hashRequestD
+        keyD
         key'
 
     --Calculate the lookup hashes
     hashes :: Vec (m + 1) (Signal dom (Unsigned n))
     hashes =  sequenceA $ hashFunctions <$> toHash
 
-    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest, insertIters) = cuckoo' hashes key' value' insert delete hashRequest
+    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest, insertIters) = cuckoo' hashes key' value' insert delete hashRequestD
+
 

@@ -110,6 +110,7 @@ type Cuckoo = forall dom gated sync cnt m n k v. (HiddenClockReset dom gated syn
         Signal dom Bool,
         Signal dom (Unsigned cnt)
         )
+
 cuckoo2
     :: forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt)
     => (k -> Vec (m + 1) (Unsigned n))                                       
@@ -125,25 +126,17 @@ cuckoo2
         )
 cuckoo2 hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone, insertIters)
     where
-
-    --Mux the key to lookup
-    hashRequestD :: Signal dom Bool
-    hashRequestD = register False hashRequest
-
-    keyD :: Signal dom k
-    keyD =  regEn (errorX "initial key") hashRequest $ key <$> evictedEntry
-
     toHash :: Signal dom k
     toHash =  mux
-        hashRequestD
-        keyD
+        hashRequest
+        (key <$> evictedEntry)
         key'
 
     --Calculate the lookup hashes
     hashes :: Vec (m + 1) (Signal dom (Unsigned n))
     hashes =  sequenceA $ hashFunctions <$> toHash
 
-    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest, insertIters) = cuckoo' hashes key' value' insert delete hashRequestD
+    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest, insertIters) = cuckoo' hashes key' value' insert delete hashRequest
 
 insertTestHarness
     :: forall dom gated sync. HiddenClockReset dom gated sync
