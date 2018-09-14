@@ -35,13 +35,15 @@ spec = describe "Cuckoo hash table" $ do
 
     specify "Cuckoo works with randomised operations" $
         noShrinking $
-        forAll genOps $ \ops -> 
-        last (sampleN 50000 (testHarness cuckoo (take 4000 ops))) == Just True
+        forAll (vectorOf 2500 arbitrary) $ \preInserts ->
+        forAll (genOps preInserts) $ \ops -> 
+        last (sampleN 50000 (testHarness cuckoo (map (uncurry Insert) preInserts ++ take 4000 ops))) == Just True
 
     specify "Cuckoo works with randomised operations 2" $
         noShrinking $
-        forAll genOps $ \ops -> 
-        last (sampleN 50000 (testHarness cuckoo2 (take 4000 ops))) == Just True
+        forAll (vectorOf 2500 arbitrary) $ \preInserts ->
+        forAll (genOps preInserts) $ \ops -> 
+        last (sampleN 50000 (testHarness cuckoo2 (map (uncurry Insert) preInserts ++ take 4000 ops))) == Just True
 
     specify "Cuckoo works with high load"               $ property $ noShrinking $ testInserts cuckoo
 
@@ -221,8 +223,8 @@ data Op
     | Idle
     deriving (Show)
 
-genOps :: Gen [Op]
-genOps = genOps' $ Map.empty
+genOps :: [(String, String)] -> Gen [Op]
+genOps initial = genOps' $ Map.fromList initial
     where
     genOps' :: Map String String -> Gen [Op]
     genOps' accum = do
