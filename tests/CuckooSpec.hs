@@ -33,9 +33,18 @@ spec = describe "Cuckoo hash table" $ do
     specify "Deletes elements" $ property $ forAll (choose (0, 2)) $ \idx k v -> 
         simulate_lazy system (testVecDelete idx k v) !! 3 == Nothing
 
-    specify "Cuckoo works with randomised operations"   $ noShrinking $ forAll genOps $ \ops -> Prelude.last (sampleN 50000 (testHarness cuckoo  (Prelude.take 4000 ops))) == Just True
-    specify "Cuckoo works with randomised operations 2" $ noShrinking $ forAll genOps $ \ops -> Prelude.last (sampleN 50000 (testHarness cuckoo2 (Prelude.take 4000 ops))) == Just True
+    specify "Cuckoo works with randomised operations" $
+        noShrinking $
+        forAll genOps $ \ops -> 
+        last (sampleN 50000 (testHarness cuckoo (take 4000 ops))) == Just True
+
+    specify "Cuckoo works with randomised operations 2" $
+        noShrinking $
+        forAll genOps $ \ops -> 
+        last (sampleN 50000 (testHarness cuckoo2 (take 4000 ops))) == Just True
+
     specify "Cuckoo works with high load"               $ property $ noShrinking $ testInserts cuckoo
+
     specify "Cuckoo works with high load 2"             $ property $ noShrinking $ testInserts cuckoo2
 
 system 
