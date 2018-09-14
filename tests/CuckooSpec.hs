@@ -16,6 +16,8 @@ import Data.Map (Map)
 import Data.Tuple.All
 import qualified Data.ByteString as BS
 import Data.Digest.CRC32
+import Data.Default
+import Data.Word
 
 import Clash.CRC
 import Clash.Cuckoo
@@ -37,13 +39,13 @@ spec = describe "Cuckoo hash table" $ do
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
         forAll (genOps preInserts) $ \ops -> 
-        last (sampleN 50000 (testHarness cuckoo (map (uncurry Insert) preInserts ++ take 4000 ops))) == Just True
+        last (sampleN 50000 (testHarness hashFuncs cuckoo (map (uncurry Insert) preInserts ++ take 4000 ops))) == Just True
 
     specify "Cuckoo works with randomised operations 2" $
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
         forAll (genOps preInserts) $ \ops -> 
-        last (sampleN 50000 (testHarness cuckoo2 (map (uncurry Insert) preInserts ++ take 4000 ops))) == Just True
+        last (sampleN 50000 (testHarness hashFuncs cuckoo2 (map (uncurry Insert) preInserts ++ take 4000 ops))) == Just True
 
     specify "Cuckoo works with high load"               $ property $ noShrinking $ testInserts cuckoo
 
@@ -216,17 +218,17 @@ testInserts cuckoo (InfiniteList insertSeq _) = collect (last maxIterations) $ f
     finished             = elem True $ Prelude.map snd res
     success              = all id $ Prelude.map fst res
 
-data Op
-    = Lookup String (Maybe String)
-    | Insert String String
-    | Delete String
+data Op key
+    = Lookup key (Maybe String)
+    | Insert key String
+    | Delete key
     | Idle
     deriving (Show)
 
-genOps :: [(String, String)] -> Gen [Op]
+genOps :: forall key. (Ord key, Arbitrary key)  => [(key, String)] -> Gen [Op key]
 genOps initial = genOps' $ Map.fromList initial
     where
-    genOps' :: Map String String -> Gen [Op]
+    genOps' :: Map key String -> Gen [Op key]
     genOps' accum = do
         (res, accum') <- case Map.null accum of
             True  -> oneof forEmpty
@@ -277,38 +279,40 @@ genOps initial = genOps' $ Map.fromList initial
             key   <- elements $ Map.keys accum
             return (Delete key, Map.delete key accum)
 
-data OpState 
+data OpState
     = LookupState (Maybe String) Bool
     | InsertState 
     | IdleState
 
-data TestbenchState
+data TestbenchState key
     = Success
     | Failure
-    | InProgress OpState [Op] --State of current operation, remaining operations
+    | InProgress OpState [Op key] --State of current operation, remaining operations
+
+hashFuncs :: [Word8] -> Vec 3 (Unsigned 10)
+hashFuncs x = Clash.map (\idx -> fromIntegral $ (`mod` 1024) $ hashWithSalt idx x) (iterateI (+1) 0)
 
 testHarness 
-    :: forall dom gated sync. HiddenClockReset dom gated sync 
-    => Cuckoo
-    -> [Op] 
+    :: forall dom gated sync key. (HiddenClockReset dom gated sync, Ord key, Default key)
+    => (key -> Vec 3 (Unsigned 10))
+    -> Cuckoo
+    -> [Op key] 
     -> Signal dom (Maybe Bool)
-testHarness cuckoo ops = result
+testHarness hashFuncs cuckoo ops = result
     where
 
     --DUT
     (lookupVal, insertDone, _, _ :: Signal dom (Unsigned 16)) = cuckoo hashFuncs key value insert delete
 
-    hashFuncs :: String -> Vec 3 (Unsigned 10)
-    hashFuncs x = Clash.map (\idx -> fromIntegral $ (`mod` 1024) $ hashWithSalt idx x) (iterateI (+1) 0)
-
-    emptyControlSigs = ("", "", False, False)
+    emptyControlSigs :: (key, String, Bool, Bool)
+    emptyControlSigs = (def, "", False, False)
 
     (result, controlSignals) = mealyB step initState (fmap sel3 <$> lookupVal, insertDone)
     (key, value, insert, delete) = unbundle controlSignals
 
     initState = InProgress IdleState ops
 
-    step :: TestbenchState -> (Maybe String, Bool) -> (TestbenchState, (Maybe Bool, (String, String, Bool, Bool)))
+    step :: TestbenchState key -> (Maybe String, Bool) -> (TestbenchState key, (Maybe Bool, (key, String, Bool, Bool)))
     step Success _ = (Success, (Just True,  emptyControlSigs))
     step Failure _ = (Failure, (Just False, emptyControlSigs))
 
