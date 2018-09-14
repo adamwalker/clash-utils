@@ -332,6 +332,6 @@ testHarness hashFuncs cuckoo ops = result
     nextState []                     = (emptyControlSigs,         Success)
     nextState (Lookup key val : ops) = ((key, "",  False, False), InProgress (LookupState val False) ops)
     nextState (Insert key val : ops) = ((key, val, True,  False), InProgress InsertState             ops)
-    nextState (Delete key     : ops) = ((key, "",  False, True),  InProgress IdleState               (Idle : Idle : Idle : ops))
+    nextState (Delete key     : ops) = ((key, "",  False, True),  InProgress IdleState               (Idle : Idle : ops))
     nextState (Idle           : ops) = (emptyControlSigs,         InProgress IdleState               ops)
 
