@@ -38,14 +38,14 @@ spec = describe "Cuckoo hash table" $ do
     specify "Cuckoo works with randomised operations" $
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
-        forAll (genOps preInserts) $ \ops -> 
-        last (sampleN 50000 (testHarness hashFuncs cuckoo (map (uncurry Insert) preInserts ++ take 4000 ops))) == Just True
+        forAll (take 4000 <$> genOps preInserts) $ \ops -> 
+        last (sampleN 50000 (testHarness hashFuncs cuckoo (map (uncurry Insert) preInserts ++ ops))) == Just True
 
     specify "Cuckoo works with randomised operations 2" $
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
-        forAll (genOps preInserts) $ \ops -> 
-        last (sampleN 50000 (testHarness hashFuncs cuckoo2 (map (uncurry Insert) preInserts ++ take 4000 ops))) == Just True
+        forAll (take 4000 <$> genOps preInserts) $ \ops -> 
+        last (sampleN 50000 (testHarness hashFuncs cuckoo2 (map (uncurry Insert) preInserts ++ ops))) == Just True
 
     specify "Cuckoo works with high load"               $ property $ noShrinking $ testInserts cuckoo
 
