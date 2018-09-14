@@ -38,13 +38,25 @@ spec = describe "Cuckoo hash table" $ do
     specify "Cuckoo works with randomised operations" $
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
-        forAll (take 4000 <$> genOps preInserts) $ \ops -> 
+        forAll (take 4000 <$> genOps False preInserts) $ \ops -> 
         last (sampleN 50000 (testHarness hashFuncs cuckoo (map (uncurry Insert) preInserts ++ ops))) == Just True
 
     specify "Cuckoo works with randomised operations 2" $
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
-        forAll (take 4000 <$> genOps preInserts) $ \ops -> 
+        forAll (take 4000 <$> genOps False preInserts) $ \ops -> 
+        last (sampleN 50000 (testHarness hashFuncs cuckoo2 (map (uncurry Insert) preInserts ++ ops))) == Just True
+
+    specify "Cuckoo works with randomised operations and recently modified keys" $
+        noShrinking $
+        forAll (vectorOf 2500 arbitrary) $ \preInserts ->
+        forAll (take 4000 <$> genOps True preInserts) $ \ops -> 
+        last (sampleN 50000 (testHarness hashFuncs cuckoo (map (uncurry Insert) preInserts ++ ops))) == Just True
+
+    specify "Cuckoo works with randomised operations and recently modified keys 2" $
+        noShrinking $
+        forAll (vectorOf 2500 arbitrary) $ \preInserts ->
+        forAll (take 4000 <$> genOps True preInserts) $ \ops -> 
         last (sampleN 50000 (testHarness hashFuncs cuckoo2 (map (uncurry Insert) preInserts ++ ops))) == Just True
 
     specify "Cuckoo works with high load"               $ property $ noShrinking $ testInserts cuckoo
@@ -225,18 +237,27 @@ data Op key
     | Idle
     deriving (Show)
 
-genOps :: forall key. (Ord key, Arbitrary key)  => [(key, String)] -> Gen [Op key]
-genOps initial = genOps' $ Map.fromList initial
+data GenState key = GenState {
+    theMap            :: Map key String,
+    lastModifications :: [key]
+}
+
+genOps :: forall key. (Ord key, Arbitrary key) => Bool -> [(key, String)] -> Gen [Op key]
+genOps doRecent initial = genOps' $ GenState (Map.fromList initial) []
     where
-    genOps' :: Map key String -> Gen [Op key]
-    genOps' accum = do
-        (res, accum') <- case Map.null accum of
-            True  -> oneof forEmpty
-            False -> oneof $ forEmpty Prelude.++ forNonempty
+    genOps' :: GenState key -> Gen [Op key]
+    genOps' (GenState accum lastModifications) = do
+        (res, accum') <- oneof testCases
         rest <- genOps' accum'
         return $ res : rest
 
         where
+
+        testCases = concat [
+                forEmpty,
+                if Map.null accum                         then [] else forNonempty,
+                if not doRecent || null lastModifications then [] else forHasModifications
+            ]
         
         forEmpty = [
                 idle,
@@ -244,40 +265,87 @@ genOps initial = genOps' $ Map.fromList initial
                 insertAny,
                 deleteAny
             ]
+
         forNonempty = [
                 lookupExists,
                 insertExists,
                 deleteExists
             ]
 
+        forHasModifications = [
+                lookupRecentMod,
+                insertRecentMod,
+                deleteRecentMod
+            ]
+
         --No operations this cycle
-        idle = pure (Idle, accum) 
+        idle = pure (Idle, GenState accum lastModifications) 
         --Lookup a random key 
         lookupAny = do
             key   <- arbitrary
-            return (Lookup key (Map.lookup key accum), accum)
+            return (
+                    Lookup key (Map.lookup key accum), 
+                    GenState accum lastModifications
+                )
         --Lookup a key that is in the map
         lookupExists = do
             key   <- elements $ Map.keys accum
-            return (Lookup key (Map.lookup key accum), accum)
+            return (
+                    Lookup key (Map.lookup key accum), 
+                    GenState accum lastModifications
+                )
+        --Lookup a recently inserted item
+        lookupRecentMod = do
+            key   <- elements lastModifications 
+            return (
+                    Lookup key (Map.lookup key accum), 
+                    GenState accum lastModifications
+                )
         --Insert a random key and value
         insertAny = do
             key   <- arbitrary
             value <- arbitrary
-            return (Insert key value, Map.insert key value accum)
+            return (
+                    Insert key value, 
+                    GenState (Map.insert key value accum) (key : take 2 lastModifications)
+                )
         --Insert a key that is already contained in the map
         insertExists = do
             key   <- elements $ Map.keys accum
             value <- arbitrary
-            return (Insert key value, Map.insert key value accum)
+            return (
+                    Insert key value, 
+                    GenState (Map.insert key value accum) (key : take 2 lastModifications)
+                )
+        --Insert a key that was recently inserted
+        insertRecentMod = do
+            key   <- elements lastModifications
+            value <- arbitrary
+            return (
+                    Insert key value, 
+                    GenState (Map.insert key value accum) (key : take 2 lastModifications)
+                )
         --Delete a random key 
         deleteAny = do
             key   <- arbitrary
-            return (Delete key, Map.delete key accum)
+            return (
+                    Delete key, 
+                    GenState (Map.delete key accum) (key : take 2 lastModifications)
+                )
         --Delete a key that is contained in the map
         deleteExists = do
             key   <- elements $ Map.keys accum
-            return (Delete key, Map.delete key accum)
+            return (
+                    Delete key, 
+                    GenState (Map.delete key accum) (key : take 2 lastModifications)
+                )
+        --Delete a key that was recently inserted
+        deleteRecentMod = do
+            key   <- elements lastModifications
+            return (
+                    Delete key, 
+                    GenState (Map.delete key accum) (key : take 2 lastModifications)
+                )
 
 data OpState
     = LookupState (Maybe String) Bool
