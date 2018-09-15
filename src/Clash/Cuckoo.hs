@@ -62,14 +62,15 @@ cuckooLookup hashFunctions tableUpdates lookupKey = cuckooLookup' tableUpdates h
     hashes :: Vec (m + 1) (Signal dom (Unsigned n))
     hashes = sequenceA $ hashFunctions <$> lookupKey
 
+{-| Like `cuckoo` but allows hash functions which take multiple cycles -}
 cuckoo'
     :: forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt)
-    => Vec (m + 1) (Signal dom (Unsigned n))
-    -> Signal dom k                                                          
-    -> Signal dom v
-    -> Signal dom Bool
-    -> Signal dom Bool
-    -> Signal dom Bool
+    => Vec (m + 1) (Signal dom (Unsigned n)) -- ^ Vector of hashes, one for each table. CRCs make good hash functions.
+    -> Signal dom k                          -- ^ Key to operate on (for lookups, insertions and deletions)           
+    -> Signal dom v                          -- ^ Value to insert (for insertions only)
+    -> Signal dom Bool                       -- ^ Insert. Insertions take a variable number of cycles.
+    -> Signal dom Bool                       -- ^ Delete. Deletions take 3 cycles.
+    -> Signal dom Bool                       -- ^ Asserted when hash computation for the evicted entry is complete
     -> (
         Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
         Signal dom Bool, 
@@ -77,7 +78,7 @@ cuckoo'
         Signal dom (TableEntry k v),
         Signal dom Bool,
         Signal dom (Unsigned cnt)
-        )
+        ) -- ^ A tuple: (Lookup result, inserting in progress, last insert cycle, evicted key to hash, hash request, number of iterations this insert took). The lookup result will be ready two cycles after the key is input. The table index and hash of the matching entry are also returned so that future table updates can be made from hardware.
 cuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, isJust <$> writebackStage, insertingDone, evictedEntry, hashRequest, insertIters)
     where
 
@@ -222,19 +223,20 @@ cuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, isJu
     lookupResult :: Signal dom (Maybe (Index (m + 1), Unsigned n, v))
     lookupResult =  fold (liftA2 (<|>)) candidates
 
+{-| A full Cuckoo hashtable supporting lookups, modification, insertion and deletion -}
 cuckoo
     :: forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt)
-    => (k -> Vec (m + 1) (Unsigned n))                                       
-    -> Signal dom k                                                          
-    -> Signal dom v
-    -> Signal dom Bool
-    -> Signal dom Bool
+    => (k -> Vec (m + 1) (Unsigned n)) -- ^ Vector of hash functions, one for each table. CRCs make good hash functions.
+    -> Signal dom k                    -- ^ Key to operate on (for lookups, insertions and deletions)
+    -> Signal dom v                    -- ^ Value to insert (for insertions only)
+    -> Signal dom Bool                 -- ^ Insert. Insertions take a variable number of cycles.
+    -> Signal dom Bool                 -- ^ Delete. Deletions take 3 cycles.
     -> (
         Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
         Signal dom Bool, 
         Signal dom Bool,
         Signal dom (Unsigned cnt)
-        )
+        ) -- ^ A tuple: (Lookup result, inserting in progress, last insert cycle, number of iterations this insert took). The lookup result will be ready two cycles after the key is input. The table index and hash of the matching entry are also returned so that future table updates can be made from hardware.
 cuckoo hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone, insertIters)
     where
 
