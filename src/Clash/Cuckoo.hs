@@ -77,19 +77,40 @@ cuckoo'
         Signal dom Bool,
         Signal dom (TableEntry k v),
         Signal dom Bool,
+        Signal dom (Unsigned cnt),
         Signal dom (Unsigned cnt)
         ) -- ^ A tuple: (Lookup result, inserting in progress, last insert cycle, evicted key to hash, hash request, number of iterations this insert took). The lookup result will be ready two cycles after the key is input. The table index and hash of the matching entry are also returned so that future table updates can be made from hardware.
-cuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, isJust <$> writebackStage, insertingDone, evictedEntry, hashRequest, insertIters)
+cuckoo' hashes key' value' insert delete evictedHashesDone = (
+        lookupResult, 
+        isJust <$> writebackStage, 
+        insertingDone, 
+        evictedEntry, 
+        hashRequest, 
+        insertIters,
+        nItems
+    )
     where
 
     --------------------------------------------------------------------------------
     --Stats
     --------------------------------------------------------------------------------
+    insertIters :: Signal dom (Unsigned cnt)
     insertIters = register 0 $ func <$> firstInsertCycle <*> (progressInsert .&&. isJust <$> writebackStage) <*> insertIters
         where
         func True  _    _ = 0
         func _     True i = i + 1
         func _     _    i = i
+
+    nItems :: Signal dom (Unsigned cnt)
+    nItems = register 0 
+        $   func 
+        <$> nItems 
+        <*> (deleteDD .&&. (isJust <$> lookupResult))
+        <*> ((progressInsert .&&. (isJust <$> writebackStage) .&&. (not <$> (isJust <$> lookupResult .&&. firstInsertCycleDD))))
+        where
+        func nItems True _    = nItems - 1
+        func nItems _    True = nItems + 1
+        func nItems _    _    = nItems
 
     --------------------------------------------------------------------------------
     --Insertion logic
@@ -102,7 +123,7 @@ cuckoo' hashes key' value' insert delete evictedHashesDone = (lookupResult, isJu
     --------------------------------------------------------------------------------
     hashRequest = (isJust <$> writebackStage) .&&. (not <$> insertingDone) .&&. progressInsert
 
-    --Track if this is the first insert writeback cycle. If it is we must consider the case where the key was already in the hashtable
+    --Track if this is the first insert writeback cycle. If it is, we must consider the case where the key was already in the hashtable
     firstInsertCycle   = insert .&&. ((isNothing <$> writebackStage) .||. insertingDone)
     firstInsertCycleD  = register False firstInsertCycle
     firstInsertCycleDD = register False firstInsertCycleD
@@ -235,9 +256,10 @@ cuckoo
         Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
         Signal dom Bool, 
         Signal dom Bool,
+        Signal dom (Unsigned cnt),
         Signal dom (Unsigned cnt)
         ) -- ^ A tuple: (Lookup result, inserting in progress, last insert cycle, number of iterations this insert took). The lookup result will be ready two cycles after the key is input. The table index and hash of the matching entry are also returned so that future table updates can be made from hardware.
-cuckoo hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone, insertIters)
+cuckoo hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone, insertIters, nItems)
     where
 
     --Mux the key to lookup
@@ -257,6 +279,5 @@ cuckoo hashFunctions key' value' insert delete = (lookupResult, inserting, inser
     hashes :: Vec (m + 1) (Signal dom (Unsigned n))
     hashes =  sequenceA $ hashFunctions <$> toHash
 
-    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest, insertIters) = cuckoo' hashes key' value' insert delete hashRequestD
-
+    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest, insertIters, nItems) = cuckoo' hashes key' value' insert delete hashRequestD
 

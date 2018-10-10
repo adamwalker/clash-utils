@@ -133,6 +133,7 @@ type Cuckoo = forall dom gated sync cnt m n k v. (HiddenClockReset dom gated syn
         Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
         Signal dom Bool, 
         Signal dom Bool,
+        Signal dom (Unsigned cnt),
         Signal dom (Unsigned cnt)
         )
 
@@ -147,9 +148,10 @@ cuckoo2
         Signal dom (Maybe (Index (m + 1), Unsigned n, v)), -- Table index, table row, value
         Signal dom Bool, 
         Signal dom Bool,
+        Signal dom (Unsigned cnt),
         Signal dom (Unsigned cnt)
         )
-cuckoo2 hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone, insertIters)
+cuckoo2 hashFunctions key' value' insert delete = (lookupResult, inserting, insertingDone, insertIters, nItems)
     where
     toHash :: Signal dom k
     toHash =  mux
@@ -161,7 +163,7 @@ cuckoo2 hashFunctions key' value' insert delete = (lookupResult, inserting, inse
     hashes :: Vec (m + 1) (Signal dom (Unsigned n))
     hashes =  sequenceA $ hashFunctions <$> toHash
 
-    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest, insertIters) = cuckoo' hashes key' value' insert delete hashRequest
+    (lookupResult, inserting, insertingDone, evictedEntry, hashRequest, insertIters, nItems) = cuckoo' hashes key' value' insert delete hashRequest
 
 insertTestHarness
     :: forall dom gated sync. HiddenClockReset dom gated sync
@@ -180,7 +182,7 @@ insertTestHarness cuckoo vals = bundle (bundle (register True (register True ins
         func False _ max' = max'
         func True  n max' = max n max'
     
-    (lookupResult, inserting, insertingDone, numIters) = cuckoo hashFuncs insertKey insertValue insert (pure False)
+    (lookupResult, inserting, insertingDone, numIters, nItems) = cuckoo hashFuncs insertKey insertValue insert (pure False)
 
     hashFuncs :: BitVector 32 -> Vec 3 (Unsigned 10)
     --hashFuncs x = h 0 :> h 1 :> h 2 :> Nil
@@ -370,7 +372,7 @@ testHarness hashFuncs cuckoo ops = result
     where
 
     --DUT
-    (lookupVal, insertDone, _, _ :: Signal dom (Unsigned 16)) = cuckoo hashFuncs key value insert delete
+    (lookupVal, insertDone, _, _, _ :: Signal dom (Unsigned 16)) = cuckoo hashFuncs key value insert delete
 
     emptyControlSigs :: (key, String, Bool, Bool)
     emptyControlSigs = (def, "", False, False)
