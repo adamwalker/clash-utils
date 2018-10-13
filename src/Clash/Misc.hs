@@ -2,7 +2,9 @@ module Clash.Misc(
     replaceSlice, 
     revBV,
     swapEndian, 
-    mealyEn
+    mealyEn,
+    count,
+    (++##)
     ) where
 
 import Clash.Prelude
@@ -51,3 +53,12 @@ mealyEn step initial enable input = mealy step' initial (bundle (enable, input))
     where
     step' state (enable, input) = (bool state state' enable, output)
         where (state', output) = step state input
+
+count :: (HiddenClockReset dom gated sync, Num a) => Signal dom Bool -> Signal dom a
+count inc = res
+    where
+    res = regEn 0 inc $ res + 1
+
+(++##) :: KnownNat m => Signal dom (BitVector n) -> Signal dom (BitVector m) -> Signal dom (BitVector (n + m))
+(++##) = liftA2 (++#)
+
