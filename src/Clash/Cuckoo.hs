@@ -106,7 +106,7 @@ cuckoo' hashes key' value' insert delete evictedHashesDone = (
         $   func 
         <$> nItems 
         <*> (deleteDD .&&. (isJust <$> lookupResult))
-        <*> ((progressInsert .&&. (isJust <$> writebackStage) .&&. (not <$> (isJust <$> lookupResult .&&. firstInsertCycleDD))))
+        <*> (((isJust <$> writebackStage) .&&. progressInsert .&&. (isJust <$> freeSlot) .&&. (not <$> (isJust <$> lookupResult .&&. firstInsertCycleDD))))
         where
         func nItems True _    = nItems - 1
         func nItems _    True = nItems + 1
