@@ -43,7 +43,7 @@ swapEndian x = pack $ reverse bytes
 
 -- Same as mealy, but with an enable signal
 mealyEn 
-    :: HiddenClockReset dom gated sync
+    :: (HiddenClockReset dom gated sync, Undefined s)
     => (s -> i -> (s, o)) -- ^ State update function
     -> s                  -- ^ Initial state
     -> Signal dom Bool    -- ^ Enable signal
@@ -54,7 +54,7 @@ mealyEn step initial enable input = mealy step' initial (bundle (enable, input))
     step' state (enable, input) = (bool state state' enable, output)
         where (state', output) = step state input
 
-count :: (HiddenClockReset dom gated sync, Num a) => Signal dom Bool -> Signal dom a
+count :: (HiddenClockReset dom gated sync, Num a, Undefined a) => Signal dom Bool -> Signal dom a
 count inc = res
     where
     res = regEn 0 inc $ res + 1

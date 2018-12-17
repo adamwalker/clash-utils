@@ -20,7 +20,7 @@ data StreamIn a = StreamIn {
 } deriving (Show)
 
 deserialize 
-    :: forall dom gated sync m a. (HiddenClockReset dom gated sync, KnownNat m)
+    :: forall dom gated sync m a. (HiddenClockReset dom gated sync, KnownNat m, Undefined a)
     => Signal dom (StreamIn a)      -- ^ Input data stream
     -> Signal dom (Maybe (Vec m a)) -- ^ Received data chunks
 deserialize streamIn = mux lastDone (Just <$> buf) (pure Nothing)

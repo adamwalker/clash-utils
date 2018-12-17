@@ -20,7 +20,7 @@ import Clash.Prelude
 
 {- | Direct form FIR filter -}
 fir 
-    :: (HiddenClockReset dom gated sync, Num a, KnownNat n) 
+    :: (HiddenClockReset dom gated sync, Num a, KnownNat n, Undefined a) 
     => Vec (n + 1) a -- ^ Coefficients
     -> Signal dom Bool   -- ^ Input enable
     -> Signal dom a      -- ^ Input samples
@@ -31,7 +31,7 @@ fir coeffs en x = dotp (map pure coeffs) (iterateI (regEn 0 en) x)
 
 {- | Transposed FIR filter -}
 firTransposed 
-    :: (HiddenClockReset dom gated sync, Num a, KnownNat n) 
+    :: (HiddenClockReset dom gated sync, Num a, KnownNat n, Undefined a) 
     => Vec (n + 1) a -- ^ Coefficients
     -> Signal dom Bool   -- ^ Input enable
     -> Signal dom a      -- ^ Input samples
@@ -42,7 +42,7 @@ firTransposed coeffs en x = foldl func 0 $ map (* x) (pure <$> coeffs)
 
 {- | Systolic FIR filter -}
 firSystolic 
-    :: (HiddenClockReset dom gated sync, Num a, KnownNat n) 
+    :: (HiddenClockReset dom gated sync, Num a, KnownNat n, Undefined a) 
     => Vec (n + 1) a -- ^ Coefficients
     -> Signal dom Bool   -- ^ Input enable
     -> Signal dom a      -- ^ Input samples
@@ -53,7 +53,7 @@ firSystolic coeffs en x = foldl func 0 $ zip (map pure coeffs) $ iterateI (regEn
 
 {- | Symmetric FIR filter -}
 firSymmetric
-    :: (HiddenClockReset dom gated sync, KnownNat n, Num a) 
+    :: (HiddenClockReset dom gated sync, KnownNat n, Num a, Undefined a) 
     => Vec (n + 1) a -- ^ Coefficients
     -> Signal dom Bool   -- ^ Input enable
     -> Signal dom a      -- ^ Input samples
@@ -66,7 +66,7 @@ firSymmetric coeffs en x = foldl func 0 $ zipWith (*) folded (pure <$> coeffs)
 
 {- | Transposed symmetric FIR filter -}
 firTransposedSymmetric
-    :: (HiddenClockReset dom gated sync, Num a, KnownNat n) 
+    :: (HiddenClockReset dom gated sync, Num a, KnownNat n, Undefined a) 
     => Vec (n + 1) a -- ^ Coefficients
     -> Signal dom Bool   -- ^ Input enable
     -> Signal dom a      -- ^ Input samples
@@ -78,7 +78,7 @@ firTransposedSymmetric coeffs en x = foldl func 0 $ coeffd ++ reverse coeffd
 
 {- | Systolic Symmetric FIR filter -}
 firSystolicSymmetric
-    :: (HiddenClockReset dom gated sync, KnownNat n, Num a) 
+    :: (HiddenClockReset dom gated sync, KnownNat n, Num a, Undefined a) 
     => Vec (n + 1) a -- ^ Coefficients
     -> Signal dom Bool   -- ^ Input enable
     -> Signal dom a      -- ^ Input samples
@@ -91,7 +91,7 @@ firSystolicSymmetric coeffs en x = foldl func 0 $ zip (map pure coeffs) folded
     func accum (coeff, input) = regEn 0 en $ accum + input * coeff
     
 firSystolicSymmetricOdd
-    :: (HiddenClockReset dom gated sync, KnownNat n, Num a) 
+    :: (HiddenClockReset dom gated sync, KnownNat n, Num a, Undefined a) 
     => Vec (n + 2) a -- ^ Coefficients
     -> Signal dom Bool   -- ^ Input enable
     -> Signal dom a      -- ^ Input samples
@@ -104,7 +104,7 @@ firSystolicSymmetricOdd coeffs en x = foldl func 0 $ zip (map pure coeffs) folde
     func accum (coeff, input) = regEn 0 en $ accum + input * coeff
     
 firSystolicHalfBand
-    :: (HiddenClockReset dom gated sync, KnownNat n, Num a) 
+    :: (HiddenClockReset dom gated sync, KnownNat n, Num a, Undefined a) 
     => Vec (n + 2) a -- ^ Coefficients
     -> Signal dom Bool   -- ^ Input enable
     -> Signal dom a      -- ^ Input samples
@@ -118,7 +118,7 @@ firSystolicHalfBand coeffs en x = foldl func 0 $ zip (map pure coeffs) folded
     func accum (coeff, input) = regEn 0 en $ accum + input * coeff
 
 semiParallelFIR 
-    :: forall dom gated sync a n m n' m'. (HiddenClockReset dom gated sync, Num a, KnownNat n, KnownNat m, n ~ (n' + 1), m ~ (m' + 1))
+    :: forall dom gated sync a n m n' m'. (HiddenClockReset dom gated sync, Num a, KnownNat n, KnownNat m, n ~ (n' + 1), m ~ (m' + 1), Undefined a)
     => Vec n (Vec m a)
     -> Signal dom Bool
     -> Signal dom a

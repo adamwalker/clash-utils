@@ -8,7 +8,7 @@ import GHC.Generics
 import qualified Data.Complex as C
 
 {-| I defined my own complex type so that I can write a Num instance without the RealFloat constraint. TODO: think about whether this is really a good idea. -}
-data Complex a = a :+ a deriving (Show, Lift, Generic, ShowX)
+data Complex a = a :+ a deriving (Show, Lift, Generic, ShowX, Undefined)
 
 instance Num a => Num (Complex a) where
     (a :+ b) + (c :+ d) = (a + c) :+ (b + d)

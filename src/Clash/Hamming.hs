@@ -38,7 +38,7 @@ hammingParity table input = fold xor $ zipWith func (unpack input) table
 --TODO: there is probably a smarter way of doing this
 -- | Correct a single bit error in a hamming code word
 correctError'
-    :: forall n. (KnownNat n)
+    :: forall n. (KnownNat n, 1 <= n)
     => Vec n (BitVector (CLog 2 n)) -- ^ Parity bits generator matrix
     -> BitVector (CLog 2 n)         -- ^ Parity bits which are wrong
     -> BitVector n                  -- ^ Data bits
