@@ -4,7 +4,9 @@ module Clash.Misc(
     swapEndian, 
     mealyEn,
     count,
-    (++##)
+    (++##),
+    watchdog,
+    setReset
     ) where
 
 import Clash.Prelude
@@ -41,7 +43,7 @@ swapEndian x = pack $ reverse bytes
     bytes :: Vec n (BitVector 8)
     bytes = unpack x 
 
--- Same as mealy, but with an enable signal
+-- | Same as mealy, but with an enable signal
 mealyEn 
     :: (HiddenClockReset dom gated sync, Undefined s)
     => (s -> i -> (s, o)) -- ^ State update function
@@ -54,11 +56,43 @@ mealyEn step initial enable input = mealy step' initial (bundle (enable, input))
     step' state (enable, input) = (bool state state' enable, output)
         where (state', output) = step state input
 
-count :: (HiddenClockReset dom gated sync, Num a, Undefined a) => Signal dom Bool -> Signal dom a
+-- | Counts cycles where the input signal is high
+count 
+    :: (HiddenClockReset dom gated sync, Num a, Undefined a) 
+    => Signal dom Bool -- ^ Increment signal
+    -> Signal dom a    -- ^ Count output
 count inc = res
     where
     res = regEn 0 inc $ res + 1
 
+-- | Concatenates signals containing BitVectors
 (++##) :: KnownNat m => Signal dom (BitVector n) -> Signal dom (BitVector m) -> Signal dom (BitVector (n + m))
 (++##) = liftA2 (++#)
+
+-- | A very simple watchdog timer
+watchdog 
+    :: (HiddenClockReset dom gated sync, KnownNat n)
+    => Unsigned n
+    -> Signal dom Bool
+    -> Signal dom Bool
+watchdog touchCnt touch = res .==. 0
+    where
+    res = register 0 $ watchdog' <$> res <*> touch
+    watchdog' res touch
+        | touch     = touchCnt
+        | res == 0  = 0
+        | otherwise = res - 1
+
+-- | Set-Reset flip flop. Reset has priority
+setReset 
+    :: forall dom gated sync. (HiddenClockReset dom gated sync)
+    => Signal dom Bool -- ^ Set
+    -> Signal dom Bool -- ^ Reset
+    -> Signal dom Bool -- ^ Result
+setReset set reset = out
+    where
+    out  = register False $ func <$> out <*> set <*> reset
+    func _ _    True  = False
+    func _ True _     = True
+    func s _    _     = s
 
