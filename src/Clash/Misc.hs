@@ -98,25 +98,29 @@ setReset set reset = out
     func s _    _    = s
 
 wideWriteMem 
-  :: forall dom gated sync writeBits bankBits a
-  .  (HiddenClockReset dom gated sync, KnownNat writeBits, KnownNat bankBits)
-  => Vec (2 ^ (writeBits + bankBits)) a
-  -> Signal dom (Unsigned (writeBits + bankBits))
-  -> Signal dom (Unsigned writeBits, Vec (2 ^ bankBits) (Maybe a))
-  -> Signal dom a
-wideWriteMem init raddr write = liftA2 (!!) ramReads (register 0 raddrBank)
+  :: forall dom gated sync writeBits readBits bankBits a
+  .  (HiddenClockReset dom gated sync, KnownNat writeBits, KnownNat readBits, KnownNat bankBits)
+  => (1 <= (2 ^ (readBits + bankBits))) --TODO: this constraint should be inferred
+  => Vec (2 ^ (writeBits + readBits + bankBits)) a
+  -> Signal dom (Unsigned (writeBits + readBits))
+  -> Signal dom (Unsigned writeBits, Vec (2 ^ (readBits + bankBits)) (Maybe a))
+  -> Signal dom (Vec (2 ^ bankBits) a)
+wideWriteMem init raddr write = liftA2 (!!) readChunks (register 0 raddrBank)
     where
 
     raddrAddr :: Signal dom (BitVector writeBits)
-    raddrBank :: Signal dom (BitVector bankBits)
+    raddrBank :: Signal dom (BitVector readBits)
     (raddrAddr, raddrBank) = unbundle $ split <$> raddr
 
-    writes :: Vec (2 ^ bankBits) (Signal dom (Maybe (Unsigned writeBits, a)))
+    writes :: Vec (2 ^ (readBits + bankBits)) (Signal dom (Maybe (Unsigned writeBits, a)))
     writes =  sequenceA $ func <$> write
         where
-        func :: (Unsigned writeBits, Vec (2 ^ bankBits) (Maybe a)) -> Vec (2 ^ bankBits) (Maybe (Unsigned writeBits, a))
+        func :: (Unsigned writeBits, Vec (2 ^ (readBits + bankBits)) (Maybe a)) -> Vec (2 ^ (readBits + bankBits)) (Maybe (Unsigned writeBits, a))
         func (wAddr, wValues) = map (fmap (wAddr, )) wValues
 
-    ramReads :: Signal dom (Vec (2 ^ bankBits) a)
+    ramReads :: Signal dom (Vec (2 ^ (readBits + bankBits)) a)
     ramReads = sequenceA $ zipWith3 blockRamPow2 (transpose $ unconcatI init) (repeat $ unpack <$> raddrAddr) writes 
+
+    readChunks :: Signal dom (Vec (2 ^ readBits) (Vec (2 ^ bankBits) a))
+    readChunks =  unconcatI <$> ramReads
 
