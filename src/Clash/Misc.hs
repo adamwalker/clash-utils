@@ -6,7 +6,8 @@ module Clash.Misc(
     count,
     (++##),
     watchdog,
-    setReset
+    setReset,
+    wideWriteMem
     ) where
 
 import Clash.Prelude
@@ -92,7 +93,30 @@ setReset
 setReset set reset = out
     where
     out  = register False $ func <$> out <*> set <*> reset
-    func _ _    True  = False
-    func _ True _     = True
-    func s _    _     = s
+    func _ _    True = False
+    func _ True _    = True
+    func s _    _    = s
+
+wideWriteMem 
+  :: forall dom gated sync writeBits bankBits a
+  .  (HiddenClockReset dom gated sync, KnownNat writeBits, KnownNat bankBits)
+  => Vec (2 ^ (writeBits + bankBits)) a
+  -> Signal dom (Unsigned (writeBits + bankBits))
+  -> Signal dom (Unsigned writeBits, Vec (2 ^ bankBits) (Maybe a))
+  -> Signal dom a
+wideWriteMem init raddr write = liftA2 (!!) ramReads (register 0 raddrBank)
+    where
+
+    raddrAddr :: Signal dom (BitVector writeBits)
+    raddrBank :: Signal dom (BitVector bankBits)
+    (raddrAddr, raddrBank) = unbundle $ split <$> raddr
+
+    writes :: Vec (2 ^ bankBits) (Signal dom (Maybe (Unsigned writeBits, a)))
+    writes =  sequenceA $ func <$> write
+        where
+        func :: (Unsigned writeBits, Vec (2 ^ bankBits) (Maybe a)) -> Vec (2 ^ bankBits) (Maybe (Unsigned writeBits, a))
+        func (wAddr, wValues) = map (fmap (wAddr, )) wValues
+
+    ramReads :: Signal dom (Vec (2 ^ bankBits) a)
+    ramReads = sequenceA $ zipWith3 blockRamPow2 (transpose $ unconcatI init) (repeat $ unpack <$> raddrAddr) writes 
 
