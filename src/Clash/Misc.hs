@@ -99,7 +99,7 @@ setReset set reset = out
 
 wideWriteMem 
   :: forall dom gated sync writeBits readBits bankBits a
-  .  (HiddenClockReset dom gated sync, KnownNat writeBits, KnownNat readBits, KnownNat bankBits)
+  .  (HiddenClockReset dom gated sync, KnownNat writeBits, KnownNat readBits, KnownNat bankBits, Undefined a)
   => (1 <= (2 ^ (readBits + bankBits))) --TODO: this constraint should be inferred
   => Vec (2 ^ (writeBits + readBits + bankBits)) a
   -> Signal dom (Unsigned (writeBits + readBits))
