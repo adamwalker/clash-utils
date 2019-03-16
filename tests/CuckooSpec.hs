@@ -4,7 +4,7 @@ module CuckooSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice, type (+), errorX)
+                      HiddenClockReset, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice, type (+), errorX, Undefined)
 
 import Test.Hspec
 import Test.QuickCheck hiding ((.||.), (.&&.), Success, Failure)
@@ -123,7 +123,7 @@ testVecDelete idx k v = [write, delete, lookup, null]
     lookup = (Clash.repeat Nothing, k)
     null   = (Clash.repeat Nothing, "")
 
-type Cuckoo = forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt)
+type Cuckoo = forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
     -> Signal dom v
@@ -138,7 +138,7 @@ type Cuckoo = forall dom gated sync cnt m n k v. (HiddenClockReset dom gated syn
         )
 
 cuckoo2
-    :: forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt)
+    :: forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
     -> Signal dom v
@@ -363,7 +363,7 @@ hashFuncs :: [Word8] -> Vec 3 (Unsigned 10)
 hashFuncs x = Clash.map (\idx -> fromIntegral $ (`mod` 1024) $ hashWithSalt idx x) (iterateI (+1) 0)
 
 testHarness 
-    :: forall dom gated sync key. (HiddenClockReset dom gated sync, Ord key, Default key)
+    :: forall dom gated sync key. (HiddenClockReset dom gated sync, Ord key, Default key, Undefined key)
     => (key -> Vec 3 (Unsigned 10))
     -> Cuckoo
     -> [Op key] 
