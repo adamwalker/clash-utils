@@ -37,7 +37,8 @@ library
         Clash.PseudoLRUTree,
         Clash.Cuckoo,
         Clash.Stream,
-        Clash.PrefixSum
+        Clash.PrefixSum,
+        Clash.CarryLookahead
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 
@@ -84,7 +85,8 @@ Test-Suite test
         PseudoLRUTreeSpec,
         CuckooSpec,
         StreamSpec,
-        PrefixSumSpec
+        PrefixSumSpec,
+        CarryLookaheadSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.12, 
