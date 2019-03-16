@@ -36,7 +36,8 @@ library
         Clash.Serialize,
         Clash.PseudoLRUTree,
         Clash.Cuckoo,
-        Clash.Stream
+        Clash.Stream,
+        Clash.PrefixSum
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 
@@ -82,7 +83,8 @@ Test-Suite test
         SerializeSpec,
         PseudoLRUTreeSpec,
         CuckooSpec,
-        StreamSpec
+        StreamSpec,
+        PrefixSumSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.12, 
