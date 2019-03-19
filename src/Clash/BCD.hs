@@ -5,7 +5,10 @@ module Clash.BCD (
     BCDDigit,
     convertStep,
     convertSteps,
-    toDec
+    toDec,
+    bcdToAscii,
+    asciiToBCD,
+    asciisToBCDs
     ) where
 
 import Clash.Prelude
@@ -46,4 +49,18 @@ toDec :: (KnownNat n, KnownNat m)
     => BitVector n    -- ^ Binary number to convert
     -> Vec m BCDDigit -- ^ Vector of BCD digits
 toDec = flip convertSteps (repeat 0)
+
+bcdToAscii :: BitVector 4 -> BitVector 8
+bcdToAscii x = 0x3 ++# x
+
+asciiToBCD :: BitVector 8 -> Maybe (BitVector 4)
+asciiToBCD digit 
+    |  highNibble == 0x3 
+    && lowNibble < 10    = Just lowNibble
+    |  otherwise         = Nothing
+    where
+    (highNibble :: BitVector 4, lowNibble :: BitVector 4) = split digit
+
+asciisToBCDs :: (KnownNat n, 1 <= n) =>  Vec n (BitVector 8) -> Maybe (Vec n (BitVector 4))
+asciisToBCDs = sequenceA . map asciiToBCD
 
