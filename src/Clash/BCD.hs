@@ -8,7 +8,9 @@ module Clash.BCD (
     toDec,
     bcdToAscii,
     asciiToBCD,
-    asciisToBCDs
+    asciisToBCDs,
+    bcdSub,
+    bcdAdd
     ) where
 
 import Clash.Prelude
@@ -63,4 +65,50 @@ asciiToBCD digit
 
 asciisToBCDs :: (KnownNat n, 1 <= n) =>  Vec n (BitVector 8) -> Maybe (Vec n (BitVector 4))
 asciisToBCDs = sequenceA . map asciiToBCD
+
+bcdSub 
+    :: forall n. (KnownNat n) 
+    => Vec n (BitVector 4) 
+    -> Vec n (BitVector 4) 
+    -> (BitVector 1, Vec n (BitVector 4))
+bcdSub x y = (bitCoerce cOut, zipWith resolveCarry carryBits sumRes)
+    where
+
+    resolveCarry :: Bool -> BitVector 4 -> BitVector 4
+    resolveCarry False res = res - 6
+    resolveCarry True  res = res
+
+    sumRes :: Vec n (BitVector 4)
+    cOut   :: Bool
+    (cOut, sumRes) = unpack $ resize (pack x) + resize (complement (pack y)) + 1
+
+    --TODO: directly instantiate a carry chain primitive to get rid of this nonsense
+    carryBits :: Vec n Bool
+    carryBits = init $ cOut :> zipWith3 func sumRes x y
+        where
+        func :: BitVector 4 -> BitVector 4 -> BitVector 4 -> Bool
+        func r x y = bitCoerce $ lsb r `xor` lsb x `xor` complement (lsb y)
+
+bcdAdd 
+    :: forall n. (KnownNat n) 
+    => Vec n (BitVector 4) 
+    -> Vec n (BitVector 4) 
+    -> (BitVector 1, Vec n (BitVector 4))
+bcdAdd x y = (bitCoerce cOut, zipWith resolveCarry carryBits sumRes)
+    where
+
+    resolveCarry :: Bool -> BitVector 4 -> BitVector 4
+    resolveCarry False res = res - 6
+    resolveCarry True  res = res
+
+    sumRes :: Vec n (BitVector 4)
+    cOut   :: Bool
+    (cOut, sumRes) = unpack $ resize (pack x) + resize (pack (map (+6) y))
+
+    --TODO: directly instantiate a carry chain primitive to get rid of this nonsense
+    carryBits :: Vec n Bool
+    carryBits = init $ cOut :> zipWith3 func sumRes x y
+        where
+        func :: BitVector 4 -> BitVector 4 -> BitVector 4 -> Bool
+        func r x y = bitCoerce $ lsb r `xor` lsb x `xor` lsb y
 
