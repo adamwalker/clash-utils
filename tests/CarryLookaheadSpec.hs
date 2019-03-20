@@ -12,7 +12,10 @@ import Clash.CarryLookahead
 --Misc
 spec = describe "Carry lookahead" $ do
     specify "Kogge-Stone adder" $ property prop_koggeStoneAdder
+    specify "Brent-Kung adder"  $ property prop_brentKungAdder
 
 prop_koggeStoneAdder :: Bool -> BitVector 32 -> BitVector 32 -> Bool
 prop_koggeStoneAdder cIn x y = snd (koggeStone cIn x y) == x + y + (if cIn then 1 else 0)
 
+prop_brentKungAdder :: Bool -> BitVector 32 -> BitVector 32 -> Bool
+prop_brentKungAdder cIn x y = snd (brentKung cIn x y) == x + y + (if cIn then 1 else 0)

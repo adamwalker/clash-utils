@@ -1,5 +1,7 @@
 module Clash.CarryLookahead (
-    koggeStone
+    carryLookaheadAdder,
+    koggeStone,
+    brentKung
     ) where
 
 import Clash.Prelude
@@ -14,23 +16,28 @@ data GenProp = GenProp {
 instance Semigroup GenProp where
     GenProp g0 p0 <> GenProp g1 p1 = GenProp (g1 || (p1 && g0)) (p0 && p1)
 
-koggeStone :: Bool -> BitVector 32 -> BitVector 32 -> (BitVector 32, BitVector 32)
-koggeStone cIn x y = (pack $ reverse carrys, pack $ reverse sums)
+type PrefixSum n a = (a -> a -> a) -> Vec n a -> Vec n a
+
+carryLookaheadAdder :: forall n. KnownNat n => PrefixSum n GenProp -> Bool -> BitVector n -> BitVector n -> (BitVector n, BitVector n)
+carryLookaheadAdder prefixSum cIn x y = (pack $ reverse carrys, pack $ reverse sums)
     where
 
-    genProps :: Vec 32 GenProp
+    genProps :: Vec n GenProp
     genProps =  zipWith func (reverse $ unpack x) (reverse $ unpack y)
         where
         func :: Bool -> Bool -> GenProp 
         func x y = GenProp (x && y) (x `xor` y)
 
-    carrys :: Vec 32 Bool
-    carrys = map func $ prefixSumParallel32 (<>) genProps
+    carrys :: Vec n Bool
+    carrys = map func $ prefixSum (<>) genProps
         where
         func (GenProp gen prop) = gen || (prop && cIn)
 
-    sums :: Vec 32 Bool
+    sums :: Vec n Bool
     sums = zipWith func (cIn +>> carrys) genProps
         where
         func c (GenProp _ p) = c `xor` p
+
+koggeStone = carryLookaheadAdder prefixSumParallel32
+brentKung  = carryLookaheadAdder prefixSumWorkEfficient32
 
