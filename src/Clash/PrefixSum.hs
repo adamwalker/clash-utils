@@ -30,7 +30,7 @@ prefixSumParallelStep SNat SNat op inputs = untouched ++ zipWith op left right
     right     :: Vec take a
     right     =  dropI inputs
 
-{-| 32 element highly parallel prefix sum -}
+{-| 32 element highly parallel prefix sum. TODO: generalise this to arbitrary lengths using dfold. -}
 prefixSumParallel32 
     :: (a -> a -> a) -- ^ Associative operation
     -> Vec 32 a      -- ^ Input vector
@@ -99,7 +99,7 @@ prefixSumWorkEfficientStepB SNat op inputs = first ++ ress ++ last
     ress :: Vec ((2 * n) * groupSize) a
     ress = concat res
 
-{-| 32 element work efficient prefix sum -}
+{-| 32 element work efficient prefix sum. TODO: generalise this to arbitrary lengths using dfold.-}
 prefixSumWorkEfficient32 
     :: (a -> a -> a) -- ^ Associative operation
     -> Vec 32 a      -- ^ Input vector
