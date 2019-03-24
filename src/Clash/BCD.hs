@@ -1,6 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-{-| Binary to BCD conversion using the <https://en.wikipedia.org/wiki/Double_dabble Double Dabble> algorithm. -}
+{-| BCD arithmetic and binary to BCD conversion using the <https://en.wikipedia.org/wiki/Double_dabble Double Dabble> algorithm. -}
 module Clash.BCD (
     BCDDigit,
     convertStep,
@@ -52,10 +52,16 @@ toDec :: (KnownNat n, KnownNat m)
     -> Vec m BCDDigit -- ^ Vector of BCD digits
 toDec = flip convertSteps (repeat 0)
 
-bcdToAscii :: BitVector 4 -> BitVector 8
+{-| Convert a BCD digit to ASCII -}
+bcdToAscii 
+    :: BitVector 4 -- ^ Input BCD digit
+    -> BitVector 8 -- ^ Output ASCII symbol
 bcdToAscii x = 0x3 ++# x
 
-asciiToBCD :: BitVector 8 -> Maybe (BitVector 4)
+{-| Convert an ASCII symbol to BCD -}
+asciiToBCD 
+    :: BitVector 8         -- ^ Input ASCII symbol
+    -> Maybe (BitVector 4) -- ^ Output BCD digit (if the conversion succeeds)
 asciiToBCD digit 
     |  highNibble == 0x3 
     && lowNibble < 10    = Just lowNibble
@@ -63,14 +69,19 @@ asciiToBCD digit
     where
     (highNibble :: BitVector 4, lowNibble :: BitVector 4) = split digit
 
-asciisToBCDs :: (KnownNat n, 1 <= n) =>  Vec n (BitVector 8) -> Maybe (Vec n (BitVector 4))
+{-| Convert an ASCII string to BCD digits -}
+asciisToBCDs 
+    :: (KnownNat n, 1 <= n) 
+    =>  Vec n (BitVector 8)        -- ^ Input ASCII string
+    -> Maybe (Vec n (BitVector 4)) -- ^ Output BCD digits (if the conversion succeeds)
 asciisToBCDs = sequenceA . map asciiToBCD
 
+{-| BCD subtraction. Efficiently utilises the carry chain. -}
 bcdSub 
     :: forall n. (KnownNat n) 
-    => Vec n (BitVector 4) 
-    -> Vec n (BitVector 4) 
-    -> (BitVector 1, Vec n (BitVector 4))
+    => Vec n (BitVector 4)                -- ^ First input
+    -> Vec n (BitVector 4)                -- ^ Second input
+    -> (BitVector 1, Vec n (BitVector 4)) -- ^ (carry out, result)
 bcdSub x y = (bitCoerce cOut, zipWith resolveCarry carryBits sumRes)
     where
 
@@ -89,11 +100,12 @@ bcdSub x y = (bitCoerce cOut, zipWith resolveCarry carryBits sumRes)
         func :: BitVector 4 -> BitVector 4 -> BitVector 4 -> Bool
         func r x y = bitCoerce $ lsb r `xor` lsb x `xor` complement (lsb y)
 
+{-| BCD addition. Efficiently utilises the carry chain. -}
 bcdAdd 
     :: forall n. (KnownNat n) 
-    => Vec n (BitVector 4) 
-    -> Vec n (BitVector 4) 
-    -> (BitVector 1, Vec n (BitVector 4))
+    => Vec n (BitVector 4)                -- ^ First input
+    -> Vec n (BitVector 4)                -- ^ Second input
+    -> (BitVector 1, Vec n (BitVector 4)) -- ^ (carry out, result)
 bcdAdd x y = (bitCoerce cOut, zipWith resolveCarry carryBits sumRes)
     where
 
