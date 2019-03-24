@@ -1,4 +1,6 @@
+{-| Carry lookahead adders built on prefix sums: https://en.wikipedia.org/wiki/Carry-lookahead_adder -}
 module Clash.CarryLookahead (
+    PrefixSum,
     carryLookaheadAdder,
     koggeStone,
     brentKung
@@ -18,7 +20,14 @@ instance Semigroup GenProp where
 
 type PrefixSum n a = (a -> a -> a) -> Vec n a -> Vec n a
 
-carryLookaheadAdder :: forall n. KnownNat n => PrefixSum n GenProp -> Bool -> BitVector n -> BitVector n -> (BitVector n, BitVector n)
+-- | A generic carry lookahead parameterised by the type of prefix sum it uses
+carryLookaheadAdder 
+    :: forall n. KnownNat n 
+    => PrefixSum n GenProp        -- ^ The prefix sum structure to use
+    -> Bool                       -- ^ Carry in
+    -> BitVector n                -- ^ Sum input 1
+    -> BitVector n                -- ^ Sum input 2
+    -> (BitVector n, BitVector n) -- ^ (Intermediate carrys, sum outputs)
 carryLookaheadAdder prefixSum cIn x y = (pack $ reverse carrys, pack $ reverse sums)
     where
 
@@ -38,6 +47,9 @@ carryLookaheadAdder prefixSum cIn x y = (pack $ reverse carrys, pack $ reverse s
         where
         func c (GenProp _ p) = c `xor` p
 
+{-| A [Kogge-Stone](https://en.wikipedia.org/wiki/Kogge%E2%80%93Stone_adder) adder -}
 koggeStone = carryLookaheadAdder prefixSumParallel32
+
+{-| A [Brent-Kung](https://en.wikipedia.org/wiki/Brent%E2%80%93Kung_adder) adder -}
 brentKung  = carryLookaheadAdder prefixSumWorkEfficient32
 
