@@ -3,7 +3,7 @@
 A random collection of reusable [Clash](http://www.clash-lang.org/) designs/examples.
 
 ## Includes:
-* [Binary to BCD conversion](https://en.wikipedia.org/wiki/Double_dabble)
+* [Binary to BCD conversion](https://en.wikipedia.org/wiki/Double_dabble), BCD arithmetic that efficiently utilises the carry chain.
 * [CORDIC](https://en.wikipedia.org/wiki/CORDIC) for calculating trigonometric functions
 * [CRC](https://en.wikipedia.org/wiki/Cyclic_redundancy_check) calculation
 * A FIFO
