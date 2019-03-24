@@ -1,4 +1,7 @@
-{-| Carry lookahead adders built on prefix sums: https://en.wikipedia.org/wiki/Carry-lookahead_adder -}
+{-| Carry lookahead adders built on prefix sums: https://en.wikipedia.org/wiki/Carry-lookahead_adder 
+
+    Don't use these for adders on FPGAs. They already come with fast carry chains in hard silicon.
+-}
 module Clash.CarryLookahead (
     PrefixSum,
     carryLookaheadAdder,
