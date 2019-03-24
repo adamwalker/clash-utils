@@ -1,3 +1,4 @@
+{-| Parallel prefix sum calculation: https://en.wikipedia.org/wiki/Prefix_sum -}
 module Clash.PrefixSum (
     prefixSumParallelStep,
     prefixSumParallel32,
@@ -8,6 +9,7 @@ module Clash.PrefixSum (
 
 import Clash.Prelude
 
+{-| One step of a parallel but less work efficient prefix sum calculation (Algorithm 1 on the wikipedia page) referenced above -}
 prefixSumParallelStep 
     :: forall take drop n a
     .  n ~ (take + drop)
@@ -28,7 +30,11 @@ prefixSumParallelStep SNat SNat op inputs = untouched ++ zipWith op left right
     right     :: Vec take a
     right     =  dropI inputs
 
-prefixSumParallel32 :: (a -> a -> a) -> Vec 32 a -> Vec 32 a
+{-| 32 element highly parallel prefix sum -}
+prefixSumParallel32 
+    :: (a -> a -> a) -- ^ Associative operation
+    -> Vec 32 a      -- ^ Input vector
+    -> Vec 32 a      -- ^ Output prefix sum
 prefixSumParallel32 op vec 
     = prefixSumParallelStep (SNat @ 16) (SNat @ 16) op
     $ prefixSumParallelStep (SNat @ 24) (SNat @ 8)  op
@@ -37,6 +43,7 @@ prefixSumParallel32 op vec
     $ prefixSumParallelStep (SNat @ 31) (SNat @ 1)  op
     $ vec
 
+{-| One step of a less parallel but more work efficient prefix sum calculation (Algorithm 2 on the wikipedia page) referenced above -}
 prefixSumWorkEfficientStepA
     :: forall level n k o a
     .  (KnownNat k, n ~ ((k * 2) * (2 ^ level)), (o + 1) ~ (2 ^ level))
@@ -62,6 +69,7 @@ prefixSumWorkEfficientStepA SNat op inputs = concat opped
             ++ init right 
             ++ singleton (last left `op` last right)
 
+{-| One step of a less parallel but more work efficient prefix sum calculation (Algorithm 2 on the wikipedia page) referenced above -}
 prefixSumWorkEfficientStepB
     :: forall groupSize g n a 
     .  (KnownNat n, groupSize ~ (g + 1))
@@ -91,7 +99,11 @@ prefixSumWorkEfficientStepB SNat op inputs = first ++ ress ++ last
     ress :: Vec ((2 * n) * groupSize) a
     ress = concat res
 
-prefixSumWorkEfficient32 :: (a -> a -> a) -> Vec 32 a -> Vec 32 a
+{-| 32 element work efficient prefix sum -}
+prefixSumWorkEfficient32 
+    :: (a -> a -> a) -- ^ Associative operation
+    -> Vec 32 a      -- ^ Input vector
+    -> Vec 32 a      -- ^ Output prefix sum
 prefixSumWorkEfficient32 op vec 
     = prefixSumWorkEfficientStepB (SNat @ 1) op
     $ prefixSumWorkEfficientStepB (SNat @ 2) op
