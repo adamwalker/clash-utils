@@ -38,7 +38,8 @@ library
         Clash.Cuckoo,
         Clash.Stream,
         Clash.PrefixSum,
-        Clash.CarryLookahead
+        Clash.CarryLookahead,
+        Clash.Xilinx.Carry
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 
@@ -86,7 +87,8 @@ Test-Suite test
         CuckooSpec,
         StreamSpec,
         PrefixSumSpec,
-        CarryLookaheadSpec
+        CarryLookaheadSpec,
+        XilinxCarrySpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.12, 
