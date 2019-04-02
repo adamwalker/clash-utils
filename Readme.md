@@ -24,8 +24,4 @@ Each design has a [Hspec](https://hspec.github.io/) testsuite/specification in t
 
 ## Status
 
-Most of these designs are not FPGA proven (yet). Designs that have actually been tested on an FPGA are:
-* the CRCs
-* the FIFOs
-* the cuckoo hashtable
-* the streaming functions
+FPGA proven designs are indicated in the module documentation.
