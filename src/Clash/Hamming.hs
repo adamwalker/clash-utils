@@ -1,4 +1,8 @@
-{-| Hamming code encoding and decoding. https://en.wikipedia.org/wiki/Hamming_code. -}
+{-| 
+    Hamming code encoding and decoding. https://en.wikipedia.org/wiki/Hamming_code. 
+
+    __FPGA proven__
+-}
 module Clash.Hamming (
     generator,
     hammingParity,

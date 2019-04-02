@@ -1,6 +1,10 @@
 {-# LANGUAGE ScopedTypeVariables, KindSignatures, TypeFamilies, UndecidableInstances #-}
 
-{-| Bitonic sorting network. See <https://en.wikipedia.org/wiki/Bitonic_sorter> and <http://www.iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/bitonicen.htm>. -}
+{-| 
+    Bitonic sorting network. See <https://en.wikipedia.org/wiki/Bitonic_sorter> and <http://www.iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/bitonicen.htm>. 
+
+    __FPGA proven__ but only for small vectors since it is (currently) purely combinational.
+-}
 module Clash.Sort (
     bitonicMerge,
     bitonicSort, 
