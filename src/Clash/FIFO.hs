@@ -1,6 +1,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-{-| A block ram FIFO -}
+{-| 
+    A block ram FIFO 
+
+    __FPGA proven__
+-}
 module Clash.FIFO (
     blockRamFIFO,
     blockRamFIFOMaybe

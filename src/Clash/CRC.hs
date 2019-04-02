@@ -16,6 +16,8 @@
 
     Each method is verified to be equivalent to the standard LFSR algorithm (the first one) in the testsuite.
 
+    __FPGA proven__
+
 -}
 module Clash.CRC (
     crc32Poly,

@@ -1,6 +1,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-{-| BCD arithmetic and binary to BCD conversion using the <https://en.wikipedia.org/wiki/Double_dabble Double Dabble> algorithm. -}
+{-| 
+    BCD arithmetic and binary to BCD conversion using the <https://en.wikipedia.org/wiki/Double_dabble Double Dabble> algorithm. 
+
+    __FPGA proven__
+-}
 module Clash.BCD (
     BCDDigit,
     convertStep,

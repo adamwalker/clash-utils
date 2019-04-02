@@ -1,4 +1,7 @@
-{-# LAnGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards #-}
+{-| 
+    __FPGA proven__
+-}
 module Clash.Stream (
     StreamIn(..),
     deserialize,

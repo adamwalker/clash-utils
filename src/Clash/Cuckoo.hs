@@ -3,6 +3,8 @@
 {-| Implements the lookup side of a <https://en.wikipedia.org/wiki/Cuckoo_hashing Cuckoo hashtable>.
 
     Cuckoo hashtables are well suited to communicating key value pairs with hardware where the space of keys is large.
+
+    __FPGA proven__
  -}
 module Clash.Cuckoo (
     TableEntry(..),
