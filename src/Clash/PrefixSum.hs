@@ -1,4 +1,8 @@
-{-| Parallel prefix sum calculation: https://en.wikipedia.org/wiki/Prefix_sum -}
+{-| 
+    Parallel prefix sum calculation: https://en.wikipedia.org/wiki/Prefix_sum 
+
+    __FPGA proven__
+-}
 module Clash.PrefixSum (
     prefixSumParallelStep,
     prefixSumParallel32,
