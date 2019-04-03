@@ -39,7 +39,8 @@ library
         Clash.Stream,
         Clash.PrefixSum,
         Clash.CarryLookahead,
-        Clash.Xilinx.Carry
+        Clash.Xilinx.Carry,
+        Clash.Crypto.AES
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 
@@ -88,7 +89,8 @@ Test-Suite test
         StreamSpec,
         PrefixSumSpec,
         CarryLookaheadSpec,
-        XilinxCarrySpec
+        XilinxCarrySpec,
+        AESSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.12, 
@@ -105,6 +107,7 @@ Test-Suite test
         data-default,
         tuple,
         bytestring,
+        cipher-aes,
         ghc-typelits-natnormalise,
         ghc-typelits-knownnat,
         ghc-typelits-extra,
