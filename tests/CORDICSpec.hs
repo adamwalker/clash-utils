@@ -32,7 +32,7 @@ prop_CORDICVectorMode =
     where
 
     doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
-    doIt = cordicSteps (\(CordicState (_ :+ y) _) -> y < 0) consts
+    doIt = cordicSteps (\(CordicState (_ :+ y) _) -> y < 0) (0 :: Index 100) consts
 
 --Test CORDIC rotation mode by calculating the real and imaginary part of a complex number given in polar form
 prop_CORDICRotationMode = 
@@ -44,4 +44,4 @@ prop_CORDICRotationMode =
     where
 
     doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
-    doIt = cordicSteps (\(CordicState _ a) -> a > 0) consts
+    doIt = cordicSteps (\(CordicState _ a) -> a > 0) (0 :: Index 100) consts
