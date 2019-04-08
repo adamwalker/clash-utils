@@ -1,4 +1,10 @@
 {-# LANGUAGE TemplateHaskell #-}
+
+{-| AES encryption.
+
+    __FPGA proven__
+-}
+
 module Clash.Crypto.AES (
     keyScheduleStep,
     subBytes,
@@ -102,21 +108,27 @@ aesEncrypt
     -> Signal dom (BitVector 128) 
     -> Signal dom (BitVector 128) 
     -> Signal dom (Bool, BitVector 128)
-aesEncrypt start key block = bundle (cnt .==. 11, pack <$> roundState)
+aesEncrypt start key block = bundle (cnt .==. 12, pack <$> roundState)
     where
 
     roundKey :: Signal dom (Vec 4 (BitVector 32))
     roundKey =  keyExpander start key 
 
     cnt :: Signal dom (Unsigned 4)
-    cnt =  register 0 $ mux start 0 (cnt + 1)
+    cnt = register 0 $ func <$> cnt <*> start
+        where
+        func _   True = 1
+        func cnt _
+            | cnt == 12 = 0
+            | cnt == 0  = 0
+            | otherwise = cnt + 1
 
     roundState :: Signal dom AESState 
     roundState = register (repeat (repeat 0)) $ step <$> cnt <*> roundState <*> roundKey <*> block
         where
         step :: Unsigned 4 -> AESState -> Vec 4 (BitVector 32) -> BitVector 128 -> AESState
-        step cnt roundState roundKey block = addRoundKey roundKey $ bool preRoundKey (unpack block) (cnt == 0)
+        step cnt roundState roundKey block = addRoundKey roundKey $ bool preRoundKey (unpack block) (cnt == 1)
             where
-            preRoundKey   = bool (mixColumns preMixColumns) preMixColumns (cnt == 10)
+            preRoundKey   = bool (mixColumns preMixColumns) preMixColumns (cnt == 11)
             preMixColumns = shiftRows $ subBytes roundState
 

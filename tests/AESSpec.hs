@@ -29,3 +29,4 @@ prop_AES key block = fmap (fmap toBS) res == Just (True, expect)
     expect  = encryptECB (initAES keyBS) blockBS
     res     = Prelude.find fst $ sampleN 20 (aesEncrypt starts (pure key) (pure block)) 
     starts  = fromList $ False : True : Prelude.repeat False
+
