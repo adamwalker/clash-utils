@@ -10,6 +10,7 @@ module Clash.BCD (
     convertStep,
     convertSteps,
     toDec,
+    binaryToDecExample,
     bcdToAscii,
     asciiToBCD,
     asciisToBCDs,
@@ -55,6 +56,18 @@ toDec :: (KnownNat n, KnownNat m)
     => BitVector n    -- ^ Binary number to convert
     -> Vec m BCDDigit -- ^ Vector of BCD digits
 toDec = flip convertSteps (repeat 0)
+
+{-| An example synthesizeable binary to decimal conversion. Converts an 8 bit binary number to three BCD digits. Consists of a 2 stage pipeline. Each pipeline stage performs four double dabble iterations for a total of 8 iterations. Processes one input per cycle. Latency is 2 cycles. -}
+binaryToDecExample 
+    :: HiddenClockReset dom gated sync
+    => Signal dom (BitVector 8)  -- ^ Input binary number
+    -> Signal dom (BitVector 12) -- ^ Output BCD number
+binaryToDecExample x 
+    = fmap pack 
+    $ liftA2 convertSteps (slice d3 d0 <$> x) 
+    $ register (repeat 0) 
+    $ liftA2 convertSteps (slice d7 d4 <$> x)
+    $ pure (repeat 0)
 
 {-| Convert a BCD digit to ASCII -}
 bcdToAscii 
