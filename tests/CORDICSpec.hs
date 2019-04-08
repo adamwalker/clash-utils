@@ -8,7 +8,7 @@ import Test.Hspec
 import Test.QuickCheck
 
 import qualified Data.Complex as C
-import Clash.CORDIC
+import Clash.DSP.CORDIC
 
 approxEqual :: Double -> Double -> Bool
 approxEqual x y = abs (x - y) < 0.0001

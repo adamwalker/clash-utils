@@ -9,8 +9,8 @@ import Test.QuickCheck
 
 import qualified Numeric.FFT as FFT
 import qualified Data.Complex as C
-import Clash.Complex (Complex, fromComplex, toComplex)
-import Clash.FFT
+import Clash.DSP.Complex (Complex, fromComplex, toComplex)
+import Clash.DSP.FFT
 
 --FFT
 spec = describe "Parallel FFTs" $ do

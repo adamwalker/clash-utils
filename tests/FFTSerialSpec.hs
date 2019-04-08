@@ -9,9 +9,9 @@ import Test.QuickCheck
 
 import qualified Numeric.FFT as FFT
 import qualified Data.Complex as C
-import Clash.Complex (Complex, fromComplex, toComplex)
-import Clash.FFTSerial
-import Clash.FFT
+import Clash.DSP.Complex (Complex, fromComplex, toComplex)
+import Clash.DSP.FFTSerial
+import Clash.DSP.FFT
 
 --serial FFT
 spec = describe "Serial FFTs" $ do

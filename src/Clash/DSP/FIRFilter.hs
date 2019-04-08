@@ -4,7 +4,7 @@
 
     These are based on designs in the Xilinx document <http://www-inst.eecs.berkeley.edu/~cs150/fa13/resources/dsp.pdf DSP: Designing for Optimal Results>
 -}
-module Clash.FIRFilter (
+module Clash.DSP.FIRFilter (
     fir,
     firTransposed,
     firSystolic,

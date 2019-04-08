@@ -20,15 +20,9 @@ library
         Clash.BCD, 
         Clash.CRC, 
         Clash.FIFO, 
-        Clash.FIRFilter, 
-        Clash.CORDIC, 
         Clash.Sort, 
         Clash.Divide, 
-        Clash.IIRFilter, 
         Clash.GrayCode, 
-        Clash.FFT, 
-        Clash.Complex, 
-        Clash.FFTSerial, 
         Clash.Hamming, 
         Clash.LFSR,
         Clash.Misc, 
@@ -40,7 +34,13 @@ library
         Clash.PrefixSum,
         Clash.CarryLookahead,
         Clash.Xilinx.Carry,
-        Clash.Crypto.AES
+        Clash.Crypto.AES,
+        Clash.DSP.FIRFilter, 
+        Clash.DSP.CORDIC, 
+        Clash.DSP.FFT, 
+        Clash.DSP.Complex, 
+        Clash.DSP.IIRFilter, 
+        Clash.DSP.FFTSerial
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 

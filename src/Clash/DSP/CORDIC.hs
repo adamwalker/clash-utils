@@ -5,7 +5,7 @@
 
     __FPGA proven__
 -}
-module Clash.CORDIC (
+module Clash.DSP.CORDIC (
     arctans,
     kValue,
     Complex(..),
@@ -20,7 +20,7 @@ module Clash.CORDIC (
 import Clash.Prelude
 import qualified Prelude as P
 
-import Clash.Complex
+import Clash.DSP.Complex
 
 {-| The gamma constants as described on the Wikipedia page -}
 arctans :: [Double]

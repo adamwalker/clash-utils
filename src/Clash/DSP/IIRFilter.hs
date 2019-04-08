@@ -1,5 +1,5 @@
 --Infinite impulse response filters
-module Clash.IIRFilter (
+module Clash.DSP.IIRFilter (
     iirDirectI,
     iirDirectII,
     iirTransposedI,

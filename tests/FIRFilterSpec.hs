@@ -8,7 +8,7 @@ import Test.Hspec
 import Test.QuickCheck
 
 import qualified Data.List.Split as S
-import Clash.FIRFilter
+import Clash.DSP.FIRFilter
 
 --FIR filter testing
 --Check that both optimised filters return the same results as the unoptimised one

@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveLift, DeriveGeneric, DeriveAnyClass #-}
-module Clash.Complex where
+module Clash.DSP.Complex where
 
 import Clash.Prelude
 

@@ -1,7 +1,7 @@
 {-| Radix 2 complex-to-complex Cooley-Tukey FFTs. https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm.
     The FFTs in this module are serial, saving multiplers and routing resources. They operate on and produce two complex numbers at a time. 
 -}
-module Clash.FFTSerial (
+module Clash.DSP.FFTSerial (
     fftSerialDITStep,
     fftSerialDIT,
     fftSerialDIFStep,
@@ -10,8 +10,8 @@ module Clash.FFTSerial (
 
 import Clash.Prelude
 
-import Clash.Complex
-import Clash.FFT(halveTwiddles)
+import Clash.DSP.Complex
+import Clash.DSP.FFT(halveTwiddles)
 
 fftBase :: (HiddenClockReset dom gated sync, Num a, Undefined a) => Signal dom Bool -> Signal dom (Complex a, Complex a) -> Signal dom (Complex a, Complex a)
 fftBase en = regEn (0, 0) en . fmap func

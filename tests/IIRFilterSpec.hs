@@ -7,7 +7,7 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck
 
-import Clash.IIRFilter
+import Clash.DSP.IIRFilter
 
 --IIR filter testing
 --Check that both direct forms are equivalent

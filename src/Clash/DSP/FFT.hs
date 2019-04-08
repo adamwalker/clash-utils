@@ -5,7 +5,7 @@
 
     TODO: use the dependently typed fold to define FFTs of any length.
 -}
-module Clash.FFT (
+module Clash.DSP.FFT (
     twiddleFactors,
     halveTwiddles,
     reorder,
@@ -21,7 +21,7 @@ module Clash.FFT (
 
 import Clash.Prelude
 
-import Clash.Complex
+import Clash.DSP.Complex
 import qualified Data.Complex as C
 import qualified Prelude as P
 
