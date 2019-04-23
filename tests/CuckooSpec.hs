@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RankNTypes, DeriveGeneric, DeriveAnyClass #-}
 module CuckooSpec where
 
 import qualified Clash.Prelude as Clash
@@ -18,6 +18,7 @@ import qualified Data.ByteString as BS
 import Data.Digest.CRC32
 import Data.Default
 import Data.Word
+import GHC.Generics
 
 import Clash.CRC
 import Clash.Cuckoo
@@ -123,7 +124,7 @@ testVecDelete idx k v = [write, delete, lookup, null]
     lookup = (Clash.repeat Nothing, k)
     null   = (Clash.repeat Nothing, "")
 
-type Cuckoo = forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k)
+type Cuckoo = forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k, Undefined v)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
     -> Signal dom v
@@ -138,7 +139,7 @@ type Cuckoo = forall dom gated sync cnt m n k v. (HiddenClockReset dom gated syn
         )
 
 cuckoo2
-    :: forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k)
+    :: forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k, Undefined v)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
     -> Signal dom v
@@ -237,7 +238,7 @@ data Op key
     | Insert key String
     | Delete key
     | Idle
-    deriving (Show)
+    deriving (Show, Generic, Undefined)
 
 data GenState key = GenState {
     theMap            :: Map key String,
@@ -353,17 +354,19 @@ data OpState
     = LookupState (Maybe String) Bool
     | InsertState 
     | IdleState
+    deriving (Generic, Undefined)
 
 data TestbenchState key
     = Success
     | Failure
     | InProgress OpState [Op key] --State of current operation, remaining operations
+    deriving (Generic, Undefined)
 
 hashFuncs :: [Word8] -> Vec 3 (Unsigned 10)
 hashFuncs x = Clash.map (\idx -> fromIntegral $ (`mod` 1024) $ hashWithSalt idx x) (iterateI (+1) 0)
 
 testHarness 
-    :: forall dom gated sync key. (HiddenClockReset dom gated sync, Ord key, Default key, Undefined key)
+    :: forall dom gated sync key. (HiddenClockReset dom gated sync, Ord key, Default key, Undefined key, Undefined (TestbenchState key))
     => (key -> Vec 3 (Unsigned 10))
     -> Cuckoo
     -> [Op key] 
