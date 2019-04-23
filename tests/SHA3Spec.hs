@@ -15,7 +15,6 @@ import qualified Data.ByteArray as BA
 import qualified Data.ByteString as BS
 import Clash.Crypto.SHA3
 
---BCD conversion testing
 spec :: SpecWith ()
 spec = 
     describe "SHA3" $ do

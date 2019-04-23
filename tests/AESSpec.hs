@@ -16,7 +16,6 @@ import qualified Data.ByteString as BS
 import Data.ByteString (ByteString)
 import qualified Data.List as Prelude
 
---BCD conversion testing
 spec :: SpecWith ()
 spec = do
     describe "AES" $ 
