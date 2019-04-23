@@ -8,6 +8,8 @@ import Test.Hspec
 import Test.QuickCheck
 
 import Crypto.Cipher.AES
+import Crypto.Cipher.Types
+import Crypto.Error
 import Clash.Crypto.AES
 
 import qualified Data.ByteString as BS
@@ -26,7 +28,7 @@ prop_AES key block = fmap (fmap toBS) res == Just (True, expect)
     toBS x  = BS.pack $ Prelude.map fromIntegral $ toList $ (unpack x :: Vec 16 (BitVector 8))
     keyBS   = toBS key
     blockBS = toBS block
-    expect  = encryptECB (initAES keyBS) blockBS
+    expect  = ecbEncrypt (throwCryptoError $ cipherInit keyBS :: AES128) blockBS
     res     = Prelude.find fst $ sampleN 20 (aesEncrypt starts (pure key) (pure block)) 
     starts  = fromList $ False : True : Prelude.repeat False
 
