@@ -1,4 +1,9 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
+
+{-| A straightforward, unoptimised <https://en.wikipedia.org/wiki/SHA-3 SHA3> implementation. 
+
+    TODO: test on more than one block
+-}
 module Clash.Crypto.SHA3 (
         SHA3State,
         theta, 
@@ -20,9 +25,10 @@ import Clash.Prelude hiding (pi, round)
 import Data.Bifunctor
 import Clash.Misc
 
---Row major
+-- | Row major 5x5 matrix of 64 bit values
 type SHA3State = Vec 5 (Vec 5 (BitVector 64))
 
+-- | Theta block permutation step
 theta :: SHA3State -> SHA3State
 theta rows = transpose $ zipWith (map . xor) toXor $ transpose rows
     where
@@ -32,6 +38,7 @@ theta rows = transpose $ zipWith (map . xor) toXor $ transpose rows
     toXor   :: Vec 5 (BitVector 64)
     toXor   =  zipWith xor (rotateRightS paritys d1) (map (flip rotateL 1) $ rotateLeftS paritys d1) 
 
+-- | Rho block permutation step
 rho :: SHA3State -> SHA3State
 rho = unconcatI . zipWith (flip rotateL) rots . concat
     where
@@ -43,6 +50,7 @@ rho = unconcatI . zipWith (flip rotateL) rots . concat
         :> 18 :>  2 :> 61 :> 56 :> 14
         :> Nil
 
+-- | Pi block permutation step
 pi :: SHA3State -> SHA3State
 pi rows = unconcatI $ map (concat rows !!) order
     where
@@ -54,6 +62,7 @@ pi rows = unconcatI $ map (concat rows !!) order
         :> 2 :> 8 :> 14 :> 15 :> 21
         :> Nil
 
+-- | Chi block permutation step
 chi :: SHA3State -> SHA3State
 chi rows = transpose $ zipWith3 (zipWith3 func) cols (rotateLeftS cols d1) (rotateLeftS cols d2)
     where
@@ -61,6 +70,7 @@ chi rows = transpose $ zipWith3 (zipWith3 func) cols (rotateLeftS cols d1) (rota
     func :: BitVector 64 -> BitVector 64 -> BitVector 64 -> BitVector 64
     func x y z = x `xor` (complement y .&. z)
 
+-- | Iota block permutation step
 iota :: Index 24 -> SHA3State -> SHA3State
 iota i ((x :> rest0) :> rest1) = ((x `xor` consts !! i) :> rest0) :> rest1
     where
@@ -80,18 +90,21 @@ iota i ((x :> rest0) :> rest1) = ((x `xor` consts !! i) :> rest0) :> rest1
         :> 0x0000000080000001 :> 0x8000000080008008
         :> Nil
 
+-- | Block permutation round
 round :: Index 24 -> SHA3State -> SHA3State
 round i = iota i . chi . pi . rho . theta
 
+-- | Xor the data to be hashed into the block
 updateState :: ((n + n0) ~ 25, KnownNat n0) => Vec n (BitVector 64) -> SHA3State -> SHA3State
 updateState dat state = unconcatI $ zipWith xor (concat state) (dat ++ repeat 0)
 
+-- | SHA3
 sha3 
     :: forall dom gated sync n n0
     .  (HiddenClockReset dom gated sync, (n + n0) ~ 25, KnownNat n0)
-    => Signal dom Bool
-    -> Signal dom (Vec n (BitVector 64))
-    -> (Signal dom Bool, Signal dom SHA3State)
+    => Signal dom Bool                         -- ^ Reset
+    -> Signal dom (Vec n (BitVector 64))       -- ^ Input block
+    -> (Signal dom Bool, Signal dom SHA3State) -- ^ (Done, hash state)
 sha3 reset dat = (register False $ cnt .==. pure maxBound, state)
     where
 
