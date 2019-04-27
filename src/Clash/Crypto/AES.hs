@@ -1,12 +1,17 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-{-| AES encryption.
+{-| A straightforward, unoptimised <https://en.wikipedia.org/wiki/Advanced_Encryption_Standard AES> implementation. 
+
+    TODO: implement decryption and key sizes other than 128 bits.
 
     __FPGA proven__
 -}
 
 module Clash.Crypto.AES (
+    sBoxConsts,
+    sBox,
     keyScheduleStep,
+    AESState,
     subBytes,
     shiftRows,
     mixColumns,
@@ -22,6 +27,7 @@ import Clash.Prelude
 
 import Data.Bool
 
+-- | Lookup table for the <https://en.wikipedia.org/wiki/Rijndael_S-box Rijndael S-box>
 sBoxConsts :: Vec 256 (BitVector 8)
 sBoxConsts = $(listToVecTH [
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
@@ -42,26 +48,32 @@ sBoxConsts = $(listToVecTH [
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16 :: BitVector 8
     ])
 
+-- | <https://en.wikipedia.org/wiki/Rijndael_S-box Rijndael S-box>
 sBox :: BitVector 8 -> BitVector 8
 sBox = asyncRomPow2 sBoxConsts . unpack
 
 gfDouble :: Vec 8 Bool -> Vec 8 Bool
 gfDouble (msb :> rest) = zipWith xor (rest :< False) $ unpack $ bool 0 0x1b msb
 
+-- | One step in the <https://en.wikipedia.org/wiki/Rijndael_key_schedule Rijndael key schedule>
 keyScheduleStep :: BitVector 8 -> Vec 4 (BitVector 32) -> Vec 4 (BitVector 32)
 keyScheduleStep rcon state = postscanl xor nextKS state
     where
     nextKS :: BitVector 32
     nextKS = pack $ zipWith xor (rcon :> repeat 0) $ map sBox (rotateLeftS (unpack $ last state) (SNat @ 1)) 
 
+-- | The AES state is a 4x4 matrix of bytes
 type AESState = Vec 4 (Vec 4 (BitVector 8))
 
+-- | The SubBytes step of an AES round
 subBytes :: AESState -> AESState
 subBytes = map (map sBox)
 
+-- | The ShiftRows step of an AES round
 shiftRows :: AESState -> AESState
 shiftRows = transpose . smap (flip rotateLeftS) . transpose
 
+-- | The MixColumns step of an AES round
 mixColumns :: AESState -> AESState
 mixColumns = map mixColumn
     where
@@ -75,24 +87,29 @@ mixColumns = map mixColumn
         r2 = (doubled !! 2) `xor` (col !! 1) `xor` (col !! 0) `xor` (doubled !! 3) `xor` (col !! 3); 
         r3 = (doubled !! 3) `xor` (col !! 2) `xor` (col !! 1) `xor` (doubled !! 0) `xor` (col !! 0); 
 
+-- | The AddRoundKey step of an AES round
 addRoundKey :: Vec 4 (BitVector 32) -> AESState -> AESState
 addRoundKey key state = zipWith (zipWith xor) (map unpack key) state
 
+-- | The initial round
 round0 :: Vec 4 (BitVector 32) -> AESState -> AESState
 round0 = addRoundKey
 
+-- | The middle rounds
 roundN :: Vec 4 (BitVector 32) -> AESState -> AESState
 roundN roundKey = addRoundKey roundKey . mixColumns . shiftRows . subBytes 
 
+-- | The last rounds
 roundLast :: Vec 4 (BitVector 32) -> AESState -> AESState
 roundLast roundKey = addRoundKey roundKey . shiftRows . subBytes 
 
+-- | <https://en.wikipedia.org/wiki/Rijndael_key_schedule Rijndael key schedule> state machine
 keyExpander 
     :: forall dom gated sync
     .  HiddenClockReset dom gated sync
-    => Signal dom Bool 
-    -> Signal dom (BitVector 128)
-    -> Signal dom (Vec 4 (BitVector 32))
+    => Signal dom Bool                   -- ^ Start
+    -> Signal dom (BitVector 128)        -- ^ Key
+    -> Signal dom (Vec 4 (BitVector 32)) -- ^ Expanded key
 keyExpander start key = keyState
     where
     keyState :: Signal dom (Vec 4 (BitVector 32))
@@ -101,13 +118,14 @@ keyExpander start key = keyState
     rc :: Signal dom (Vec 8 Bool)
     rc =  register (repeat False :< True) $ mux start (pure $ unpack 1) (gfDouble <$> rc)
 
+-- | AES encryption state machine
 aesEncrypt
     :: forall dom gated sync
     .  HiddenClockReset dom gated sync
-    => Signal dom Bool 
-    -> Signal dom (BitVector 128) 
-    -> Signal dom (BitVector 128) 
-    -> Signal dom (Bool, BitVector 128)
+    => Signal dom Bool                  -- ^ Start
+    -> Signal dom (BitVector 128)       -- ^ Key
+    -> Signal dom (BitVector 128)       -- ^ Plaintext block
+    -> Signal dom (Bool, BitVector 128) -- ^ Encrypted block
 aesEncrypt start key block = bundle (cnt .==. 12, pack <$> roundState)
     where
 
