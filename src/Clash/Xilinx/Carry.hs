@@ -12,14 +12,17 @@ carryN
     :: forall n
     .  KnownNat n
     => Bool
-    -> Vec n Bool
-    -> Vec n Bool
-    -> (Vec n Bool, Vec n Bool)
-carryN cIn s d = (zipWith xor (init c) s, tail c)
+    -> BitVector n
+    -> BitVector n
+    -> (BitVector n, BitVector n)
+carryN cIn s d = (pack $ reverse $ zipWith xor (init c) sBits, pack $ reverse $ tail c)
     where
 
+    sBits = reverse $ unpack s
+    dBits = reverse $ unpack d
+
     c :: Vec (n + 1) Bool
-    c = scanl carryStage cIn (zip s d)
+    c = scanl carryStage cIn (zip sBits dBits)
 
     carryStage :: Bool -> (Bool, Bool) -> Bool
     carryStage cIn (s, d) = bool d cIn s
@@ -29,8 +32,5 @@ carry8 = carryN @8
 carry4 = carryN @4
 
 xilinxCarryAdder :: KnownNat n => Bool -> BitVector n -> BitVector n -> BitVector n
-xilinxCarryAdder cIn x y = pack $ reverse $ fst $ 
-    carryN cIn 
-        (reverse $ unpack $ x `xor` y) 
-        (reverse $ unpack x)
+xilinxCarryAdder cIn x y = fst $ carryN cIn (x `xor` y) x
 
