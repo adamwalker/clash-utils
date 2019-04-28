@@ -1,3 +1,9 @@
+{-| Carry select adder: https://en.wikipedia.org/wiki/Carry-select_adder 
+
+    Useful if you need to add two big numbers quickly. For example, `carrySelectAdderExample` can add two 512 bit numbers in a single clock cycle on an Xilinx Artix 7 FPGA with a 100MHz clock. This is not possible with ordinary addition (e.g. using the + operator in Verilog).
+
+    __FPGA proven__
+-}
 module Clash.CarrySelect (
     CarryN,
     carrySelectLeaf,
@@ -9,19 +15,21 @@ module Clash.CarrySelect (
 import Clash.Prelude
 import Data.Bool
 
+-- | Type of functions that behave the same as a Xilinx carry chain
 type CarryN n
-    =  Bool
-    -> BitVector n
-    -> BitVector n
-    -> (BitVector n, BitVector n)
+    =  Bool                       -- ^ Carry in
+    -> BitVector n                -- ^ S input (select)
+    -> BitVector n                -- ^ D input
+    -> (BitVector n, BitVector n) -- ^ (Sum, carries)
 
+-- | Combine the two numbers to be added to get an intermediate result that is used in subsequent calls to `carrySelectStage`
 carrySelectLeaf
     :: forall chunk n chunk'
     .  (KnownNat n, KnownNat chunk, chunk ~ (chunk' + 1))
-    => CarryN chunk
-    -> BitVector (n * chunk)
-    -> BitVector (n * chunk)
-    -> Vec n ((Bool, Bool), (BitVector chunk, BitVector chunk))
+    => CarryN chunk                                             -- ^ CarryN primitive to use
+    -> BitVector (n * chunk)                                    -- ^ First input to sum
+    -> BitVector (n * chunk)                                    -- ^ Second input to sum
+    -> Vec n ((Bool, Bool), (BitVector chunk, BitVector chunk)) -- ^ Intermediate state for subsequent use in `carrySelectStage`
 carrySelectLeaf carryN x y = zipWith func (unpack x) (unpack y)
     where
     func :: BitVector chunk -> BitVector chunk -> ((Bool, Bool), (BitVector chunk, BitVector chunk))
@@ -33,12 +41,13 @@ carrySelectLeaf carryN x y = zipWith func (unpack x) (unpack y)
         (s0, cs0) = carryN False prop gen
         (s1, cs1) = carryN True  prop gen
 
+-- | Carry select adder step
 carrySelectStage 
     :: forall level chunk c
     .  (chunk ~ (c + 1), KnownNat chunk, KnownNat level)
-    => CarryN chunk
-    -> Vec chunk ((Bool, Bool), (BitVector (chunk ^ level), BitVector (chunk ^ level)))
-    -> ((Bool, Bool), (BitVector (chunk ^ (level + 1)), BitVector (chunk ^ (level + 1))))
+    => CarryN chunk                                                                       -- ^ CarryN primitive to use
+    -> Vec chunk ((Bool, Bool), (BitVector (chunk ^ level), BitVector (chunk ^ level)))   -- ^ Intermediate adder state output from `carrySelectLeaf` or `carrySelectStage`
+    -> ((Bool, Bool), (BitVector (chunk ^ (level + 1)), BitVector (chunk ^ (level + 1)))) -- ^ Next intermediate adder state
 carrySelectStage carryN inputs = (head prefixSum, (pack sum0, pack sum1))
 
     where
@@ -61,6 +70,7 @@ carrySelectStage carryN inputs = (head prefixSum, (pack sum0, pack sum1))
     sum0 = zipWith3 bool sum0s sum1s $ map fst (tail prefixSum) :< False
     sum1 = zipWith3 bool sum0s sum1s $ map snd (tail prefixSum) :< True
 
+-- | Create a `CarryN` from an adder. Creates a fast `CarryN` on non-Xilinx FPGAs that have different looking carry chains. 
 carryNAdder :: forall n. KnownNat n => CarryN n
 carryNAdder cIn s d = (truncateB sum, pack $ takeI $ (unpack $ sum `xor` resize x0 `xor` resize x1 :: Vec (n + 1) Bool))
     where
@@ -71,7 +81,11 @@ carryNAdder cIn s d = (truncateB sum, pack $ takeI $ (unpack $ sum `xor` resize 
     sum :: BitVector (n + 1)
     sum = extend x1 + extend x0 + extend (pack cIn)
 
-carrySelectAdderExample :: BitVector 512 -> BitVector 512 -> BitVector 512
+-- | An example carry select adder. Can add two 512 bit numbers in a single cycle on a Xilinx Artix 7 at 100MHz.
+carrySelectAdderExample 
+    :: BitVector 512 -- ^ X
+    -> BitVector 512 -- ^ Y
+    -> BitVector 512 -- ^ X + y
 carrySelectAdderExample x y = fst $ snd $ carrySelectStage @2 carryNAdder $ map (carrySelectStage @1 carryNAdder) leaves
     where
     leaves :: Vec 8 (Vec 8 ((Bool, Bool), (BitVector 8, BitVector 8)))

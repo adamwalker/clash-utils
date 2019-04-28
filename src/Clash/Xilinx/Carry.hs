@@ -34,8 +34,6 @@ carryN cIn s d = (pack $ reverse $ zipWith xor (init c) sBits, pack $ reverse $ 
     carryStage :: Bool -> (Bool, Bool) -> Bool
     carryStage cIn (s, d) = bool d cIn s
 
---TODO: primitive definitions for these
-
 -- | Xilinx Ultrascale(+) carry8 primitive. TODO: verilog/VHDL primitive definition.
 carry8 = carryN @8
 
