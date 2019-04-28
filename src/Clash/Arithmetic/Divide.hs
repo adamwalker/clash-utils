@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables, RecordWildCards #-}
 
 {-| A hardware divider -}
-module Clash.Divide (
+module Clash.Arithmetic.Divide (
     Divide(..),
     initialDivide,
     divideStep,

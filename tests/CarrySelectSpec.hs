@@ -7,7 +7,7 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck
 
-import Clash.CarrySelect
+import Clash.Arithmetic.CarrySelect
 
 spec = describe "Carry select" $ do
     specify "Adds" $ property prop_carrySelectAdder

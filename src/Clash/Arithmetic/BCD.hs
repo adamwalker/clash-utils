@@ -5,7 +5,7 @@
 
     __FPGA proven__
 -}
-module Clash.BCD (
+module Clash.Arithmetic.BCD (
     BCDDigit,
     convertStep,
     convertSteps,

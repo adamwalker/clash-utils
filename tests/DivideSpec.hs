@@ -7,7 +7,7 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck
 
-import Clash.Divide
+import Clash.Arithmetic.Divide
 
 --Divider
 spec = describe "Divder" $ 

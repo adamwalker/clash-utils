@@ -8,7 +8,7 @@ import Test.Hspec
 import Test.QuickCheck
 
 import Data.Digits
-import Clash.BCD
+import Clash.Arithmetic.BCD
 
 --BCD conversion testing
 spec :: SpecWith ()

@@ -17,11 +17,22 @@ cabal-version:       >=1.10
 
 library
     exposed-modules:     
-        Clash.BCD, 
+        Clash.Arithmetic.BCD, 
+        Clash.Arithmetic.CarryLookahead,
+        Clash.Arithmetic.CarrySelect,
+        Clash.Arithmetic.Divide, 
+        Clash.Crypto.AES,
+        Clash.Crypto.SHA3,
+        Clash.DSP.FIRFilter, 
+        Clash.DSP.CORDIC, 
+        Clash.DSP.FFT, 
+        Clash.DSP.Complex, 
+        Clash.DSP.IIRFilter, 
+        Clash.DSP.FFTSerial,
+        Clash.Xilinx.Carry,
         Clash.CRC, 
         Clash.FIFO, 
         Clash.Sort, 
-        Clash.Divide, 
         Clash.GrayCode, 
         Clash.Hamming, 
         Clash.LFSR,
@@ -31,18 +42,7 @@ library
         Clash.PseudoLRUTree,
         Clash.Cuckoo,
         Clash.Stream,
-        Clash.PrefixSum,
-        Clash.CarryLookahead,
-        Clash.Xilinx.Carry,
-        Clash.Crypto.AES,
-        Clash.Crypto.SHA3,
-        Clash.DSP.FIRFilter, 
-        Clash.DSP.CORDIC, 
-        Clash.DSP.FFT, 
-        Clash.DSP.Complex, 
-        Clash.DSP.IIRFilter, 
-        Clash.DSP.FFTSerial,
-        Clash.CarrySelect
+        Clash.PrefixSum
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 

@@ -7,7 +7,7 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck
 
-import Clash.CarryLookahead
+import Clash.Arithmetic.CarryLookahead
 
 --Misc
 spec = describe "Carry lookahead" $ do
