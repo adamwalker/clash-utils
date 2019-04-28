@@ -7,7 +7,7 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck
 
-import Clash.Hamming
+import Clash.ErrorControl.Hamming
 
 --Hamming codes
 --Test the (15, 11) code

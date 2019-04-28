@@ -3,7 +3,7 @@
 
     __FPGA proven__
 -}
-module Clash.Hamming (
+module Clash.ErrorControl.Hamming (
     generator,
     hammingParity,
     correctError',

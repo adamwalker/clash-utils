@@ -20,7 +20,7 @@ import Data.Default
 import Data.Word
 import GHC.Generics
 
-import Clash.CRC
+import Clash.ErrorControl.CRC
 import Clash.Cuckoo
 
 spec = describe "Cuckoo hash table" $ do

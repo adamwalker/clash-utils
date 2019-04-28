@@ -19,7 +19,7 @@
     __FPGA proven__
 
 -}
-module Clash.CRC (
+module Clash.ErrorControl.CRC (
     crc32Poly,
     crcStep,
     crcSteps,

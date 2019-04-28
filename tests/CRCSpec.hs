@@ -10,7 +10,7 @@ import Test.QuickCheck
 
 import Data.Word
 import Data.Digest.CRC32
-import Clash.CRC
+import Clash.ErrorControl.CRC
 import Clash.Misc
 
 --Check that the CRC implementation agrees with a known goood implementation of CRC32
