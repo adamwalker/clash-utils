@@ -5,7 +5,7 @@
 
     __FPGA proven__
 -}
-module Clash.FIFO (
+module Clash.Container.FIFO (
     blockRamFIFO,
     blockRamFIFOMaybe
     ) where

@@ -11,7 +11,7 @@ import Test.QuickCheck
 import Data.Sequence (Seq, (|>))
 import qualified Data.Sequence as Seq
 import Data.Maybe
-import Clash.FIFO
+import Clash.Container.FIFO
 
 --FIFO
 --This software model should behave identically to the hardare FIFO

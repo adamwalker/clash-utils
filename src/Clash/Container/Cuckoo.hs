@@ -6,7 +6,7 @@
 
     __FPGA proven__
  -}
-module Clash.Cuckoo (
+module Clash.Container.Cuckoo (
     TableEntry(..),
     cuckooLookup',
     cuckooLookup,
