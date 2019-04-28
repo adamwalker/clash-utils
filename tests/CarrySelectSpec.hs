@@ -9,7 +9,6 @@ import Test.QuickCheck
 
 import Clash.CarrySelect
 
---Misc
 spec = describe "Carry select" $ do
     specify "Adds" $ property prop_carrySelectAdder
 
