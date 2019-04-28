@@ -41,7 +41,8 @@ library
         Clash.DSP.FFT, 
         Clash.DSP.Complex, 
         Clash.DSP.IIRFilter, 
-        Clash.DSP.FFTSerial
+        Clash.DSP.FFTSerial,
+        Clash.CarrySelect
     -- other-modules:       
     default-extensions:  
         ScopedTypeVariables, 
@@ -92,7 +93,8 @@ Test-Suite test
         CarryLookaheadSpec,
         XilinxCarrySpec,
         AESSpec,
-        SHA3Spec
+        SHA3Spec,
+        CarrySelectSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.12, 
