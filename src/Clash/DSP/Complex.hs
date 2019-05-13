@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveLift, DeriveGeneric, DeriveAnyClass #-}
+{-# LANGUAGE DeriveLift, DeriveGeneric, DeriveAnyClass, DeriveFunctor #-}
 module Clash.DSP.Complex where
 
 import Clash.Prelude
@@ -8,7 +8,7 @@ import GHC.Generics
 import qualified Data.Complex as C
 
 {-| I defined my own complex type so that I can write a Num instance without the RealFloat constraint. TODO: think about whether this is really a good idea. -}
-data Complex a = a :+ a deriving (Show, Lift, Generic, ShowX, Undefined)
+data Complex a = a :+ a deriving (Show, Lift, Generic, ShowX, Undefined, Functor)
 
 instance Num a => Num (Complex a) where
     (a :+ b) + (c :+ d) = (a + c) :+ (b + d)
