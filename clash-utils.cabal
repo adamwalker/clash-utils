@@ -23,6 +23,7 @@ library
         Clash.Arithmetic.Divide, 
         Clash.Container.FIFO, 
         Clash.Container.Cuckoo,
+        Clash.Container.CuckooPipeline,
         Clash.Crypto.AES,
         Clash.Crypto.SHA3,
         Clash.DSP.Complex, 
@@ -94,7 +95,8 @@ Test-Suite test
         XilinxCarrySpec,
         AESSpec,
         SHA3Spec,
-        CarrySelectSpec
+        CarrySelectSpec,
+        CuckooPipelineSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.12, 
