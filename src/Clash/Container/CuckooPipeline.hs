@@ -1,4 +1,11 @@
 {-# LANGUAGE TemplateHaskell, DeriveGeneric, DeriveAnyClass #-}
+
+{-| Another <https://en.wikipedia.org/wiki/Cuckoo_hashing Cuckoo hashtable>.
+
+    Cuckoo hashtables are well suited to communicating key value pairs with hardware where the space of keys is large.
+
+    __FPGA proven__
+ -}
 module Clash.Container.CuckooPipeline (
     TableEntry(..),
     cuckooPipelineStage,
@@ -160,16 +167,17 @@ cuckooPipelineInsert hashFuncs toLookup modification = (luRes, or <$> sequenceA 
 
     insertD = register Nothing insert
 
+-- | An example cuckoo hashtable top level design
 exampleDesign
     :: HiddenClockReset dom gated sync
-    => Signal dom (BitVector 64)
-    -> Signal dom Bool
-    -> Signal dom Bool
-    -> Signal dom (BitVector 32)
+    => Signal dom (BitVector 64) -- ^ Key to lookup/modify/delete
+    -> Signal dom Bool           -- ^ Perform modification
+    -> Signal dom Bool           -- ^ Modification is delete
+    -> Signal dom (BitVector 32) -- ^ New value for modifications
     -> (
         Signal dom (Maybe (BitVector 32)),
         Signal dom Bool
-        )
+        )                        -- ^ (Lookup result, busy)
 exampleDesign lu modify delete val = cuckooPipelineInsert hashFunctions lu (cmd <$> modify <*> delete <*> val)
     where
     cmd modify delete val
