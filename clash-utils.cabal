@@ -20,6 +20,7 @@ library
         Clash.Arithmetic.BCD, 
         Clash.Arithmetic.CarryLookahead,
         Clash.Arithmetic.CarrySelect,
+        Clash.Arithmetic.CarrySave,
         Clash.Arithmetic.Divide, 
         Clash.Container.FIFO, 
         Clash.Container.Cuckoo,
@@ -101,7 +102,8 @@ Test-Suite test
         SHA3Spec,
         CarrySelectSpec,
         CuckooPipelineSpec,
-        RegexSpec
+        RegexSpec,
+        CarrySaveSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.12, 
