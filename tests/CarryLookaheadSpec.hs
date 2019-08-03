@@ -9,7 +9,6 @@ import Test.QuickCheck
 
 import Clash.Arithmetic.CarryLookahead
 
---Misc
 spec = describe "Carry lookahead" $ do
     specify "Kogge-Stone adder" $ property prop_koggeStoneAdder
     specify "Brent-Kung adder"  $ property prop_brentKungAdder

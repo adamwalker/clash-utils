@@ -22,6 +22,7 @@ library
         Clash.Arithmetic.CarrySelect,
         Clash.Arithmetic.CarrySave,
         Clash.Arithmetic.Divide, 
+        Clash.Arithmetic.Multiplier, 
         Clash.Container.FIFO, 
         Clash.Container.Cuckoo,
         Clash.Container.CuckooPipeline,
@@ -103,7 +104,8 @@ Test-Suite test
         CarrySelectSpec,
         CuckooPipelineSpec,
         RegexSpec,
-        CarrySaveSpec
+        CarrySaveSpec,
+        MultiplierSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.12, 
