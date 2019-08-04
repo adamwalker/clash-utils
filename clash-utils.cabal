@@ -28,6 +28,7 @@ library
         Clash.Container.CuckooPipeline,
         Clash.Crypto.AES,
         Clash.Crypto.SHA3,
+        Clash.DSP.CICFilter,
         Clash.DSP.Complex, 
         Clash.DSP.CORDIC, 
         Clash.DSP.FFT, 
@@ -105,7 +106,8 @@ Test-Suite test
         CuckooPipelineSpec,
         RegexSpec,
         CarrySaveSpec,
-        MultiplierSpec
+        MultiplierSpec,
+        CICFilterSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.12, 
