@@ -1,11 +1,15 @@
 module Clash.Arithmetic.Multiplier (
         multiply,
-        multiplySigned
+        multiplySigned,
+        serialMultiplyCarrySave,
+        serialMultiplyCarrySaveSigned
     ) where
 
 import Clash.Prelude
 
 import Data.Bool
+
+import Clash.Arithmetic.CarrySave (fullAdder)
 
 multiply 
     :: forall m n
@@ -40,4 +44,64 @@ multiplySigned x y = sum $
             where
             func2 :: Index (m + 1) -> Bool -> Bool
             func2 idx1 val = (idx0 == maxBound) `xor` (idx1 == maxBound) `xor` val
+
+serialMultiplyCarrySave
+    :: forall dom gated sync n 
+    .  (HiddenClockReset dom gated sync, KnownNat n)
+    => Signal dom (BitVector (n + 1))
+    -> Signal dom Bool
+    -> Signal dom Bool
+    -> Signal dom Bool
+serialMultiplyCarrySave x en y = sumOut
+    where
+
+    partials :: Vec (n + 1) (Signal dom Bool)
+    partials =  sequenceA $ fmap unpack $ bool <$> 0 <*> x <*> y
+
+    res :: Vec (n + 1) (Signal dom (Bool, Bool))
+    res =  map (regEn (False, False) en) $ zipWith3 (liftA3 fullAdder) partials carryOuts (pure False :> sumOuts)
+
+    sumOut  :: Signal dom Bool
+    sumOuts :: Vec n (Signal dom Bool)
+    sumOuts :< sumOut = map (fmap snd) res
+
+    carryOuts :: Vec (n + 1) (Signal dom Bool)
+    carryOuts = map (fmap fst) res
+
+serialMultiplyCarrySaveSigned
+    :: forall dom gated sync n 
+    .  (HiddenClockReset dom gated sync, KnownNat n)
+    => Signal dom (BitVector (n + 2))
+    -> Signal dom Bool
+    -> Signal dom Bool
+    -> Signal dom Bool
+    -> Signal dom Bool
+serialMultiplyCarrySaveSigned x en msb y = sumOut
+    where
+
+    msbD :: Signal dom Bool
+    msbD = regEn False en msb
+
+    partials' :: Vec (n + 2) (Signal dom Bool)
+    partials' =  sequenceA $ fmap unpack $ bool <$> 0 <*> x <*> y
+
+    p :> ps = partials'
+
+    finalConst :: Vec (n + 2) Bool
+    finalConst = True :> (repeat False :< True)
+
+    partials :: Vec (n + 2) (Signal dom Bool)
+    partials 
+        = zipWith (mux msbD) (map pure finalConst)
+        $ map (liftA2 (bool id not) msb) $ fmap not p :> ps
+
+    res :: Vec (n + 2) (Signal dom (Bool, Bool))
+    res =  map (regEn (False, False) en) $ zipWith3 (liftA3 fullAdder) partials carryOuts (pure False :> sumOuts)
+
+    sumOut  :: Signal dom Bool
+    sumOuts :: Vec (n + 1) (Signal dom Bool)
+    sumOuts :< sumOut = map (fmap snd) res
+
+    carryOuts :: Vec (n + 2) (Signal dom Bool)
+    carryOuts = map (fmap fst) res
 
