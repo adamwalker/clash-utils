@@ -2,7 +2,11 @@ module Clash.Arithmetic.Multiplier (
         multiply,
         multiplySigned,
         serialMultiplyCarrySave,
-        serialMultiplyCarrySaveSigned
+        serialMultiplyCarrySaveSigned,
+        BoothRes(..),
+        boothEncode,
+        boothWindows,
+        boothMultiply
     ) where
 
 import Clash.Prelude
@@ -104,4 +108,58 @@ serialMultiplyCarrySaveSigned x en msb y = sumOut
 
     carryOuts :: Vec (n + 2) (Signal dom Bool)
     carryOuts = map (fmap fst) res
+
+data BoothRes = BoothRes {
+    mult   :: Bool,
+    shift  :: Bool,
+    negate :: Bool
+} deriving (Show)
+
+boothEncode :: BitVector 3 -> BoothRes
+boothEncode 0x0 = BoothRes False False False
+boothEncode 0x1 = BoothRes True  False False
+boothEncode 0x2 = BoothRes True  False False
+boothEncode 0x3 = BoothRes True  True  False
+boothEncode 0x4 = BoothRes True  True  True
+boothEncode 0x5 = BoothRes True  False True
+boothEncode 0x6 = BoothRes True  False True
+boothEncode 0x7 = BoothRes False False True
+
+boothWindows 
+    :: forall n
+    .  KnownNat n
+    => Vec (2 * (n + 1)) Bool
+    -> Vec (n + 1) (Vec 3 Bool)
+boothWindows xs = map (take (SNat @ 3)) $ map (:< False) shifts
+    where
+
+    shiftL :: Vec (2 * (n + 1)) Bool -> Vec (2 * (n + 1)) Bool
+    shiftL ys = drop (SNat @ 2) ys :< False :< False
+
+    shifts :: Vec (n + 1) (Vec (2 * (n + 1)) Bool)
+    shifts = iterateI shiftL xs
+
+boothMultiply
+    :: forall n m
+    .  (KnownNat m, KnownNat n) 
+    => BitVector m
+    -> BitVector ((2 * n) + 1) 
+    -> BitVector (m + (2 * (n + 1)))
+boothMultiply x y = ifoldl (sumFunc x) 0 $ reverse res
+    where
+    res :: Vec (n + 1) BoothRes
+    res =  map (boothEncode . pack) $ boothWindows (False :> unpack y :: Vec (2 * (n + 1)) Bool)
+
+    sumFunc x accum i (BoothRes mult shift negate) =
+        let
+            shifted
+                | shift     = extend x `shiftL` 1
+                | otherwise = extend x
+            summed 
+                | negate    = accum - (shifted `shiftL` (2 * fromIntegral i))
+                | otherwise = accum + (shifted `shiftL` (2 * fromIntegral i))
+            noped
+                | mult      = summed
+                | otherwise = accum
+        in noped
 

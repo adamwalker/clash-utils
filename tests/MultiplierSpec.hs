@@ -14,6 +14,7 @@ spec = describe "Multiplier lookahead" $ do
     specify "signed"                   $ property prop_signed
     specify "serial carry save"        $ property prop_serialMultiplyCarrySave
     specify "serial carry save signed" $ property prop_serialMultiplyCarrySaveSigned
+    specify "booth Multiplier"         $ property prop_booth
 
 prop_unsigned :: BitVector 8 -> BitVector 8 -> Bool
 prop_unsigned x y = multiply x y == (extend x * extend y)
@@ -52,3 +53,7 @@ prop_serialMultiplyCarrySaveSigned x y = result == expect
         $ sample 
         $ serialMultiplyCarrySaveSigned (pure x) (pure True) msb
         $ fromList $ False : y' ++ repeat False 
+
+prop_booth :: BitVector 7 -> BitVector 7 -> Bool
+prop_booth x y = boothMultiply x y == (extend x * extend y)
+
