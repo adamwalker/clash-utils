@@ -1,6 +1,7 @@
 module Clash.Misc(
     replaceSlice, 
     revBV,
+    swapChunks, 
     swapEndian, 
     mealyEn,
     count,
@@ -35,14 +36,21 @@ revBV :: forall n. KnownNat n => BitVector n -> BitVector n
 revBV = pack . reverse . (unpack :: BitVector n -> Vec n Bit)
 
 -- | Swap the endianness of a bitvector of bytes
+swapChunks 
+    :: forall n m. KnownNat n
+    => SNat m
+    -> BitVector (m * n)
+    -> BitVector (m * n)
+swapChunks SNat x = pack $ reverse bytes
+    where
+    bytes :: Vec n (BitVector m)
+    bytes = unpack x 
+
 swapEndian 
     :: forall n. KnownNat n
     => BitVector (8 * n)
     -> BitVector (8 * n)
-swapEndian x = pack $ reverse bytes
-    where
-    bytes :: Vec n (BitVector 8)
-    bytes = unpack x 
+swapEndian = swapChunks (SNat @8)
 
 -- | Same as mealy, but with an enable signal
 mealyEn 
