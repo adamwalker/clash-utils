@@ -16,6 +16,7 @@ import Clash.Prelude
 
 import Data.Singletons.Prelude (Apply, TyFun, type (@@))
 import Data.Proxy
+import Data.Kind (Type)
 
 compareAndSwap :: (Ord a) => a -> a -> (a, a)
 compareAndSwap x y 
@@ -74,7 +75,7 @@ bitonicSorterExample = sort16
 {-| Arbitrary length bitonic sorter -}
 type ExpVec k a = Vec (2 ^ k) a
 
-data SplitHalf (a :: *) (f :: TyFun Nat *) :: *
+data SplitHalf (a :: Type) (f :: TyFun Nat Type) :: Type
 type instance Apply (SplitHalf a) k = (ExpVec k a -> ExpVec k a, ExpVec (k + 1) a -> ExpVec (k + 1) a)
 
 {-| Length generic bitonic sorter -}

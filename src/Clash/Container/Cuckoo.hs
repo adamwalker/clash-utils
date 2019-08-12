@@ -1,4 +1,5 @@
 {-# LANGUAGE RecordWildCards, StandaloneDeriving, DeriveAnyClass, DeriveGeneric #-}
+{-# LANGUAGE UndecidableInstances #-} --For the (KnownNat (BitSize k)) constraints below in ghc 8.6+
 
 {-| A <https://en.wikipedia.org/wiki/Cuckoo_hashing Cuckoo hashtable>.
 

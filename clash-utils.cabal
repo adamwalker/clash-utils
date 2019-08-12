@@ -62,6 +62,8 @@ library
         KindSignatures,
         TypeFamilies,
         TupleSections
+    if impl(ghc >= 8.6)
+        default-extensions: NoStarIsType
     build-depends:       
         base          >=4.8 && <5, 
         clash-prelude >=0.99 && <1, 
@@ -145,4 +147,6 @@ Test-Suite test
         KindSignatures,
         TypeFamilies,
         TemplateHaskell
+    if impl(ghc >= 8.6)
+        default-extensions: NoStarIsType
 
