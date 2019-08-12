@@ -50,8 +50,8 @@ multiplySigned x y = sum $
             func2 idx1 val = (idx0 == maxBound) `xor` (idx1 == maxBound) `xor` val
 
 serialMultiplyCarrySave
-    :: forall dom gated sync n 
-    .  (HiddenClockReset dom gated sync, KnownNat n)
+    :: forall dom n 
+    .  (HiddenClockResetEnable dom, KnownNat n)
     => Signal dom (BitVector (n + 1))
     -> Signal dom Bool
     -> Signal dom Bool
@@ -73,8 +73,8 @@ serialMultiplyCarrySave x en y = sumOut
     carryOuts = map (fmap fst) res
 
 serialMultiplyCarrySaveSigned
-    :: forall dom gated sync n 
-    .  (HiddenClockReset dom gated sync, KnownNat n)
+    :: forall dom n 
+    .  (HiddenClockResetEnable dom, KnownNat n)
     => Signal dom (BitVector (n + 2))
     -> Signal dom Bool
     -> Signal dom Bool

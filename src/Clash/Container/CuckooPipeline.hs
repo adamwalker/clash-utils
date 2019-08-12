@@ -29,7 +29,7 @@ data TableEntry k v = TableEntry {
     Each stage manages its own table and has its own hash function
 -}
 cuckooPipelineStage 
-    :: forall dom gated sync n k v. (HiddenClockReset dom gated sync, KnownNat n, Eq k, Undefined k, Undefined v)
+    :: forall dom n k v. (HiddenClockResetEnable dom, KnownNat n, Eq k, Undefined k, Undefined v)
     => (k -> Unsigned n)                     -- ^ Hash function for this stage
     -> Signal dom k                          -- ^ Key to be looked up. For modifications and deletes, set this input
                                              --   in addition to the "modification" field below
@@ -114,7 +114,7 @@ cuckooPipelineStage hashFunc toLookup insertVal modification incomingEviction = 
     Assumes that inserts are known to not be in the table
 -}
 cuckooPipeline 
-    :: forall dom gated sync m n k v. (HiddenClockReset dom gated sync, KnownNat n, Eq k, KnownNat m, Undefined k, Undefined v)
+    :: forall dom m n k v. (HiddenClockResetEnable dom, KnownNat n, Eq k, KnownNat m, Undefined k, Undefined v)
     => Vec (m + 1) (k -> Unsigned n)                     -- ^ Hash functions for each stage
     -> Signal dom k                                      -- ^ Key to lookup or modify
     -> Signal dom (Maybe (Maybe v))                      -- ^ Modification. Nothing == no modification. Just Nothing == delete. Just (Just X) == overwrite with X
@@ -140,7 +140,7 @@ cuckooPipeline hashFuncs toLookup modification inserts = (fold (liftA2 (<|>)) lo
   | Only allows one insertion at a time so it is less efficient for inserts than `cuckooPipeline`
 -}
 cuckooPipelineInsert
-    :: forall dom gated sync m n k v. (HiddenClockReset dom gated sync, KnownNat n, Eq k, KnownNat m, Undefined k, Undefined v)
+    :: forall dom m n k v. (HiddenClockResetEnable dom, KnownNat n, Eq k, KnownNat m, Undefined k, Undefined v)
     => Vec (m + 1) (k -> Unsigned n) -- ^ Hash functions for each stage
     -> Signal dom k                  -- ^ Key to lookup, modify or insert
     -> Signal dom (Maybe (Maybe v))  -- ^ Modification. Nothing == no modification. Just Nothing == delete. Just (Just X) == insert or overwrite existing value at key
@@ -169,7 +169,7 @@ cuckooPipelineInsert hashFuncs toLookup modification = (luRes, or <$> sequenceA 
 
 -- | An example cuckoo hashtable top level design
 exampleDesign
-    :: HiddenClockReset dom gated sync
+    :: HiddenClockResetEnable dom
     => Signal dom (BitVector 64) -- ^ Key to lookup/modify/delete
     -> Signal dom Bool           -- ^ Perform modification
     -> Signal dom Bool           -- ^ Modification is delete

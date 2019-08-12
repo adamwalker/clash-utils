@@ -4,7 +4,8 @@ module CuckooSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice, type (+), errorX, Undefined)
+                      HiddenClockResetEnable, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice, type (+), errorX, Undefined,
+                      System)
 
 import Test.Hspec
 import Test.QuickCheck hiding ((.||.), (.&&.), Success, Failure)
@@ -26,46 +27,46 @@ import Clash.Container.Cuckoo
 spec = describe "Cuckoo hash table" $ do
 
     specify "Retrieves inserted elements" $ property $ forAll (choose (0, 2)) $ \idx k v -> 
-        simulate_lazy system (testVec idx k v) !! 2 == Just (fromIntegral idx, hashFunc idx k, v)
+        simulate_lazy @System system (testVec idx k v) !! 2 == Just (fromIntegral idx, hashFunc idx k, v)
 
     specify "Retrieves inserted elements with collision" $ property $ forAll (choose (0, 2)) $ \idx -> 
         forAll (elements $ [0..2] \\ [idx]) $ \collidingIdx k v k' -> 
             (k /= k') ==> 
-                simulate_lazy system (testVecCollision idx collidingIdx k v k') !! 3 == Just (fromIntegral idx, hashFunc idx k, v)
+                simulate_lazy @System system (testVecCollision idx collidingIdx k v k') !! 3 == Just (fromIntegral idx, hashFunc idx k, v)
 
     specify "Deletes elements" $ property $ forAll (choose (0, 2)) $ \idx k v -> 
-        simulate_lazy system (testVecDelete idx k v) !! 3 == Nothing
+        simulate_lazy @System system (testVecDelete idx k v) !! 3 == Nothing
 
     specify "Cuckoo works with randomised operations" $
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
         forAll (take 4000 <$> genOps False preInserts) $ \ops -> 
-        last (sampleN 50000 (testHarness hashFuncs cuckoo (map (uncurry Insert) preInserts ++ ops))) == Just True
+        last (sampleN @System 50000 (testHarness hashFuncs cuckoo (map (uncurry Insert) preInserts ++ ops))) == Just True
 
     specify "Cuckoo works with randomised operations 2" $
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
         forAll (take 4000 <$> genOps False preInserts) $ \ops -> 
-        last (sampleN 50000 (testHarness hashFuncs cuckoo2 (map (uncurry Insert) preInserts ++ ops))) == Just True
+        last (sampleN @System 50000 (testHarness hashFuncs cuckoo2 (map (uncurry Insert) preInserts ++ ops))) == Just True
 
     specify "Cuckoo works with randomised operations and recently modified keys" $
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
         forAll (take 4000 <$> genOps True preInserts) $ \ops -> 
-        last (sampleN 50000 (testHarness hashFuncs cuckoo (map (uncurry Insert) preInserts ++ ops))) == Just True
+        last (sampleN @System 50000 (testHarness hashFuncs cuckoo (map (uncurry Insert) preInserts ++ ops))) == Just True
 
     specify "Cuckoo works with randomised operations and recently modified keys 2" $
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
         forAll (take 4000 <$> genOps True preInserts) $ \ops -> 
-        last (sampleN 50000 (testHarness hashFuncs cuckoo2 (map (uncurry Insert) preInserts ++ ops))) == Just True
+        last (sampleN @System 50000 (testHarness hashFuncs cuckoo2 (map (uncurry Insert) preInserts ++ ops))) == Just True
 
     specify "Cuckoo works with high load"               $ property $ noShrinking $ testInserts cuckoo
 
     specify "Cuckoo works with high load 2"             $ property $ noShrinking $ testInserts cuckoo2
 
 system 
-    :: HiddenClockReset dom gated sync 
+    :: HiddenClockResetEnable dom
     => Signal dom (
             Vec 3 (Maybe (Unsigned 12, Maybe (TableEntry String String))), 
             String
@@ -124,7 +125,7 @@ testVecDelete idx k v = [write, delete, lookup, null]
     lookup = (Clash.repeat Nothing, k)
     null   = (Clash.repeat Nothing, "")
 
-type Cuckoo = forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k, Undefined v)
+type Cuckoo = forall dom cnt m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k, Undefined v)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
     -> Signal dom v
@@ -139,7 +140,7 @@ type Cuckoo = forall dom gated sync cnt m n k v. (HiddenClockReset dom gated syn
         )
 
 cuckoo2
-    :: forall dom gated sync cnt m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k, Undefined v)
+    :: forall dom cnt m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k, Undefined v)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
     -> Signal dom v
@@ -167,7 +168,7 @@ cuckoo2 hashFunctions key' value' insert delete = (lookupResult, inserting, inse
     (lookupResult, inserting, insertingDone, evictedEntry, hashRequest, insertIters, nItems) = cuckoo' hashes key' value' insert delete hashRequest
 
 insertTestHarness
-    :: forall dom gated sync. HiddenClockReset dom gated sync
+    :: forall dom. HiddenClockResetEnable dom
     => Cuckoo
     -> [(BitVector 32, BitVector 32)]
     -> Signal dom ((Bool, Bool), Unsigned 16)
@@ -229,7 +230,7 @@ insertTestHarness cuckoo vals = bundle (bundle (register True (register True ins
 testInserts :: Cuckoo -> InfiniteList (BitVector 32, BitVector 32) -> Property
 testInserts cuckoo (InfiniteList insertSeq _) = collect (last maxIterations) $ finished && success
     where
-    (res, maxIterations) = unzip $ sampleN_lazy 50000 $ insertTestHarness cuckoo insertSeq
+    (res, maxIterations) = unzip $ sampleN_lazy @System 50000 $ insertTestHarness cuckoo insertSeq
     finished             = elem True $ Prelude.map snd res
     success              = all id $ Prelude.map fst res
 
@@ -366,7 +367,7 @@ hashFuncs :: [Word8] -> Vec 3 (Unsigned 10)
 hashFuncs x = Clash.map (\idx -> fromIntegral $ (`mod` 1024) $ hashWithSalt idx x) (iterateI (+1) 0)
 
 testHarness 
-    :: forall dom gated sync key. (HiddenClockReset dom gated sync, Ord key, Default key, Undefined key, Undefined (TestbenchState key))
+    :: forall dom key. (HiddenClockResetEnable dom, Ord key, Default key, Undefined key, Undefined (TestbenchState key))
     => (key -> Vec 3 (Unsigned 10))
     -> Cuckoo
     -> [Op key] 

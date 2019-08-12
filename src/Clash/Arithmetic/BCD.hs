@@ -59,7 +59,7 @@ toDec = flip convertSteps (repeat 0)
 
 {-| An example synthesizeable binary to decimal conversion. Converts an 8 bit binary number to three BCD digits. Consists of a 2 stage pipeline. Each pipeline stage performs four double dabble iterations for a total of 8 iterations. Processes one input per cycle. Latency is 2 cycles. -}
 binaryToDecExample 
-    :: HiddenClockReset dom gated sync
+    :: HiddenClockResetEnable dom 
     => Signal dom (BitVector 8)  -- ^ Input binary number
     -> Signal dom (BitVector 12) -- ^ Output BCD number
 binaryToDecExample x 

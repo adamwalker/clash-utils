@@ -3,7 +3,7 @@ module AESSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset, toList, sampleN, fromList)
+                      HiddenClockResetEnable, toList, sampleN, fromList, System)
 import Test.Hspec
 import Test.QuickCheck
 
@@ -28,6 +28,6 @@ prop_AES key block = fmap (fmap toBS) res == Just (True, expect)
     keyBS   = toBS key
     blockBS = toBS block
     expect  = ecbEncrypt (throwCryptoError $ cipherInit keyBS :: AES128) blockBS
-    res     = Prelude.find fst $ sampleN 20 (aesEncrypt starts (pure key) (pure block)) 
+    res     = Prelude.find fst $ sampleN @System 20 (aesEncrypt starts (pure key) (pure block)) 
     starts  = fromList $ False : True : Prelude.repeat False
 

@@ -3,7 +3,7 @@ module MultiplierSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset, extend, fromList, toList, sample, bitCoerce)
+                      HiddenClockResetEnable, extend, fromList, toList, sample, bitCoerce, System)
 import Test.Hspec
 import Test.QuickCheck hiding (sample)
 
@@ -33,7 +33,7 @@ prop_serialMultiplyCarrySave x y = result == expect
     result 
         = take 16 
         $ drop 2 
-        $ sample 
+        $ sample @System
         $ serialMultiplyCarrySave (pure x) (pure True)
         $ fromList $ False : y' ++ repeat False 
 
@@ -50,7 +50,7 @@ prop_serialMultiplyCarrySaveSigned x y = result == expect
     result 
         = take 16 
         $ drop 2 
-        $ sample 
+        $ sample @System
         $ serialMultiplyCarrySaveSigned (pure x) (pure True) msb
         $ fromList $ False : y' ++ repeat False 
 

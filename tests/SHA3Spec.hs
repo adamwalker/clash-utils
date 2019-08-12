@@ -3,7 +3,7 @@ module SHA3Spec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset, toList, sampleN, fromList, type (+))
+                      HiddenClockResetEnable, toList, sampleN, fromList, type (+), System)
 import Test.Hspec
 import Test.QuickCheck
 
@@ -27,7 +27,7 @@ prop :: (((n + 1) + n0) ~ 25, KnownNat n0) => ([Word8] -> [Word8]) -> Int -> Vec
 prop hashFunc mdlen vec =
     let 
         starts = fromList $ False : True : repeat False
-        res    = fmap snd $ find fst $ sampleN 30 $ bundle $ sha3 starts (pure (vec :< 0x8000000000000006))
+        res    = fmap snd $ find fst $ sampleN @System 30 $ bundle $ sha3 starts (pure (vec :< 0x8000000000000006))
         resStr = take mdlen $ concat $ map (reverse . toList . (unpack :: BitVector 64 -> Vec 8 (Word8))) $ toList $ Clash.concat $ fromJust res
         str    = concat $ map (reverse . toList . (unpack :: BitVector 64 -> Vec 8 (Word8))) $ toList vec
         expect = hashFunc str

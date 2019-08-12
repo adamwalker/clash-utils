@@ -43,7 +43,7 @@ crc32Poly = 0b10011000001000111011011011
 
 {-| Calculates CRC one bit / clock cycle -}
 serialCRC 
-    :: forall dom gated sync n. (HiddenClockReset dom gated sync, KnownNat n)
+    :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
     => BitVector (n + 1)          -- ^ Initial value of shift register
     -> BitVector n                -- ^ The polynomial. The low order bit is assumed to be 1 so is not included.
     -> Signal dom Bit                 -- ^ Input bit
@@ -54,7 +54,7 @@ serialCRC init polynomial input = pack <$> mealy step' (unpack init) input
 
 {-| Calculates CRC m bits / clock cycle -}
 parallelCRC 
-    :: forall dom gated sync n m. (HiddenClockReset dom gated sync, KnownNat n, KnownNat m)
+    :: forall dom n m. (HiddenClockResetEnable dom, KnownNat n, KnownNat m)
     => BitVector (n + 1)          -- ^ Initial value of shift register
     -> BitVector n                -- ^ The polynomial. The low order bit is assumed to be 1 so is not included.
     -> Signal dom (BitVector m)       -- ^ Input bits

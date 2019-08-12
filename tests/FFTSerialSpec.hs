@@ -3,7 +3,7 @@ module FFTSerialSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset)
+                      HiddenClockResetEnable, System)
 import Test.Hspec
 import Test.QuickCheck
 
@@ -41,10 +41,10 @@ difOutputReorder ((a, b) : (c, d) : (e, f) : (g, h) : _) = a : e : c : g : b : f
 prop_fftSerialDIT :: Vec 8 (C.Complex Double) -> Bool
 prop_fftSerialDIT vec = and $ zipWith approxEqualComplex (map toComplex result) (FFT.fft (Clash.toList vec))
     where
-    result = ditOutputReorder $ drop 8 $ simulate_lazy (fftSerialDIT twiddles4 (pure True)) $ (Clash.toList (ditInputReorder (Clash.map fromComplex vec))) ++ repeat (0, 0)
+    result = ditOutputReorder $ drop 8 $ simulate_lazy @System (fftSerialDIT twiddles4 (pure True)) $ (Clash.toList (ditInputReorder (Clash.map fromComplex vec))) ++ repeat (0, 0)
 
 prop_fftSerialDIF :: Vec 8 (C.Complex Double) -> Bool
 prop_fftSerialDIF vec = and $ zipWith approxEqualComplex (map toComplex result) (FFT.fft (Clash.toList vec))
     where
-    result = difOutputReorder $ drop 8 $ simulate_lazy (fftSerialDIF twiddles4 (pure True)) $ (Clash.toList (difInputReorder (Clash.map fromComplex vec))) ++ repeat (0, 0)
+    result = difOutputReorder $ drop 8 $ simulate_lazy @System (fftSerialDIF twiddles4 (pure True)) $ (Clash.toList (difInputReorder (Clash.map fromComplex vec))) ++ repeat (0, 0)
 

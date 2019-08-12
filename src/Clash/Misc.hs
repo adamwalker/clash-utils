@@ -54,7 +54,7 @@ swapEndian = swapChunks (SNat @8)
 
 -- | Same as mealy, but with an enable signal
 mealyEn 
-    :: (HiddenClockReset dom gated sync, Undefined s)
+    :: (HiddenClockResetEnable dom, Undefined s)
     => (s -> i -> (s, o)) -- ^ State update function
     -> s                  -- ^ Initial state
     -> Signal dom Bool    -- ^ Enable signal
@@ -67,7 +67,7 @@ mealyEn step initial enable input = mealy step' initial (bundle (enable, input))
 
 -- | Counts cycles where the input signal is high
 count 
-    :: (HiddenClockReset dom gated sync, Num a, Undefined a) 
+    :: (HiddenClockResetEnable dom, Num a, Undefined a) 
     => Signal dom Bool -- ^ Increment signal
     -> Signal dom a    -- ^ Count output
 count inc = res
@@ -80,7 +80,7 @@ count inc = res
 
 -- | A very simple watchdog timer
 watchdog 
-    :: (HiddenClockReset dom gated sync, KnownNat n)
+    :: (HiddenClockResetEnable dom, KnownNat n)
     => Unsigned n
     -> Signal dom Bool
     -> Signal dom Bool
@@ -94,7 +94,7 @@ watchdog touchCnt touch = res .==. 0
 
 -- | Set-Reset flip flop. Reset has priority
 setReset 
-    :: forall dom gated sync. (HiddenClockReset dom gated sync)
+    :: forall dom. (HiddenClockResetEnable dom)
     => Signal dom Bool -- ^ Set
     -> Signal dom Bool -- ^ Reset
     -> Signal dom Bool -- ^ Result
@@ -106,8 +106,8 @@ setReset set reset = out
     func s _    _    = s
 
 wideWriteMem 
-  :: forall dom gated sync writeBits readBits bankBits a
-  .  (HiddenClockReset dom gated sync, KnownNat writeBits, KnownNat readBits, KnownNat bankBits, Undefined a)
+  :: forall dom writeBits readBits bankBits a
+  .  (HiddenClockResetEnable dom, KnownNat writeBits, KnownNat readBits, KnownNat bankBits, Undefined a)
   => (1 <= (2 ^ (readBits + bankBits))) --TODO: this constraint should be inferred
   => Vec (2 ^ (writeBits + readBits + bankBits)) a
   -> Signal dom (Unsigned (writeBits + readBits))

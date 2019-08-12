@@ -100,8 +100,8 @@ updateState dat state = unconcatI $ zipWith xor (concat state) (dat ++ repeat 0)
 
 -- | SHA3
 sha3 
-    :: forall dom gated sync n n0
-    .  (HiddenClockReset dom gated sync, (n + n0) ~ 25, KnownNat n0)
+    :: forall dom n n0
+    .  (HiddenClockResetEnable dom, (n + n0) ~ 25, KnownNat n0)
     => Signal dom Bool                         -- ^ Reset
     -> Signal dom (Vec n (BitVector 64))       -- ^ Input block
     -> (Signal dom Bool, Signal dom SHA3State) -- ^ (Done, hash state)
@@ -125,8 +125,8 @@ sha3 reset dat = (register False $ cnt .==. pure maxBound, state)
         $ round <$> cnt <*> roundsIn
 
 sha3Packed  
-    :: forall inputSize outputSize rate dom drop gated sync 
-    .  (HiddenClockReset dom gated sync, 1600 ~ (outputSize + drop), 25 ~ (inputSize + rate), KnownNat rate, KnownNat outputSize)
+    :: forall inputSize outputSize rate dom drop 
+    .  (HiddenClockResetEnable dom, 1600 ~ (outputSize + drop), 25 ~ (inputSize + rate), KnownNat rate, KnownNat outputSize)
     => Signal dom Bool 
     -> Signal dom (Vec inputSize (BitVector 64)) 
     -> (Signal dom Bool, Signal dom (BitVector outputSize))

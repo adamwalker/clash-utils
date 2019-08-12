@@ -3,7 +3,7 @@ module RegexSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset, fromList, sampleN_lazy)
+                      HiddenClockResetEnable, fromList, sampleN_lazy, System)
 import Data.Word
 import qualified Data.ByteString as BS
 import Test.Hspec
@@ -48,7 +48,7 @@ regex   = Concat (Concat (Concat (Star (Class [b])) (Concat (Class [c]) (Star ((
 
 --Test matching strings
 prop_match = forAll (genString regex) $ \str -> 
-    last $ sampleN_lazy (length str + 3) 
+    last $ sampleN_lazy @System (length str + 3) 
          $ regexMatchBlockRam resultHW (pure True) 
          $ fromList ([0] ++ map pack str ++ repeat 0)
 
@@ -57,7 +57,7 @@ prop_nomatch str = res == expect
     where
     expect = BS.pack str =~ "\\`b*c(a|b)*[ac]h\\'"
     res = last 
-        $ sampleN_lazy (length str + 3) 
+        $ sampleN_lazy @System (length str + 3) 
         $ regexMatchBlockRam resultHW (pure True) 
         $ fromList ([0] ++ map pack str ++ repeat 0)
 

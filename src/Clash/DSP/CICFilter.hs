@@ -8,8 +8,8 @@ module Clash.DSP.CICFilter (
 import Clash.Prelude
 
 integrate
-    :: forall dom gated sync a
-    . (HiddenClockReset dom gated sync, Undefined a, Num a)
+    :: forall dom a
+    . (HiddenClockResetEnable dom, Undefined a, Num a)
     => Signal dom Bool
     -> Signal dom a
     -> Signal dom a
@@ -18,8 +18,8 @@ integrate valid x = res
     res = regEn 0 valid $ res + x
 
 comb 
-    :: forall dom gated sync m a
-    .  (HiddenClockReset dom gated sync, KnownNat m, Undefined a, Num a)
+    :: forall dom m a
+    .  (HiddenClockResetEnable dom, KnownNat m, Undefined a, Num a)
     => SNat m 
     -> Signal dom Bool
     -> Signal dom a
@@ -30,8 +30,8 @@ comb SNat valid x = x - last delayLine
     delayLine =  iterateI (regEn 0 valid) x
 
 nth 
-    :: forall dom gated sync d
-    .  HiddenClockReset dom gated sync
+    :: forall dom d
+    .  HiddenClockResetEnable dom
     => SNat d
     -> Signal dom Bool
     -> Signal dom Bool
@@ -45,8 +45,8 @@ nth SNat valid = (cnt .==. 0) .&&. valid
             | otherwise       = cnt + 1
 
 cicDecimate
-    :: forall dom gated sync m d order a
-    .  (HiddenClockReset dom gated sync, KnownNat m, Undefined a, Num a)
+    :: forall dom m d order a
+    .  (HiddenClockResetEnable dom, KnownNat m, Undefined a, Num a)
     => SNat d
     -> SNat m
     -> SNat order

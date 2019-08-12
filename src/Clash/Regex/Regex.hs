@@ -11,7 +11,7 @@ import Clash.Regex.RegexCompile
 
 -- | Regular expression matching combinational logic
 regexMatchComb
-    :: forall dom gated sync n
+    :: forall dom n
     .  KnownNat n
     => Vec n (Vec (n + 1) Bool) -- ^ Matching engine connection matrix
     -> Bool                     -- ^ Matches may start here
@@ -25,8 +25,8 @@ regexMatchComb connections start states incoming = zipWith func incoming connect
 
 -- | Regular expression matching sequential logic
 regexMatch
-    :: forall dom gated sync n
-    .  (HiddenClockReset dom gated sync, KnownNat n)
+    :: forall dom n
+    .  (HiddenClockResetEnable dom, KnownNat n)
     => Vec n (Vec (n + 1) Bool) -- ^ Matching engine connection matrix
     -> Signal dom Bool          -- ^ Matches may start here
     -> Signal dom (Vec n Bool)  -- ^ Character class matches
@@ -37,8 +37,8 @@ regexMatch connections start incoming = res
 
 -- | Regular expression matching where the character classes are matched using block rams
 regexMatchBlockRam 
-    :: forall dom gated sync n m a
-    .  (HiddenClockReset dom gated sync, KnownNat n, BitPack a, m ~ BitSize a, KnownNat m)
+    :: forall dom n m a
+    .  (HiddenClockResetEnable dom, KnownNat n, BitPack a, m ~ BitSize a, KnownNat m)
     => CompiledRegexHW (n + 1) m -- ^ Result of regex compilation
     -> Signal dom Bool           -- ^ Matches may start here
     -> Signal dom a              -- ^ Input character

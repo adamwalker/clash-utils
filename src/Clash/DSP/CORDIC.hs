@@ -74,7 +74,7 @@ cordicSteps dir start = flip (ifoldl cordicStep')
 
 {-| An example synthesizeable CORDIC implementation. Finds the magnitude and phase of a complex number. Consists of an 8 deep pipeline. Each pipeline stages performs two CORDIC iterations for a total of 16 iterations. Processes one input per cycle. Latency is 8 cycles. -}
 cordicExample 
-    :: HiddenClockReset dom gated sync
+    :: HiddenClockResetEnable dom
     => Vec 16 (SFixed 2 16)                                  -- ^ Vector or arctans. Needs to be supplied as an argument to work around GHC's annoying "stage restriction".
     -> Signal dom (SFixed 16 16)                             -- ^ Real part
     -> Signal dom (SFixed 16 16)                             -- ^ Imaginary part

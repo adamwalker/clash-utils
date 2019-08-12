@@ -3,7 +3,7 @@ module FIFOSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset)
+                      HiddenClockResetEnable, System)
 import GHC.TypeLits
 import Test.Hspec
 import Test.QuickCheck
@@ -45,17 +45,17 @@ compareOutputs (val1, empty1, full1) (val2, empty2, full2)
 prop_FIFOs :: [(Bool, BitVector 32, Bool)] -> Bool
 prop_FIFOs signals = and $ zipWith compareOutputs expect result
     where
-    expect = take (length signals) $ simulate_lazy (mealy (fifoStep 5) (0, Seq.empty)) signals
-    result = take (length signals) $ simulate_lazy hackedFIFO signals
-    hackedFIFO :: HiddenClockReset dom gated sync => Signal dom (Bool, BitVector 32, Bool) -> Signal dom (BitVector 32, Bool, Bool)
+    expect = take (length signals) $ simulate_lazy @System (mealy (fifoStep 5) (0, Seq.empty)) signals
+    result = take (length signals) $ simulate_lazy @System hackedFIFO signals
+    hackedFIFO :: HiddenClockResetEnable dom => Signal dom (Bool, BitVector 32, Bool) -> Signal dom (BitVector 32, Bool, Bool)
     hackedFIFO = bundle . (\(x, y, z) ->  (blockRamFIFO (SNat @ 5)) x y z) . unbundle 
 
 prop_FIFOMaybe :: [(Bool, BitVector 32, Bool)] -> Bool
 prop_FIFOMaybe signals = Prelude.and $ Prelude.zipWith compareOutputs expect result
     where
-    expect = take (length signals) $ simulate_lazy (mealy (fifoStep 5) (0, Seq.empty)) signals
-    result = take (length signals) $ simulate_lazy hackedFIFO signals
-    hackedFIFO :: HiddenClockReset dom gated sync => Signal dom (Bool, BitVector 32, Bool) -> Signal dom (BitVector 32, Bool, Bool)
+    expect = take (length signals) $ simulate_lazy @System (mealy (fifoStep 5) (0, Seq.empty)) signals
+    result = take (length signals) $ simulate_lazy @System hackedFIFO signals
+    hackedFIFO :: HiddenClockResetEnable dom => Signal dom (Bool, BitVector 32, Bool) -> Signal dom (BitVector 32, Bool, Bool)
     hackedFIFO inputs = bundle $ (fromJust <$> readDataM, (not . isJust) <$> readDataM, full)
         where
         (readReq, writeData, writeReq) = unbundle inputs

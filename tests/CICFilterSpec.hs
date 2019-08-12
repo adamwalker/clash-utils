@@ -3,7 +3,7 @@ module CICFilterSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset, type (+), extend, Undefined, fromList, sample)
+                      HiddenClockResetEnable, type (+), extend, Undefined, fromList, sample, System)
 import Test.Hspec
 import Test.QuickCheck hiding (sample)
 
@@ -29,6 +29,6 @@ prop_cic_sums (InfiniteList x _) = expect == result
         $ drop 4 
         $ map snd 
         $ filter fst 
-        $ sample 
+        $ sample @System
         $ bundle 
         $ cicDecimate (SNat @ 4) (SNat @ 2) (SNat @ 1) (pure True) (fromList (0 : extended))

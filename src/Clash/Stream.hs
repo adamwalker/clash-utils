@@ -23,7 +23,7 @@ data StreamIn a = StreamIn {
 } deriving (Show)
 
 deserialize 
-    :: forall dom gated sync m a. (HiddenClockReset dom gated sync, KnownNat m, Undefined a)
+    :: forall dom m a. (HiddenClockResetEnable dom, KnownNat m, Undefined a)
     => Signal dom (StreamIn a)      -- ^ Input data stream
     -> Signal dom (Maybe (Vec m a)) -- ^ Received data chunks
 deserialize streamIn = mux lastDone (Just <$> buf) (pure Nothing)
@@ -52,7 +52,7 @@ deserialize streamIn = mux lastDone (Just <$> buf) (pure Nothing)
             | otherwise       = ptr
 
 selectStream
-    :: forall dom gated sync a. (HiddenClockReset dom gated sync,  Eq a) 
+    :: forall dom a. (HiddenClockResetEnable dom,  Eq a) 
     => (a -> Bool)
     -> Signal dom (StreamIn a)
     -> Signal dom (StreamIn a)
@@ -91,8 +91,8 @@ byteExtract offset ptr valid dat
 ----------------------------------------------------------
 
 byteExtractAccum 
-    :: forall dom gated sync chunkSize lowBits (highBits :: Nat) num. (
-        HiddenClockReset dom gated sync, 
+    :: forall dom chunkSize lowBits (highBits :: Nat) num. (
+        HiddenClockResetEnable dom, 
         highBits <= BitSize num, (highBits + lowBits) ~ BitSize num, KnownNat highBits, 
         KnownNat (BitSize num), BitPack num, Num num, 
         KnownNat chunkSize)
@@ -104,8 +104,8 @@ byteExtractAccum
 byteExtractAccum offset ptr valid dat = regMaybe 0 $ byteExtract @chunkSize @lowBits @highBits @num offset <$> ptr <*> valid <*> dat
 
 fieldExtractAccum
-    :: forall dom gated sync chunkSize n lowBits (highBits :: Nat) num. (
-        HiddenClockReset dom gated sync, 
+    :: forall dom chunkSize n lowBits (highBits :: Nat) num. (
+        HiddenClockResetEnable dom, 
         highBits <= BitSize num, (highBits + lowBits) ~ BitSize num, KnownNat highBits, 
         KnownNat (BitSize num), BitPack num, Num num, 
         KnownNat chunkSize,
@@ -125,8 +125,8 @@ fieldExtractAccum offset ptr valid dat = sequenceA $ map (\offset -> byteExtract
 ----------------------------------------------------------
 
 byteExtractAccumComb
-    :: forall dom gated sync chunkSize lowBits (highBits :: Nat) num. (
-        HiddenClockReset dom gated sync, 
+    :: forall dom chunkSize lowBits (highBits :: Nat) num. (
+        HiddenClockResetEnable dom, 
         highBits <= BitSize num, (highBits + lowBits) ~ BitSize num, KnownNat highBits, 
         KnownNat (BitSize num), BitPack num, Num num, 
         KnownNat chunkSize)
@@ -142,8 +142,8 @@ byteExtractAccumComb offset ptr valid dat = mealy func 0 $ byteExtract offset <$
     func state (Just x) = (x, x)
 
 fieldExtractAccumComb
-    :: forall dom gated sync chunkSize n lowBits (highBits :: Nat) num. (
-        HiddenClockReset dom gated sync, 
+    :: forall dom chunkSize n lowBits (highBits :: Nat) num. (
+        HiddenClockResetEnable dom, 
         highBits <= BitSize num, (highBits + lowBits) ~ BitSize num, KnownNat highBits, 
         KnownNat (BitSize num), BitPack num, Num num, 
         KnownNat chunkSize,

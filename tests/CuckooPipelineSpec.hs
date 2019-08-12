@@ -4,7 +4,8 @@ module CuckooPipelineSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockReset, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice, type (+), errorX, Undefined)
+                      HiddenClockResetEnable, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice, type (+), errorX, Undefined,
+                      System)
 
 import Test.Hspec
 import Test.QuickCheck hiding ((.||.), (.&&.), Success, Failure)
@@ -29,13 +30,13 @@ spec = describe "CuckooPipeline hash table" $ do
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
         forAll (take 4000 <$> genOps False preInserts) $ \ops -> 
-        last (sampleN 50000 (testHarness hashFuncs cuckooPipelineInsert (map (uncurry Insert) preInserts ++ ops))) == Just True
+        last (sampleN @System 50000 (testHarness hashFuncs cuckooPipelineInsert (map (uncurry Insert) preInserts ++ ops))) == Just True
 
     specify "Works with randomised operations and recently modified keys" $
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
         forAll (take 4000 <$> genOps True preInserts) $ \ops -> 
-        last (sampleN 50000 (testHarness hashFuncs cuckooPipelineInsert (map (uncurry Insert) preInserts ++ ops))) == Just True
+        last (sampleN @System 50000 (testHarness hashFuncs cuckooPipelineInsert (map (uncurry Insert) preInserts ++ ops))) == Just True
 
 data Op key
     = Lookup key (Maybe String)
@@ -166,7 +167,7 @@ data TestbenchState key
     | InProgress OpState [Op key] --State of current operation, remaining operations
     deriving (Generic, Undefined)
 
-type Cuckoo = forall dom gated sync m n k v. (HiddenClockReset dom gated sync, KnownNat m, KnownNat n, Eq k, Undefined k, Undefined v)
+type Cuckoo = forall dom m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, Undefined k, Undefined v)
     => Vec (m + 1) (k -> Unsigned n)
     -> Signal dom k                                                          
     -> Signal dom (Maybe (Maybe v))
@@ -176,7 +177,7 @@ type Cuckoo = forall dom gated sync m n k v. (HiddenClockReset dom gated sync, K
         )
 
 testHarness 
-    :: forall dom gated sync key. (HiddenClockReset dom gated sync, Ord key, Default key, Undefined key)
+    :: forall dom key. (HiddenClockResetEnable dom, Ord key, Default key, Undefined key)
     => (Vec 3 (key -> Unsigned 10))
     -> Cuckoo
     -> [Op key] 

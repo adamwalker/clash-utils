@@ -105,8 +105,8 @@ roundLast roundKey = addRoundKey roundKey . shiftRows . subBytes
 
 -- | <https://en.wikipedia.org/wiki/Rijndael_key_schedule Rijndael key schedule> state machine
 keyExpander 
-    :: forall dom gated sync
-    .  HiddenClockReset dom gated sync
+    :: forall dom 
+    .  HiddenClockResetEnable dom
     => Signal dom Bool                   -- ^ Start
     -> Signal dom (BitVector 128)        -- ^ Key
     -> Signal dom (Vec 4 (BitVector 32)) -- ^ Expanded key
@@ -120,8 +120,8 @@ keyExpander start key = keyState
 
 -- | AES encryption state machine
 aesEncrypt
-    :: forall dom gated sync
-    .  HiddenClockReset dom gated sync
+    :: forall dom 
+    .  HiddenClockResetEnable dom
     => Signal dom Bool                  -- ^ Start
     -> Signal dom (BitVector 128)       -- ^ Key
     -> Signal dom (BitVector 128)       -- ^ Plaintext block
