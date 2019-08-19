@@ -8,7 +8,8 @@ module Clash.Misc(
     (++##),
     watchdog,
     setReset,
-    wideWriteMem
+    wideWriteMem,
+    prioSelectCarryChain
     ) where
 
 import Clash.Prelude
@@ -131,4 +132,9 @@ wideWriteMem init raddr write = liftA2 (!!) readChunks (register 0 raddrBank)
 
     readChunks :: Signal dom (Vec (2 ^ readBits) (Vec (2 ^ bankBits) a))
     readChunks =  unconcatI <$> ramReads
+
+prioSelectCarryChain :: KnownNat n => Vec n Bool -> Vec n Bool
+prioSelectCarryChain x = reverse $ unpack $ (complement packed + 1) .&. packed
+    where
+    packed = pack $ reverse x
 
