@@ -45,17 +45,17 @@ nth SNat valid = (cnt .==. 0) .&&. valid
             | otherwise       = cnt + 1
 
 cicDecimate
-    :: forall dom m d order a
+    :: forall dom m r n a
     .  (HiddenClockResetEnable dom, KnownNat m, Undefined a, Num a)
-    => SNat d
+    => SNat r
     -> SNat m
-    -> SNat order
+    -> SNat n
     -> Signal dom Bool
     -> Signal dom a
     -> (Signal dom Bool, Signal dom a)
-cicDecimate d m SNat valid x = (validN, result)
+cicDecimate r m SNat valid x = (validN, result)
     where
-    integrated = last $ iterate (SNat @ (order + 1)) (integrate valid) x
-    validN     = nth d valid
-    result     = last $ iterate (SNat @ (order + 1)) (regEn 0 validN . comb m validN) integrated
+    integrated = last $ iterate (SNat @ (n + 1)) (integrate valid) x
+    validN     = nth r valid
+    result     = last $ iterate (SNat @ (n + 1)) (regEn 0 validN . comb m validN) integrated
 
