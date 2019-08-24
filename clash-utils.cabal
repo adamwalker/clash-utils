@@ -26,6 +26,7 @@ library
         Clash.Container.FIFO, 
         Clash.Container.Cuckoo,
         Clash.Container.CuckooPipeline,
+        Clash.Container.MultiPortBlockRam,
         Clash.Crypto.AES,
         Clash.Crypto.SHA3,
         Clash.DSP.CICFilter,
@@ -109,7 +110,8 @@ Test-Suite test
         RegexSpec,
         CarrySaveSpec,
         MultiplierSpec,
-        CICFilterSpec
+        CICFilterSpec,
+        MultiPortBlockRamSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.14, 
