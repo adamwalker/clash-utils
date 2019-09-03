@@ -22,6 +22,7 @@ A random collection of reusable [Clash](http://www.clash-lang.org/) designs/exam
 * [SHA3](https://en.wikipedia.org/wiki/SHA-3) and [AES](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
 * Multipliers
 * [Multi port block rams](http://www.eecg.toronto.edu/~steffan/papers/laforest_xor_fpga12.pdf)
+* Regular expression matching
 
 Each design has a [Hspec](https://hspec.github.io/) testsuite/specification in the [/tests](https://github.com/adamwalker/clash-utils/tree/master/tests) subdirectory.
 
