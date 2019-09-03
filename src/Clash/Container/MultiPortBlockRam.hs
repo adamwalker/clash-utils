@@ -1,3 +1,6 @@
+{-| 
+    Build multi port rams out of block rams as described in http://www.eecg.toronto.edu/~steffan/papers/laforest_xor_fpga12.pdf.
+-}
 module Clash.Container.MultiPortBlockRam (
         multiPortBlockRam
     ) where

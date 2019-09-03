@@ -21,6 +21,7 @@ A random collection of reusable [Clash](http://www.clash-lang.org/) designs/exam
 * [Prefix sums](https://en.wikipedia.org/wiki/Prefix_sum), [Carry lookahead adders](https://en.wikipedia.org/wiki/Carry-lookahead_adder), [Carry select adders](https://en.wikipedia.org/wiki/Carry-select_adder) and [Carry save adders](https://en.wikipedia.org/wiki/Carry-save_adder)
 * [SHA3](https://en.wikipedia.org/wiki/SHA-3) and [AES](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
 * Multipliers
+* [Multi port block rams](http://www.eecg.toronto.edu/~steffan/papers/laforest_xor_fpga12.pdf)
 
 Each design has a [Hspec](https://hspec.github.io/) testsuite/specification in the [/tests](https://github.com/adamwalker/clash-utils/tree/master/tests) subdirectory.
 
