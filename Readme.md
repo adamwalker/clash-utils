@@ -7,7 +7,7 @@ A random collection of reusable [Clash](http://www.clash-lang.org/) designs/exam
 * [CORDIC](https://en.wikipedia.org/wiki/CORDIC) for calculating trigonometric functions
 * [CRC](https://en.wikipedia.org/wiki/Cyclic_redundancy_check) calculation
 * A FIFO
-* [FIR](https://en.wikipedia.org/wiki/Finite_impulse_response), [IIR](https://en.wikipedia.org/wiki/Infinite_impulse_response) filters
+* [FIR](https://en.wikipedia.org/wiki/Finite_impulse_response), [IIR](https://en.wikipedia.org/wiki/Infinite_impulse_response) and [CIC](https://en.wikipedia.org/wiki/Cascaded_integrator%E2%80%93comb_filter) filters
 * A [bitonic sorting network](https://en.wikipedia.org/wiki/Bitonic_sorter)
 * Divider
 * [FFTs](https://en.wikipedia.org/wiki/Fast_Fourier_transform)
