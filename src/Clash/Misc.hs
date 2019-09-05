@@ -55,7 +55,7 @@ swapEndian = swapChunks (SNat @8)
 
 -- | Same as mealy, but with an enable signal
 mealyEn 
-    :: (HiddenClockResetEnable dom, Undefined s)
+    :: (HiddenClockResetEnable dom, NFDataX s)
     => (s -> i -> (s, o)) -- ^ State update function
     -> s                  -- ^ Initial state
     -> Signal dom Bool    -- ^ Enable signal
@@ -68,7 +68,7 @@ mealyEn step initial enable input = mealy step' initial (bundle (enable, input))
 
 -- | Counts cycles where the input signal is high
 count 
-    :: (HiddenClockResetEnable dom, Num a, Undefined a) 
+    :: (HiddenClockResetEnable dom, Num a, NFDataX a) 
     => Signal dom Bool -- ^ Increment signal
     -> Signal dom a    -- ^ Count output
 count inc = res
@@ -108,7 +108,7 @@ setReset set reset = out
 
 wideWriteMem 
   :: forall dom writeBits readBits bankBits a
-  .  (HiddenClockResetEnable dom, KnownNat writeBits, KnownNat readBits, KnownNat bankBits, Undefined a)
+  .  (HiddenClockResetEnable dom, KnownNat writeBits, KnownNat readBits, KnownNat bankBits, NFDataX a)
   => (1 <= (2 ^ (readBits + bankBits))) --TODO: this constraint should be inferred
   => Vec (2 ^ (writeBits + readBits + bankBits)) a
   -> Signal dom (Unsigned (writeBits + readBits))

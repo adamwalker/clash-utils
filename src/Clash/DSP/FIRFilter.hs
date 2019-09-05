@@ -102,7 +102,7 @@ macPreAddRealComplexPipelined en c i1 i2 accum = liftA2 (:+) a3 a4
 
 {- | Direct form FIR filter -}
 fir 
-    :: (HiddenClockResetEnable dom, KnownNat n, Undefined inputType, Num inputType) 
+    :: (HiddenClockResetEnable dom, KnownNat n, NFDataX inputType, Num inputType) 
     => (Signal dom coeffType  -> Signal dom inputType  -> Signal dom outputType) -- ^ Function to do the multiplication
     -> (Signal dom outputType -> Signal dom outputType -> Signal dom outputType) -- ^ Function to do the accumulation
     -> Vec (n + 1) coeffType                                                     -- ^ Coefficients
@@ -123,7 +123,7 @@ type MAC dom coeffType inputType outputType
 
 {- | Transposed FIR filter -}
 firTransposed 
-    :: (HiddenClockResetEnable dom, KnownNat n, Undefined outputType, Num outputType) 
+    :: (HiddenClockResetEnable dom, KnownNat n, NFDataX outputType, Num outputType) 
     => MAC dom coeffType inputType outputType -- ^ Function to do the multiply and accumulate
     -> Vec (n + 1) coeffType                  -- ^ Coefficients
     -> Signal dom Bool                        -- ^ Input enable
@@ -135,7 +135,7 @@ firTransposed mac coeffs en x = foldl (func x) 0 $ (pure <$> coeffs)
 
 {- | Systolic FIR filter -}
 firSystolic 
-    :: (HiddenClockResetEnable dom, KnownNat n, Undefined outputType, Num outputType, Num inputType, Undefined inputType) 
+    :: (HiddenClockResetEnable dom, KnownNat n, NFDataX outputType, Num outputType, Num inputType, NFDataX inputType) 
     => MAC dom coeffType inputType outputType -- ^ Function to do the multiply and accumulate
     -> Vec (n + 1) coeffType                  -- ^ Coefficients
     -> Signal dom Bool                        -- ^ Input enable
@@ -157,7 +157,7 @@ type MACPreAdd dom coeffType inputType outputType
 --TODO: symmetric odd and Symmetric half band
 {- | Symmetric FIR filter -}
 firSymmetric
-    :: (HiddenClockResetEnable dom, KnownNat n, Num inputType, Undefined inputType, Num outputType, Undefined outputType) 
+    :: (HiddenClockResetEnable dom, KnownNat n, Num inputType, NFDataX inputType, Num outputType, NFDataX outputType) 
     => MACPreAdd dom coeffType inputType outputType -- ^ Function to do the multiply and accumulate
     -> Vec (n + 1) coeffType                        -- ^ Coefficients
     -> Signal dom Bool                              -- ^ Input enable
@@ -170,7 +170,7 @@ firSymmetric macPreAdd coeffs en x = foldl (func x) 0 $ zip (pure <$> coeffs) de
 
 {- | Systolic Symmetric FIR filter with even number of coefficients -}
 firSystolicSymmetric
-    :: (HiddenClockResetEnable dom, KnownNat n, Num outputType, Undefined outputType, Num inputType, Undefined inputType) 
+    :: (HiddenClockResetEnable dom, KnownNat n, Num outputType, NFDataX outputType, Num inputType, NFDataX inputType) 
     => MACPreAdd dom coeffType inputType outputType -- ^ Function to do the multiply and accumulate with pre-add
     -> Vec (n + 1) coeffType                        -- ^ Coefficients
     -> Signal dom Bool                              -- ^ Input enable
@@ -184,7 +184,7 @@ firSystolicSymmetric macPreAdd coeffs en x = foldl (func lastDelayLine) 0 $ zip 
 
 {- | Systolic symmetric FIR filter with odd number of coefficients -}
 firSystolicSymmetricOdd
-    :: (HiddenClockResetEnable dom, KnownNat n, Num outputType, Undefined outputType, Num inputType, Undefined inputType) 
+    :: (HiddenClockResetEnable dom, KnownNat n, Num outputType, NFDataX outputType, Num inputType, NFDataX inputType) 
     => MACPreAdd dom coeffType inputType outputType -- ^ Function to do the multiply and accumulate with pre-add
     -> Vec (n + 2) coeffType                        -- ^ Coefficients
     -> Signal dom Bool                              -- ^ Input enable
@@ -198,7 +198,7 @@ firSystolicSymmetricOdd macPreAdd coeffs en x = foldl (func lastDelayLine) 0 $ z
 
 {- | Systolic half band filter (also symmetric and odd number of coefficients) -}
 firSystolicHalfBand
-    :: (HiddenClockResetEnable dom, KnownNat n, Num inputType, Num outputType, Undefined inputType, Undefined outputType) 
+    :: (HiddenClockResetEnable dom, KnownNat n, Num inputType, Num outputType, NFDataX inputType, NFDataX outputType) 
     => MACPreAdd dom coeffType inputType outputType -- ^ Function to do the multiply and accumulate with pre-add
     -> Vec (n + 2) coeffType                        -- ^ Coefficients
     -> Signal dom Bool                              -- ^ Input enable
@@ -212,7 +212,7 @@ firSystolicHalfBand macPreAdd coeffs en x = foldl func 0 $ zip3 (map pure coeffs
     func accum (coeff, input, last) = regEn 0 en $ macPreAdd en coeff last input accum 
 
 semiParallelFIR 
-    :: forall dom a n m n' m'. (HiddenClockResetEnable dom, Num a, KnownNat n, KnownNat m, n ~ (n' + 1), m ~ (m' + 1), Undefined a)
+    :: forall dom a n m n' m'. (HiddenClockResetEnable dom, Num a, KnownNat n, KnownNat m, n ~ (n' + 1), m ~ (m' + 1), NFDataX a)
     => Vec n (Vec m a)
     -> Signal dom Bool
     -> Signal dom a

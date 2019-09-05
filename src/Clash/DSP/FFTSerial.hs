@@ -13,7 +13,7 @@ import Clash.Prelude
 import Clash.DSP.Complex
 import Clash.DSP.FFT(halveTwiddles)
 
-fftBase :: (HiddenClockResetEnable dom, Num a, Undefined a) => Signal dom Bool -> Signal dom (Complex a, Complex a) -> Signal dom (Complex a, Complex a)
+fftBase :: (HiddenClockResetEnable dom, Num a, NFDataX a) => Signal dom Bool -> Signal dom (Complex a, Complex a) -> Signal dom (Complex a, Complex a)
 fftBase en = regEn (0, 0) en . fmap func
     where
     func (x, y) = (x + y, x - y)
@@ -22,7 +22,7 @@ fftBase en = regEn (0, 0) en . fmap func
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
 -- | A step in the serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. 
 fftSerialDITStep
-    :: forall dom n a. (HiddenClockResetEnable dom, KnownNat n, Num a, Undefined a)
+    :: forall dom n a. (HiddenClockResetEnable dom, KnownNat n, Num a, NFDataX a)
     => Vec (2 ^ (n + 1)) (Complex a) -- ^ Precomputed twiddle factors
     -> Signal dom Bool                   -- ^ Input enable signal
     -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
@@ -63,7 +63,7 @@ fftSerialDITStep twiddles en input = bundle (butterflyHighOutput, butterflyLowOu
 
 -- | Example serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
 fftSerialDIT
-    :: forall dom a. (HiddenClockResetEnable dom, Num a, Undefined a)
+    :: forall dom a. (HiddenClockResetEnable dom, Num a, NFDataX a)
     => Vec 4 (Complex a)             -- ^ Precomputed twiddle factors
     -> Signal dom Bool                   -- ^ Input enable signal
     -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
@@ -84,7 +84,7 @@ fftSerialDIT twiddles en input =
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
 -- | A step in the serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. 
 fftSerialDIFStep
-    :: forall dom n a. (HiddenClockResetEnable dom, KnownNat n, Num a, Undefined a)
+    :: forall dom n a. (HiddenClockResetEnable dom, KnownNat n, Num a, NFDataX a)
     => Vec (2 ^ (n + 1)) (Complex a) -- ^ Precomputed twiddle factors
     -> Signal dom Bool                   -- ^ Input enable signal
     -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
@@ -124,7 +124,7 @@ fftSerialDIFStep twiddles en input = bundle (upperRamReadResult, regEn 0 en lowe
 
 -- | Example serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
 fftSerialDIF
-    :: forall dom a. (HiddenClockResetEnable dom, Num a, Undefined a)
+    :: forall dom a. (HiddenClockResetEnable dom, Num a, NFDataX a)
     => Vec 4 (Complex a)             -- ^ Precomputed twiddle factors
     -> Signal dom Bool                   -- ^ Input enable signal
     -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples

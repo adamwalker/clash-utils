@@ -12,7 +12,7 @@ import Clash.Prelude
 
 integrate
     :: forall dom a
-    . (HiddenClockResetEnable dom, Undefined a, Num a)
+    . (HiddenClockResetEnable dom, NFDataX a, Num a)
     => Signal dom Bool
     -> Signal dom a
     -> Signal dom a
@@ -22,7 +22,7 @@ integrate valid x = res
 
 comb 
     :: forall dom m a
-    .  (HiddenClockResetEnable dom, KnownNat m, Undefined a, Num a)
+    .  (HiddenClockResetEnable dom, KnownNat m, NFDataX a, Num a)
     => SNat m 
     -> Signal dom Bool
     -> Signal dom a
@@ -49,7 +49,7 @@ nth SNat valid = (cnt .==. 0) .&&. valid
 
 cicDecimate
     :: forall dom m r n a
-    .  (HiddenClockResetEnable dom, KnownNat m, Undefined a, Num a)
+    .  (HiddenClockResetEnable dom, KnownNat m, NFDataX a, Num a)
     => SNat r
     -> SNat m
     -> SNat n

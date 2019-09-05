@@ -23,7 +23,7 @@ data StreamIn a = StreamIn {
 } deriving (Show)
 
 deserialize 
-    :: forall dom m a. (HiddenClockResetEnable dom, KnownNat m, Undefined a)
+    :: forall dom m a. (HiddenClockResetEnable dom, KnownNat m, NFDataX a)
     => Signal dom (StreamIn a)      -- ^ Input data stream
     -> Signal dom (Maybe (Vec m a)) -- ^ Received data chunks
 deserialize streamIn = mux lastDone (Just <$> buf) (pure Nothing)

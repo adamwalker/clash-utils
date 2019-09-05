@@ -38,7 +38,7 @@ kValue i = product $ P.take i $ P.map func [0..]
 data CordicState a b = CordicState {
     cplx :: Complex a,
     arg  :: b
-} deriving (Show, Generic, ShowX, Undefined)
+} deriving (Show, Generic, ShowX, NFDataX)
 
 {-| Perform one step of the CORDIC algorithm. Can be used to calculate sine and cosine as well as calculate the magnitude and phase of a complex number. See the tests to see how this is done. This pure function can be used iteratively by feeding the output back into the input, pipelined by instantiating it several times with registers in between, or combinationally. `cordicSteps` may be useful for this. -}
 cordicStep 

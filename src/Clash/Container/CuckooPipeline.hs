@@ -23,13 +23,13 @@ import Clash.ErrorControl.CRC
 data TableEntry k v = TableEntry {
     key   :: k,
     value :: v
-} deriving (Show, Generic, ShowX, Undefined)
+} deriving (Show, Generic, ShowX, NFDataX)
 
 {-| One stage in the cuckoo pipeline
     Each stage manages its own table and has its own hash function
 -}
 cuckooPipelineStage 
-    :: forall dom n k v. (HiddenClockResetEnable dom, KnownNat n, Eq k, Undefined k, Undefined v)
+    :: forall dom n k v. (HiddenClockResetEnable dom, KnownNat n, Eq k, NFDataX k, NFDataX v)
     => (k -> Unsigned n)                     -- ^ Hash function for this stage
     -> Signal dom k                          -- ^ Key to be looked up. For modifications and deletes, set this input
                                              --   in addition to the "modification" field below
@@ -114,7 +114,7 @@ cuckooPipelineStage hashFunc toLookup insertVal modification incomingEviction = 
     Assumes that inserts are known to not be in the table
 -}
 cuckooPipeline 
-    :: forall dom m n k v. (HiddenClockResetEnable dom, KnownNat n, Eq k, KnownNat m, Undefined k, Undefined v)
+    :: forall dom m n k v. (HiddenClockResetEnable dom, KnownNat n, Eq k, KnownNat m, NFDataX k, NFDataX v)
     => Vec (m + 1) (k -> Unsigned n)                     -- ^ Hash functions for each stage
     -> Signal dom k                                      -- ^ Key to lookup or modify
     -> Signal dom (Maybe (Maybe v))                      -- ^ Modification. Nothing == no modification. Just Nothing == delete. Just (Just X) == overwrite with X
@@ -140,7 +140,7 @@ cuckooPipeline hashFuncs toLookup modification inserts = (fold (liftA2 (<|>)) lo
   | Only allows one insertion at a time so it is less efficient for inserts than `cuckooPipeline`
 -}
 cuckooPipelineInsert
-    :: forall dom m n k v. (HiddenClockResetEnable dom, KnownNat n, Eq k, KnownNat m, Undefined k, Undefined v)
+    :: forall dom m n k v. (HiddenClockResetEnable dom, KnownNat n, Eq k, KnownNat m, NFDataX k, NFDataX v)
     => Vec (m + 1) (k -> Unsigned n) -- ^ Hash functions for each stage
     -> Signal dom k                  -- ^ Key to lookup, modify or insert
     -> Signal dom (Maybe (Maybe v))  -- ^ Modification. Nothing == no modification. Just Nothing == delete. Just (Just X) == insert or overwrite existing value at key

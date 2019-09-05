@@ -4,7 +4,7 @@ module CuckooSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockResetEnable, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice, type (+), errorX, Undefined,
+                      HiddenClockResetEnable, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice, type (+), errorX, NFDataX,
                       System)
 
 import Test.Hspec
@@ -125,7 +125,7 @@ testVecDelete idx k v = [write, delete, lookup, null]
     lookup = (Clash.repeat Nothing, k)
     null   = (Clash.repeat Nothing, "")
 
-type Cuckoo = forall dom cnt m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k, Undefined v)
+type Cuckoo = forall dom cnt m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, KnownNat cnt, NFDataX k, NFDataX v)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
     -> Signal dom v
@@ -140,7 +140,7 @@ type Cuckoo = forall dom cnt m n k v. (HiddenClockResetEnable dom, KnownNat m, K
         )
 
 cuckoo2
-    :: forall dom cnt m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k, Undefined v)
+    :: forall dom cnt m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, KnownNat cnt, NFDataX k, NFDataX v)
     => (k -> Vec (m + 1) (Unsigned n))                                       
     -> Signal dom k                                                          
     -> Signal dom v
@@ -239,7 +239,7 @@ data Op key
     | Insert key String
     | Delete key
     | Idle
-    deriving (Show, Generic, Undefined)
+    deriving (Show, Generic, NFDataX)
 
 data GenState key = GenState {
     theMap            :: Map key String,
@@ -355,19 +355,19 @@ data OpState
     = LookupState (Maybe String) Bool
     | InsertState 
     | IdleState
-    deriving (Generic, Undefined)
+    deriving (Generic, NFDataX)
 
 data TestbenchState key
     = Success
     | Failure
     | InProgress OpState [Op key] --State of current operation, remaining operations
-    deriving (Generic, Undefined)
+    deriving (Generic, NFDataX)
 
 hashFuncs :: [Word8] -> Vec 3 (Unsigned 10)
 hashFuncs x = Clash.map (\idx -> fromIntegral $ (`mod` 1024) $ hashWithSalt idx x) (iterateI (+1) 0)
 
 testHarness 
-    :: forall dom key. (HiddenClockResetEnable dom, Ord key, Default key, Undefined key, Undefined (TestbenchState key))
+    :: forall dom key. (HiddenClockResetEnable dom, Ord key, Default key, NFDataX key, NFDataX (TestbenchState key))
     => (key -> Vec 3 (Unsigned 10))
     -> Cuckoo
     -> [Op key] 

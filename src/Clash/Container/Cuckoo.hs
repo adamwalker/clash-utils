@@ -23,13 +23,13 @@ import Data.Maybe
 data TableEntry k v = TableEntry {
     key   :: k,
     value :: v
-} deriving (Generic, Undefined)
+} deriving (Generic, NFDataX)
 
 deriving instance (BitPack k, BitPack v, KnownNat (BitSize v), KnownNat (BitSize k)) => BitPack (TableEntry k v)
 
 {-| The lookup side of a Cuckoo hashtable. Uses split tables. Allows the hashes to be computed in advance, possibly over multiple cycles. -}
 cuckooLookup' 
-    :: forall dom m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, Undefined k, Undefined (TableEntry k v))
+    :: forall dom m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, NFDataX k, NFDataX (TableEntry k v))
     => Vec (m + 1) (Signal dom (Maybe (Unsigned n, Maybe (TableEntry k v)))) -- ^ Table updates from software. A vector of (row number, row value) pair updates, one for each table. 
     -> Vec (m + 1) (Signal dom (Unsigned n))                                 -- ^ Vector of hashed keys, one for each table. CRCs make good hash functions.
     -> Signal dom k                                                          -- ^ The key to lookup.
@@ -54,7 +54,7 @@ cuckooLookup' tableUpdates hashes lookupKey = fold (liftA2 (<|>)) candidates
 
 {-| The lookup side of a Cuckoo hashtable. Uses split tables. -}
 cuckooLookup 
-    :: forall dom m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, Undefined k, Undefined (TableEntry k v))
+    :: forall dom m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, NFDataX k, NFDataX (TableEntry k v))
     => (k -> Vec (m + 1) (Unsigned n))                                       -- ^ Vector of hash functions, one for each table. CRCs make good hash functions.
     -> Vec (m + 1) (Signal dom (Maybe (Unsigned n, Maybe (TableEntry k v)))) -- ^ Table updates from software. A vector of (row number, row value) pair updates, one for each table. 
     -> Signal dom k                                                          -- ^ The key to lookup.
@@ -67,7 +67,7 @@ cuckooLookup hashFunctions tableUpdates lookupKey = cuckooLookup' tableUpdates h
 
 {-| Like `cuckoo` but allows hash functions which take multiple cycles -}
 cuckoo'
-    :: forall dom cnt m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k, Undefined (TableEntry k v))
+    :: forall dom cnt m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, KnownNat cnt, NFDataX k, NFDataX (TableEntry k v))
     => Vec (m + 1) (Signal dom (Unsigned n)) -- ^ Vector of hashes, one for each table. CRCs make good hash functions.
     -> Signal dom k                          -- ^ Key to operate on (for lookups, insertions and deletions)           
     -> Signal dom v                          -- ^ Value to insert (for insertions only)
@@ -249,7 +249,7 @@ cuckoo' hashes key' value' insert delete evictedHashesDone = (
 
 {-| A full Cuckoo hashtable supporting lookups, modification, insertion and deletion -}
 cuckoo
-    :: forall dom cnt m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, KnownNat cnt, Undefined k, Undefined (TableEntry k v))
+    :: forall dom cnt m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, KnownNat cnt, NFDataX k, NFDataX (TableEntry k v))
     => (k -> Vec (m + 1) (Unsigned n)) -- ^ Vector of hash functions, one for each table. CRCs make good hash functions.
     -> Signal dom k                    -- ^ Key to operate on (for lookups, insertions and deletions)
     -> Signal dom v                    -- ^ Value to insert (for insertions only)

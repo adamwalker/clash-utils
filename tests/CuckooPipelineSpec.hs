@@ -4,7 +4,7 @@ module CuckooPipelineSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockResetEnable, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice, type (+), errorX, Undefined,
+                      HiddenClockResetEnable, (.==.), sampleN_lazy, register, regEn, (.<.), (.||.), (.&&.), iterateI, mealyB, sampleN, slice, type (+), errorX, NFDataX,
                       System)
 
 import Test.Hspec
@@ -43,7 +43,7 @@ data Op key
     | Insert key String
     | Delete key
     | Idle
-    deriving (Show, Generic, Undefined)
+    deriving (Show, Generic, NFDataX)
 
 data GenState key = GenState {
     theMap            :: Map key String,
@@ -159,15 +159,15 @@ data OpState
     = LookupState (Maybe String) Bool
     | InsertState Bool
     | IdleState
-    deriving (Generic, Undefined)
+    deriving (Generic, NFDataX)
 
 data TestbenchState key
     = Success
     | Failure
     | InProgress OpState [Op key] --State of current operation, remaining operations
-    deriving (Generic, Undefined)
+    deriving (Generic, NFDataX)
 
-type Cuckoo = forall dom m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, Undefined k, Undefined v)
+type Cuckoo = forall dom m n k v. (HiddenClockResetEnable dom, KnownNat m, KnownNat n, Eq k, NFDataX k, NFDataX v)
     => Vec (m + 1) (k -> Unsigned n)
     -> Signal dom k                                                          
     -> Signal dom (Maybe (Maybe v))
@@ -177,7 +177,7 @@ type Cuckoo = forall dom m n k v. (HiddenClockResetEnable dom, KnownNat m, Known
         )
 
 testHarness 
-    :: forall dom key. (HiddenClockResetEnable dom, Ord key, Default key, Undefined key)
+    :: forall dom key. (HiddenClockResetEnable dom, Ord key, Default key, NFDataX key)
     => (Vec 3 (key -> Unsigned 10))
     -> Cuckoo
     -> [Op key] 

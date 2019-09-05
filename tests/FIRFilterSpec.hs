@@ -3,7 +3,7 @@ module FIRFilterSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockResetEnable, type (+), extend, Undefined, System)
+                      HiddenClockResetEnable, type (+), extend, NFDataX, System)
 import Control.Applicative
 import Test.Hspec
 import Test.QuickCheck
@@ -27,7 +27,7 @@ spec = describe "FIR filters" $ do
         specify "semi parallel 3"     $ property $ prop_semiParallelFIR3
 
 goldenFIR 
-    :: (HiddenClockResetEnable dom, Num a, KnownNat n, Undefined a)
+    :: (HiddenClockResetEnable dom, Num a, KnownNat n, NFDataX a)
     => Vec (n + 1) a
     -> Signal dom Bool
     -> Signal dom a

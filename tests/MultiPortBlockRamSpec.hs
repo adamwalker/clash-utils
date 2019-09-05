@@ -3,7 +3,7 @@ module MultiPortBlockRamSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockResetEnable, extend, fromList, toList, sample, bitCoerce, System, Undefined, UNat(..), type (+), type (<=), register, toUNat)
+                      HiddenClockResetEnable, extend, fromList, toList, sample, bitCoerce, System, NFDataX, UNat(..), type (+), type (<=), register, toUNat)
 import Test.Hspec
 import Test.QuickCheck hiding (sample)
 
@@ -21,7 +21,7 @@ spec = describe "Multi port block ram" $ do
     specify "is equivalent to golden model" $ property prop_multiPortBlockRam
 
 --TODO: this is silly
-instance Undefined (IntMap a)
+instance NFDataX (IntMap a)
     where 
     deepErrorX = const (IntMap.empty)
     rnfX = const ()
