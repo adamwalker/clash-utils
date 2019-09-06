@@ -40,6 +40,7 @@ library
         Clash.ErrorControl.Hamming, 
         Clash.Regex.Regex,
         Clash.Regex.RegexCompile,
+        Clash.Xilinx.Adder,
         Clash.Xilinx.Carry,
         Clash.Sort, 
         Clash.GrayCode, 
@@ -111,7 +112,8 @@ Test-Suite test
         CarrySaveSpec,
         MultiplierSpec,
         CICFilterSpec,
-        MultiPortBlockRamSpec
+        MultiPortBlockRamSpec,
+        XilinxAdderSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.14, 
