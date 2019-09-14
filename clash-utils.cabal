@@ -46,6 +46,7 @@ library
         Clash.GrayCode, 
         Clash.LFSR,
         Clash.Misc, 
+        Clash.Network.Types,
         Clash.Scrambler,
         Clash.Serialize,
         Clash.PseudoLRUTree,
@@ -63,7 +64,9 @@ library
         GADTs,
         KindSignatures,
         TypeFamilies,
-        TupleSections
+        TupleSections,
+        DeriveGeneric,
+        DeriveAnyClass
     if impl(ghc >= 8.6)
         default-extensions: NoStarIsType
     build-depends:       
