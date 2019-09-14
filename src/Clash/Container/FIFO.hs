@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 {-| 
-    A block ram FIFO 
+    Block ram FWFT (first word fallthrough) FIFOs.
 
     __FPGA proven__
 -}
