@@ -43,6 +43,7 @@ library
         Clash.Xilinx.Adder,
         Clash.Xilinx.Carry,
         Clash.Stream.Stream,
+        Clash.Stream.SampleStream,
         Clash.Sort, 
         Clash.GrayCode, 
         Clash.LFSR,
