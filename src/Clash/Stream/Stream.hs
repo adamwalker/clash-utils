@@ -2,7 +2,7 @@
 {-| 
     __FPGA proven__
 -}
-module Clash.Stream (
+module Clash.Stream.Stream (
     StreamIn(..),
     deserialize,
     selectStream,

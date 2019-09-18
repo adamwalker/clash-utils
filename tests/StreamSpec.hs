@@ -11,7 +11,7 @@ import Data.Default
 import Data.List
 import Data.Maybe
 import Control.Monad
-import Clash.Stream
+import Clash.Stream.Stream
 
 streamize :: [a] -> [StreamIn a]
 streamize []     = error "empty stream"

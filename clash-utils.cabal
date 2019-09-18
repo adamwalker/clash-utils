@@ -42,6 +42,7 @@ library
         Clash.Regex.RegexCompile,
         Clash.Xilinx.Adder,
         Clash.Xilinx.Carry,
+        Clash.Stream.Stream,
         Clash.Sort, 
         Clash.GrayCode, 
         Clash.LFSR,
@@ -50,7 +51,6 @@ library
         Clash.Scrambler,
         Clash.Serialize,
         Clash.PseudoLRUTree,
-        Clash.Stream,
         Clash.PrefixSum
     -- other-modules:       
     default-extensions:  
