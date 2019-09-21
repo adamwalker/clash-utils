@@ -9,7 +9,8 @@ module Clash.Stream.SampleStream (
         widenStream,
         narrowStream,
         packetize,
-        prependHeader
+        prependHeader,
+        swapNibbles
     ) where
 
 import Clash.Prelude
@@ -64,7 +65,7 @@ widenStream streamIn = bundle (vldOut, sequenceA saved)
             | otherwise            = writePtr + 1
 
     saved :: Vec n (Signal dom a)
-    saved =  map (regEn (errorX "init") vldIn) $ datIn +>> saved
+    saved =  map (regEn (errorX "init") vldIn) $ saved <<+ datIn
 
 -- | Break up a stream of data into a stream of smaller chunks
 narrowStream 
@@ -72,7 +73,7 @@ narrowStream
     .  (HiddenClockResetEnable dom, NFDataX a, Default a, KnownNat n)
     => Signal dom (Bool, Vec (n + 1) a)
     -> Signal dom (Bool, a)
-narrowStream streamIn = bundle (vldOut, last <$> saved)
+narrowStream streamIn = bundle (vldOut, head <$> saved)
     where
 
     (vldIn, datIn) = unbundle streamIn
@@ -93,7 +94,7 @@ narrowStream streamIn = bundle (vldOut, last <$> saved)
     saved =  register (repeat def) $ func <$> vldIn <*> datIn <*> saved
         where
         func True  dat _   = dat
-        func False _   vec = def +>> vec
+        func False _   vec = vec <<+ def
 
 -- | Buffer up an entire packet worth of data and then send it out
 packetize
@@ -171,4 +172,7 @@ prependHeader vec streamIn ready = (bundle (vldOut, eofOut, datOut), readyOut)
         func _       _     = False
 
     eofOut = eofIn .&&. (state .==. pure Payload)
+
+swapNibbles :: KnownNat n => Vec (2 * n) a -> Vec (2 * n) a
+swapNibbles = concat . map reverse . unconcat (SNat @ 2)
 
