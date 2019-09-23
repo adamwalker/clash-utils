@@ -71,27 +71,44 @@ widenStream streamIn = bundle (vldOut, sequenceA saved)
 narrowStream 
     :: forall n dom gated sync a
     .  (HiddenClockResetEnable dom, NFDataX a, Default a, KnownNat n)
-    => Signal dom (Bool, Vec (n + 1) a)
-    -> Signal dom (Bool, a)
-narrowStream streamIn = bundle (vldOut, head <$> saved)
+    => Signal dom (Bool, Bool, Vec (n + 1) a)
+    -> Signal dom Bool
+    -> (Signal dom (Bool, Bool, a), Signal dom Bool)
+narrowStream streamIn readyIn = (bundle (vldOut, eofOut, head <$> saved), readyOut)
     where
 
-    (vldIn, datIn) = unbundle streamIn
+    (vldIn, eofIn, datIn) = unbundle streamIn
 
     vldOut :: Signal dom Bool
     vldOut =  isJust <$> readPtr
 
+    accept :: Signal dom Bool
+    accept = vldIn .&&. readyOut
+
+    latchedEof :: Signal dom Bool
+    latchedEof =  regEn False accept eofIn
+
+    eofOut :: Signal dom Bool
+    eofOut =  latchedEof .&&. (readPtr .==. (Just <$> pure maxBound))
+
+    readyOut :: Signal dom Bool
+    readyOut 
+        =    (isNothing <$> readPtr) 
+        .||. ((readPtr .==. (Just <$> pure maxBound)) .&&. readyIn)
+
     readPtr :: Signal dom (Maybe (Index (n + 1)))
-    readPtr =  register Nothing $ func <$> readPtr <*> vldIn
+    readPtr =  register Nothing $ func <$> readPtr <*> vldIn <*> readyIn
         where
-        func _       True = Just 0
-        func Nothing _    = Nothing
-        func (Just readPtr) _
-            | readPtr == maxBound = Nothing
-            | otherwise           = Just $ readPtr + 1
+        func Nothing True  _ = Just 0
+        func Nothing False _ = Nothing
+        func (Just readPtr) vldIn True
+            | readPtr == maxBound && vldIn = Just 0
+            | readPtr == maxBound          = Nothing
+            | otherwise                    = Just $ readPtr + 1
+        func st _ False = st
 
     saved :: Signal dom (Vec (n + 1) a)
-    saved =  register (repeat def) $ func <$> vldIn <*> datIn <*> saved
+    saved =  register (repeat def) $ func <$> accept <*> datIn <*> saved
         where
         func True  dat _   = dat
         func False _   vec = vec <<+ def
