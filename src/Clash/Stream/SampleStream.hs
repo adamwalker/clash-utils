@@ -108,10 +108,11 @@ narrowStream streamIn readyIn = (bundle (vldOut, eofOut, head <$> saved), readyO
         func st _ False = st
 
     saved :: Signal dom (Vec (n + 1) a)
-    saved =  register (repeat def) $ func <$> accept <*> datIn <*> saved
+    saved =  register (repeat def) $ func <$> accept <*> datIn <*> saved <*> readyIn
         where
-        func True  dat _   = dat
-        func False _   vec = vec <<+ def
+        func True  dat _   _    = dat
+        func False _   vec True = vec <<+ def
+        func _     _   vec _    = vec
 
 -- | Buffer up an entire packet worth of data and then send it out
 packetize
@@ -134,7 +135,7 @@ packetize pktSize streamIn downstreamReady = bundle (vldOut, eofOut, fifoDat)
     readReq = vldOut .&&. downstreamReady
 
     packetCnt :: Signal dom (Maybe (Unsigned n))
-    packetCnt = register Nothing $ func <$> packetCnt <*> (nElements .>=. pktSize) <*> pktSize <*> downstreamReady
+    packetCnt = register Nothing $ func <$> packetCnt <*> (nElements .>. pktSize) <*> pktSize <*> downstreamReady
         where
         func Nothing  True  _       _     = Just 0
         func Nothing  False _       _     = Nothing
