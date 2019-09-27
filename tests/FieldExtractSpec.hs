@@ -1,4 +1,4 @@
-module StreamSpec where
+module FieldExtractSpec where
 
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
@@ -11,7 +11,7 @@ import Data.Default
 import Data.List
 import Data.Maybe
 import Control.Monad
-import Clash.Stream.Stream
+import Clash.Stream.FieldExtract
 
 streamize :: [a] -> [StreamIn a]
 streamize []     = error "empty stream"
