@@ -78,7 +78,7 @@ cuckooPipelineStage hashFunc toLookup insertVal modificationD incomingEviction =
 
     --Save the lookup key for comparison with the table entry key in the next cycle
     keyD     :: Signal dom k
-    keyD     =  register undefined toLookup
+    keyD     =  register (errorX "Cuckoo: initial keyD") toLookup
 
     --Compare the lookup key with the key in the table to see if we got a match
     luRes    :: Signal dom (Maybe v)
@@ -96,7 +96,7 @@ cuckooPipelineStage hashFunc toLookup insertVal modificationD incomingEviction =
     --Save the hash for the next cycle when we write back the modified value
     --to avoid recomputing it
     hashD         :: Signal dom (Unsigned n)
-    hashD         =  register undefined hash
+    hashD         =  register (errorX "Cuckoo: initial hashD") hash
 
     --Calculate the block ram write back if we're doing a modification
     finalMod      :: Signal dom (Maybe (Unsigned n, Maybe (TableEntry k v)))
