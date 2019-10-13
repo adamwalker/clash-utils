@@ -33,6 +33,7 @@ cuckooPipelineStage
     => (k -> Unsigned n)                     -- ^ Hash function for this stage
     -> Signal dom k                          -- ^ Key to be looked up. For modifications and deletes, set this input
                                              --   in addition to the "modification" field below
+    -> Signal dom k                          -- ^ Delayed key
     -> Signal dom (Maybe (TableEntry k v))   -- ^ Value to be inserted
     -> Signal dom (Maybe (Maybe v))          -- ^ Modification. "Nothing" is no modification. "Just Nothing" is delete.
     -> Signal dom (Maybe (TableEntry k v))   -- ^ Incoming value to be evicted fro mthe previous stage in the pipeline.
@@ -41,7 +42,7 @@ cuckooPipelineStage
         Signal dom (Maybe v),                --Lookup result
         Signal dom Bool                      --Busy
         )                                    -- ^ (Outgoing value to be evicted, Lookup result, Busy)
-cuckooPipelineStage hashFunc toLookup insertVal modificationD incomingEviction = (
+cuckooPipelineStage hashFunc toLookup keyD insertVal modificationD incomingEviction = (
         mux evicting fromMem (pure Nothing), 
         luRes,
         isJust <$> incomingEviction
@@ -75,10 +76,6 @@ cuckooPipelineStage hashFunc toLookup insertVal modificationD incomingEviction =
     --
     --Lookup logic
     --
-
-    --Save the lookup key for comparison with the table entry key in the next cycle
-    keyD     :: Signal dom k
-    keyD     =  register (errorX "Cuckoo: initial keyD") toLookup
 
     --Compare the lookup key with the key in the table to see if we got a match
     luRes    :: Signal dom (Maybe v)
@@ -121,11 +118,15 @@ cuckooPipeline
 cuckooPipeline hashFuncs toLookup modificationD inserts = (fold (liftA2 (<|>)) lookupResults, busys)
     where
 
+    --Save the lookup key for comparison with the table entry key in the next cycle
+    keyD :: Signal dom k
+    keyD =  register (errorX "Cuckoo: initial keyD") toLookup
+
     --Construct the pipeline
     (accum, res) = mapAccumL func accum $ zip hashFuncs inserts
         where
         func accum (hashFunc, insert) = 
-            let (toEvict, lookupResult, insertBusy) = cuckooPipelineStage hashFunc toLookup insert modificationD accum
+            let (toEvict, lookupResult, insertBusy) = cuckooPipelineStage hashFunc toLookup keyD insert modificationD accum
             in  (toEvict, (lookupResult, insertBusy))
 
     --Combine the results and busy signals from the individual pipelines
