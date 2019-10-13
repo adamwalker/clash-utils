@@ -41,7 +41,7 @@ cuckooPipelineStage
         Signal dom (Maybe v),                --Lookup result
         Signal dom Bool                      --Busy
         )                                    -- ^ (Outgoing value to be evicted, Lookup result, Busy)
-cuckooPipelineStage hashFunc toLookup insertVal modification incomingEviction = (
+cuckooPipelineStage hashFunc toLookup insertVal modificationD incomingEviction = (
         mux evicting fromMem (pure Nothing), 
         luRes,
         isJust <$> incomingEviction
@@ -98,11 +98,6 @@ cuckooPipelineStage hashFunc toLookup insertVal modification incomingEviction = 
     hashD         :: Signal dom (Unsigned n)
     hashD         =  register undefined hash
 
-    --Save the modification value in case we need to write it back in the next cycle
-    --(because it was found in this table)
-    modificationD :: Signal dom (Maybe (Maybe v))
-    modificationD =  register Nothing modification
-
     --Calculate the block ram write back if we're doing a modification
     finalMod      :: Signal dom (Maybe (Unsigned n, Maybe (TableEntry k v)))
     finalMod      =  func <$> modificationD <*> (isJust <$> luRes) <*> hashD <*> keyD
@@ -123,14 +118,14 @@ cuckooPipeline
         Signal dom (Maybe v),         -- Lookup result
         Vec (m + 1) (Signal dom Bool) -- Vector of pipeline busy signals
         )                                                -- ^ (Lookup result, Vector of pipeline busy signals)
-cuckooPipeline hashFuncs toLookup modification inserts = (fold (liftA2 (<|>)) lookupResults, busys)
+cuckooPipeline hashFuncs toLookup modificationD inserts = (fold (liftA2 (<|>)) lookupResults, busys)
     where
 
     --Construct the pipeline
     (accum, res) = mapAccumL func accum $ zip hashFuncs inserts
         where
         func accum (hashFunc, insert) = 
-            let (toEvict, lookupResult, insertBusy) = cuckooPipelineStage hashFunc toLookup insert modification accum
+            let (toEvict, lookupResult, insertBusy) = cuckooPipelineStage hashFunc toLookup insert modificationD accum
             in  (toEvict, (lookupResult, insertBusy))
 
     --Combine the results and busy signals from the individual pipelines
@@ -154,18 +149,19 @@ cuckooPipelineInsert hashFuncs toLookup modification = (luRes, or <$> sequenceA 
     --Instantiate the pipeline
     --Modifications are passed straight in. This works fine for inserts since none of the stages will match and there will be no writeback.
     --If none of the stages matched, then we insert into the first pipeline stage (only) on the next cycle.
-    (luRes, busys) = cuckooPipeline hashFuncs toLookup modification 
-        $  mux ((isJust <$> insertD) .&&. (isJust <$> luRes)) (pure Nothing) insertD --TODO gross hack to avoid block ram undefined
+    (luRes, busys) = cuckooPipeline hashFuncs toLookup modificationD 
+        $  insertD
         :> repeat (pure Nothing)
 
-    --Form an insert from our modification in case the key is not found in any tables
-    insert :: Signal dom (Maybe (TableEntry k v))
-    insert =  func <$> toLookup <*> modification
-        where
-        func key (Just (Just value)) = Just $ TableEntry key value
-        func _   _                   = Nothing
+    modificationD = register Nothing modification
+    toLookupD     = register (errorX "toLookupD") toLookup
 
-    insertD = register Nothing insert
+    --Form an insert from our modification in case the key is not found in any tables
+    insertD :: Signal dom (Maybe (TableEntry k v))
+    insertD =  func <$> toLookupD <*> modificationD <*> (isJust <$> luRes)
+        where
+        func key (Just (Just value)) False = Just $ TableEntry key value
+        func _   _                   _     = Nothing
 
 -- | An example cuckoo hashtable top level design
 exampleDesign
