@@ -20,6 +20,9 @@ module Clash.DSP.FIRFilter (
     firSystolicSymmetric,
     firSystolicSymmetricOdd,
     firSystolicHalfBand,
+    macUnit,
+    integrate,
+    semiParallelFIRSystolic,
     semiParallelFIR
     ) where
 
@@ -210,6 +213,71 @@ firSystolicHalfBand macPreAdd coeffs en x = foldl func 0 $ zip3 (map pure coeffs
     lastDelayLine                   = regEn 0 en $ regEn 0 en $ last delayLine
     delayedReturn                   = iterateI (regEn 0 en) lastDelayLine
     func accum (coeff, input, last) = regEn 0 en $ macPreAdd en coeff last input accum 
+
+macUnit
+    :: forall n dom coeffType inputType outputType
+    .  (HiddenClockResetEnable dom, KnownNat n, NFDataX inputType, Num inputType, NFDataX outputType, Num outputType)
+    => MAC dom coeffType inputType outputType
+    -> Vec n coeffType                               -- ^ Filter coefficients
+    -> Signal dom (Index n)                          -- ^ Index to multiply
+    -> Signal dom Bool                               -- ^ Step
+    -> Signal dom outputType                         -- ^ Sample
+    -> Signal dom inputType                          -- ^ MAC cascade in
+    -> (Signal dom outputType, Signal dom inputType) -- ^ (MAC'd sample out, delayed input sample out)
+macUnit mac coeffs idx step cascadeIn sampleIn = (macD, sampleOut)
+    where
+
+    shiftSamples = step .&&. idx .==. pure maxBound
+
+    sampleShiftReg :: Signal dom (Vec n inputType)
+    sampleShiftReg =  regEn (repeat 0) shiftSamples $ (+>>) <$> sampleIn <*> sampleShiftReg
+
+    sampleToMul = (!!) <$> sampleShiftReg <*> idx
+    coeffToMul  = (coeffs !!) <$> idx
+    sampleOut   = regEn 0 shiftSamples sampleToMul
+    macD        = regEn 0 step $ mac step coeffToMul sampleToMul cascadeIn
+
+integrate
+    :: (HiddenClockResetEnable dom, Num a, NFDataX a)
+    => Signal dom Bool -- ^ Input valid
+    -> Signal dom Bool -- ^ Reset accumulator to 0. Will apply to new data on _this_ cycle.
+    -> Signal dom a    -- ^ Data in
+    -> Signal dom a    -- ^ Integrated data out
+integrate step reset sampleIn = sum
+    where
+    sum = regEn 0 step $ mux reset 0 sum + sampleIn
+
+semiParallelFIRSystolic
+    :: forall numStages coeffsPerStage coeffType inputType outputType dom
+    .  (HiddenClockResetEnable dom, KnownNat coeffsPerStage, KnownNat numStages, NFDataX inputType, NFDataX outputType, Num inputType, Num outputType)
+    => MAC dom coeffType inputType outputType
+    -> Vec (numStages + 1) (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
+    -> Signal dom Bool                                           -- ^ Input valid
+    -> Signal dom inputType                                      -- ^ Sample
+    -> (Signal dom Bool, Signal dom outputType, Signal dom Bool) -- ^ (Output valid, output data, ready)
+semiParallelFIRSystolic mac coeffs valid sampleIn = (resetSum, integrate globalStep resetSum $ fst sampleOut, address .==. pure maxBound)
+    where
+    sampleOut = foldl func (0, sampleIn) (zip coeffs indices)
+        where
+        func 
+            :: (Signal dom outputType, Signal dom inputType)
+            -> (Vec coeffsPerStage coeffType, Signal dom (Index coeffsPerStage))
+            -> (Signal dom outputType, Signal dom inputType)
+        func (cascadeIn, sampleIn) (coeffs, idx) = macUnit mac coeffs idx globalStep cascadeIn sampleIn
+
+    globalStep = address ./=. pure maxBound .||. valid
+
+    address :: Signal dom (Index coeffsPerStage)
+    address = regEn maxBound globalStep (wrappingInc <$> address)
+        where
+        wrappingInc x
+            | x == maxBound = 0
+            | otherwise     = x + 1
+
+    indices :: Vec (numStages + 1) (Signal dom (Index coeffsPerStage))
+    indices =  iterateI (regEn 0 globalStep) address
+
+    resetSum = regEn False globalStep $ last indices .==. 0
 
 semiParallelFIR 
     :: forall dom a n m n' m'. (HiddenClockResetEnable dom, Num a, KnownNat n, KnownNat m, n ~ (n' + 1), m ~ (m' + 1), NFDataX a)

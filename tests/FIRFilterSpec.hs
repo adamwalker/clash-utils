@@ -3,10 +3,10 @@ module FIRFilterSpec where
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
                       simulate, simulate_lazy, listToVecTH, KnownNat, pack, unpack, (++#), mealy, mux, bundle, unbundle, 
-                      HiddenClockResetEnable, type (+), extend, NFDataX, System)
+                      HiddenClockResetEnable, type (+), extend, NFDataX, System, fromList, singleton, sample)
 import Control.Applicative
 import Test.Hspec
-import Test.QuickCheck
+import Test.QuickCheck hiding (sample)
 
 import qualified Data.List.Split as S
 import Clash.DSP.FIRFilter
@@ -21,6 +21,9 @@ spec = describe "FIR filters" $ do
         specify "symmetric"           $ property $ prop_FilterSymmetric
         specify "systolic symmetric"  $ property $ prop_systolicSymmetric
         specify "systolic half band"  $ property $ prop_systolicHalfBand
+    describe "Semi-parallel systolic" $ do
+        specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRSystolic
+        specify "Semi-parallel 2"     $ property $ prop_semiParallelFIRSystolicMultiStage
     describe "Semi-parallel" $ do
         specify "semi parallel 1"     $ property $ prop_semiParallelFIR1
         specify "semi parallel 2"     $ property $ prop_semiParallelFIR2
@@ -71,6 +74,67 @@ prop_systolicHalfBand coeffs mid input =
     == take (length input) (drop 17 $ simulate @System (firSystolicHalfBand (const (liftA4 macPreAddRealReal)) (coeffs Clash.++ Clash.singleton mid) (pure True)) input)
     where
     coeffs' = Clash.init (Clash.merge coeffs (Clash.repeat 0))
+
+streamList 
+    :: (HiddenClockResetEnable dom, NFDataX a)
+    => [a]
+    -> [Bool]
+    -> Signal dom Bool
+    -> (Signal dom Bool, Signal dom a)
+streamList samples enables = unbundle . mealy step (samples, enables)
+    where
+    step :: ([a], [Bool]) -> Bool -> (([a], [Bool]), (Bool, a))
+    step (l@(x:xs), (e:es))     False = ((l, es),  (e, x))
+    step (l@(x:xs), (False:es)) True  = ((l, es),  (False, x))
+    step (  (x:xs), (True:es))  True  = ((xs, es), (True, x))
+
+type Filter dom a
+    =  Signal dom Bool                                  -- ^ Input valid
+    -> Signal dom a                                     -- ^ Sample
+    -> (Signal dom Bool, Signal dom a, Signal dom Bool) -- ^ (Output valid, output data, ready)
+
+system 
+    :: forall dom a
+    .  (HiddenClockResetEnable dom, NFDataX a, Num a)
+    => Filter dom a
+    -> [a]
+    -> [Bool]
+    -> (Signal dom Bool, Signal dom a)
+system filter samples ens = (vld, out)
+    where
+    (valids, sampleStream) = streamList samples (cycle ens) ready
+    (vld, out, ready)      = filter valids sampleStream
+
+prop_semiParallelFIRSystolic :: Vec 4 (Signed 32) -> [Signed 32] -> Property
+prop_semiParallelFIRSystolic coeffs input = expect === result 
+    where
+    expect
+        = take (length input) 
+        $ sample @System 
+        $ goldenFIR coeffs (pure True) (fromList $ 0 : input ++ repeat 0)
+    result
+        = take (length input) 
+        $ map snd
+        $ filter fst
+        $ sample @System 
+        $ bundle 
+        $ system (semiParallelFIRSystolic (const macRealReal) (singleton coeffs)) (input ++ repeat 0) (cycle [False, True])
+
+prop_semiParallelFIRSystolicMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> Property
+prop_semiParallelFIRSystolicMultiStage coeffs input = expect === result 
+    where
+    expect
+        = take (length input) 
+        $ sample @System 
+        $ goldenFIR (Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
+    result
+        = take (length input) 
+        $ drop 3
+        $ map snd
+        $ filter fst
+        $ sample @System 
+        $ bundle 
+        $ system (semiParallelFIRSystolic (const macRealReal) coeffs) (input ++ repeat 0) (cycle [False, True])
 
 --Semi-parallel FIR filter has lots of tests because it is confusing
 prop_semiParallelFIR1 :: Vec 9 (Signed 32) -> [Signed 32] -> Bool
