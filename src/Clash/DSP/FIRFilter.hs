@@ -23,6 +23,7 @@ module Clash.DSP.FIRFilter (
     macUnit,
     integrate,
     semiParallelFIRSystolic,
+    semiParallelFIRTransposed,
     semiParallelFIR
     ) where
 
@@ -278,6 +279,52 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (resetSum, integrate globalS
     indices =  iterateI (regEn 0 globalStep) address
 
     resetSum = regEn False globalStep $ last indices .==. 0
+
+semiParallelFIRTransposed
+    :: forall dom numStages coeffsPerStage coeffType inputType outputType
+    .  (HiddenClockResetEnable dom, KnownNat numStages, KnownNat coeffsPerStage, 1 <= coeffsPerStage, NFDataX inputType, Num inputType, NFDataX outputType, Num outputType)
+    => MAC dom coeffType inputType outputType
+    -> Vec numStages (Vec coeffsPerStage coeffType)
+    -> Signal dom Bool
+    -> Signal dom inputType
+    -> (Signal dom Bool, Signal dom outputType, Signal dom Bool)
+semiParallelFIRTransposed mac coeffs valid sampleIn = (register False (stageCounter .==. pure maxBound), dataOut, stepInput)
+    where
+
+    delayStage :: Signal dom inputType -> Signal dom inputType
+    delayStage x = last $ iterate (SNat @ (numStages + 1)) (regEn 0 stepInput) x
+
+    delayLine :: Vec coeffsPerStage (Signal dom inputType)
+    delayLine =  iterateI delayStage sampleIn
+
+    stageCounter :: Signal dom (Index coeffsPerStage)
+    stageCounter =  regEn 0 globalStep $ wrappingInc <$> stageCounter
+        where
+        wrappingInc x
+            | x == maxBound = 0
+            | otherwise     = x + 1
+
+    globalStep :: Signal dom Bool
+    globalStep =  valid .||. stageCounter ./=. 0
+
+    stepInput :: Signal dom Bool
+    stepInput =  stageCounter .==. pure maxBound 
+
+    newCascadeIn :: Signal dom Bool
+    newCascadeIn =  stageCounter .==. 0
+
+    delayedSampleIn :: Signal dom inputType
+    delayedSampleIn =  liftA2 (!!) (sequenceA delayLine) stageCounter
+
+    dataOut :: Signal dom outputType
+    dataOut =  foldl accumFunc (pure 0) coeffs
+        where
+        accumFunc :: Signal dom outputType -> Vec coeffsPerStage coeffType -> Signal dom outputType
+        accumFunc cascadeIn coeffs = accum
+            where
+            cascadeIn' = mux newCascadeIn cascadeIn accum
+            coeff      = fmap (coeffs !!) stageCounter
+            accum      = regEn 0 globalStep $ mac globalStep coeff delayedSampleIn cascadeIn' 
 
 semiParallelFIR 
     :: forall dom a n m n' m'. (HiddenClockResetEnable dom, Num a, KnownNat n, KnownNat m, n ~ (n' + 1), m ~ (m' + 1), NFDataX a)

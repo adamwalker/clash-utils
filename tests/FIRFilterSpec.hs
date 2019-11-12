@@ -24,6 +24,8 @@ spec = describe "FIR filters" $ do
     describe "Semi-parallel systolic" $ do
         specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRSystolic
         specify "Semi-parallel 2"     $ property $ prop_semiParallelFIRSystolicMultiStage
+    describe "Semi-parallel transposed" $ do
+        specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRTransposed
     describe "Semi-parallel" $ do
         specify "semi parallel 1"     $ property $ prop_semiParallelFIR1
         specify "semi parallel 2"     $ property $ prop_semiParallelFIR2
@@ -84,9 +86,10 @@ streamList
 streamList samples enables = unbundle . mealy step (samples, enables)
     where
     step :: ([a], [Bool]) -> Bool -> (([a], [Bool]), (Bool, a))
-    step (l@(x:xs), (e:es))     False = ((l, es),  (e, x))
-    step (l@(x:xs), (False:es)) True  = ((l, es),  (False, x))
-    step (  (x:xs), (True:es))  True  = ((xs, es), (True, x))
+    step (l@(x:xs), es@(True:_)) False = ((l, es),  (True, x))
+    step (l@(x:xs), (e:es))      False = ((l, es),  (e, x))
+    step (l@(x:xs), (False:es))  True  = ((l, es),  (False, x))
+    step (  (x:xs), (True:es))   True  = ((xs, es), (True, x))
 
 type Filter dom a
     =  Signal dom Bool                                  -- ^ Input valid
@@ -135,6 +138,22 @@ prop_semiParallelFIRSystolicMultiStage coeffs input = expect === result
         $ sample @System 
         $ bundle 
         $ system (semiParallelFIRSystolic (const macRealReal) coeffs) (input ++ repeat 0) (cycle [False, True])
+
+prop_semiParallelFIRTransposed :: Vec 4 (Vec 3 (Signed 32)) -> [Signed 32] -> Property
+prop_semiParallelFIRTransposed coeffs input = expect === result
+    where
+    expect 
+        = take (length input) 
+        $ sample @System 
+        $ goldenFIR (swizzle coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
+    result
+        = take (length input) 
+        $ map snd
+        $ filter fst
+        $ sample @System 
+        $ bundle 
+        $ system (semiParallelFIRTransposed (const macRealReal) coeffs) (0 : input ++ repeat 0) (cycle [False, True])
+    swizzle = Clash.concat . Clash.transpose . Clash.reverse
 
 --Semi-parallel FIR filter has lots of tests because it is confusing
 prop_semiParallelFIR1 :: Vec 9 (Signed 32) -> [Signed 32] -> Bool
