@@ -221,21 +221,20 @@ macUnit
     => MAC dom coeffType inputType outputType
     -> Vec n coeffType                               -- ^ Filter coefficients
     -> Signal dom (Index n)                          -- ^ Index to multiply
+    -> Signal dom Bool                               -- ^ Shift
     -> Signal dom Bool                               -- ^ Step
     -> Signal dom outputType                         -- ^ Sample
     -> Signal dom inputType                          -- ^ MAC cascade in
     -> (Signal dom outputType, Signal dom inputType) -- ^ (MAC'd sample out, delayed input sample out)
-macUnit mac coeffs idx step cascadeIn sampleIn = (macD, sampleOut)
+macUnit mac coeffs idx shiftSamples step cascadeIn sampleIn = (macD, sampleOut)
     where
 
-    shiftSamples = step .&&. idx .==. pure maxBound
-
     sampleShiftReg :: Signal dom (Vec n inputType)
-    sampleShiftReg =  regEn (repeat 0) shiftSamples $ (+>>) <$> sampleIn <*> sampleShiftReg
+    sampleShiftReg =  regEn (repeat 0) (step .&&. shiftSamples) $ (+>>) <$> sampleIn <*> sampleShiftReg
 
     sampleToMul = (!!) <$> sampleShiftReg <*> idx
     coeffToMul  = (coeffs !!) <$> idx
-    sampleOut   = regEn 0 shiftSamples sampleToMul
+    sampleOut   = regEn 0 (step .&&. shiftSamples) sampleToMul
     macD        = regEn 0 step $ mac step coeffToMul sampleToMul cascadeIn
 
 integrate
@@ -258,16 +257,19 @@ semiParallelFIRSystolic
     -> (Signal dom Bool, Signal dom outputType, Signal dom Bool) -- ^ (Output valid, output data, ready)
 semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
     where
-    sampleOut = foldl func (0, sampleIn) (zip coeffs indices)
+    sampleOut = foldl func (0, sampleIn) (zip3 coeffs indices shifts)
         where
         func 
             :: (Signal dom outputType, Signal dom inputType)
-            -> (Vec coeffsPerStage coeffType, Signal dom (Index coeffsPerStage))
+            -> (Vec coeffsPerStage coeffType, Signal dom (Index coeffsPerStage), Signal dom Bool)
             -> (Signal dom outputType, Signal dom inputType)
-        func (cascadeIn, sampleIn) (coeffs, idx) = macUnit mac coeffs idx globalStep cascadeIn sampleIn
+        func (cascadeIn, sampleIn) (coeffs, idx, shift) = macUnit mac coeffs idx shift globalStep cascadeIn sampleIn
 
     globalStep :: Signal dom Bool
     globalStep =  address ./=. pure maxBound .||. valid
+
+    shifts :: Vec (numStages + 1) (Signal dom Bool)
+    shifts =  iterateI (regEn False globalStep) $ address .==. pure maxBound
 
     address :: Signal dom (Index coeffsPerStage)
     address = regEn maxBound globalStep (wrappingInc <$> address)
