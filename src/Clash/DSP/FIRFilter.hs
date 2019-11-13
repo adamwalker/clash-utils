@@ -256,7 +256,7 @@ semiParallelFIRSystolic
     -> Signal dom Bool                                           -- ^ Input valid
     -> Signal dom inputType                                      -- ^ Sample
     -> (Signal dom Bool, Signal dom outputType, Signal dom Bool) -- ^ (Output valid, output data, ready)
-semiParallelFIRSystolic mac coeffs valid sampleIn = (resetSum, integrate globalStep resetSum $ fst sampleOut, address .==. pure maxBound)
+semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
     where
     sampleOut = foldl func (0, sampleIn) (zip coeffs indices)
         where
@@ -266,7 +266,8 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (resetSum, integrate globalS
             -> (Signal dom outputType, Signal dom inputType)
         func (cascadeIn, sampleIn) (coeffs, idx) = macUnit mac coeffs idx globalStep cascadeIn sampleIn
 
-    globalStep = address ./=. pure maxBound .||. valid
+    globalStep :: Signal dom Bool
+    globalStep =  address ./=. pure maxBound .||. valid
 
     address :: Signal dom (Index coeffsPerStage)
     address = regEn maxBound globalStep (wrappingInc <$> address)
@@ -278,7 +279,14 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (resetSum, integrate globalS
     indices :: Vec (numStages + 1) (Signal dom (Index coeffsPerStage))
     indices =  iterateI (regEn 0 globalStep) address
 
-    resetSum = regEn False globalStep $ last indices .==. 0
+    validOut :: Signal dom Bool
+    validOut =  regEn False globalStep $ last indices .==. 0
+
+    dataOut :: Signal dom outputType
+    dataOut =  integrate globalStep validOut $ fst sampleOut
+
+    ready :: Signal dom Bool
+    ready =  address .==. pure maxBound
 
 semiParallelFIRTransposed
     :: forall dom numStages coeffsPerStage coeffType inputType outputType
@@ -288,11 +296,11 @@ semiParallelFIRTransposed
     -> Signal dom Bool
     -> Signal dom inputType
     -> (Signal dom Bool, Signal dom outputType, Signal dom Bool)
-semiParallelFIRTransposed mac coeffs valid sampleIn = (register False (stageCounter .==. pure maxBound), dataOut, stepInput)
+semiParallelFIRTransposed mac coeffs valid sampleIn = (validOut, dataOut, ready)
     where
 
     delayStage :: Signal dom inputType -> Signal dom inputType
-    delayStage x = last $ iterate (SNat @ (numStages + 1)) (regEn 0 stepInput) x
+    delayStage x = last $ iterate (SNat @ (numStages + 1)) (regEn 0 ready) x
 
     delayLine :: Vec coeffsPerStage (Signal dom inputType)
     delayLine =  iterateI delayStage sampleIn
@@ -307,8 +315,8 @@ semiParallelFIRTransposed mac coeffs valid sampleIn = (register False (stageCoun
     globalStep :: Signal dom Bool
     globalStep =  valid .||. stageCounter ./=. 0
 
-    stepInput :: Signal dom Bool
-    stepInput =  stageCounter .==. pure maxBound 
+    ready :: Signal dom Bool
+    ready =  stageCounter .==. pure maxBound 
 
     newCascadeIn :: Signal dom Bool
     newCascadeIn =  stageCounter .==. 0
@@ -325,6 +333,9 @@ semiParallelFIRTransposed mac coeffs valid sampleIn = (register False (stageCoun
             cascadeIn' = mux newCascadeIn cascadeIn accum
             coeff      = fmap (coeffs !!) stageCounter
             accum      = regEn 0 globalStep $ mac globalStep coeff delayedSampleIn cascadeIn' 
+
+    validOut :: Signal dom Bool
+    validOut =  register False (stageCounter .==. pure maxBound)
 
 semiParallelFIR 
     :: forall dom a n m n' m'. (HiddenClockResetEnable dom, Num a, KnownNat n, KnownNat m, n ~ (n' + 1), m ~ (m' + 1), NFDataX a)
