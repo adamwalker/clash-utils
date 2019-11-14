@@ -105,11 +105,11 @@ system
     -> (Signal dom Bool, Signal dom a)
 system filter samples ens = (vld, out)
     where
-    (valids, sampleStream) = streamList samples (cycle ens) ready
+    (valids, sampleStream) = streamList samples ens ready
     (vld, out, ready)      = filter valids sampleStream
 
-prop_semiParallelFIRSystolic :: Vec 4 (Signed 32) -> [Signed 32] -> Property
-prop_semiParallelFIRSystolic coeffs input = expect === result 
+prop_semiParallelFIRSystolic :: Vec 4 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_semiParallelFIRSystolic coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
         = take (length input) 
@@ -121,10 +121,10 @@ prop_semiParallelFIRSystolic coeffs input = expect === result
         $ filter fst
         $ sample @System 
         $ bundle 
-        $ system (semiParallelFIRSystolic (const macRealReal) (singleton coeffs)) (input ++ repeat 0) (cycle [False, True])
+        $ system (semiParallelFIRSystolic (const macRealReal) (singleton coeffs)) (input ++ repeat 0) ens
 
-prop_semiParallelFIRSystolicMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> Property
-prop_semiParallelFIRSystolicMultiStage coeffs input = expect === result 
+prop_semiParallelFIRSystolicMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
         = take (length input) 
@@ -137,10 +137,10 @@ prop_semiParallelFIRSystolicMultiStage coeffs input = expect === result
         $ filter fst
         $ sample @System 
         $ bundle 
-        $ system (semiParallelFIRSystolic (const macRealReal) coeffs) (input ++ repeat 0) (cycle [False, True])
+        $ system (semiParallelFIRSystolic (const macRealReal) coeffs) (input ++ repeat 0) ens
 
-prop_semiParallelFIRTransposed :: Vec 4 (Vec 3 (Signed 32)) -> [Signed 32] -> Property
-prop_semiParallelFIRTransposed coeffs input = expect === result
+prop_semiParallelFIRTransposed :: Vec 4 (Vec 3 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_semiParallelFIRTransposed coeffs input (InfiniteList ens _) = expect === result
     where
     expect 
         = take (length input) 
@@ -152,7 +152,7 @@ prop_semiParallelFIRTransposed coeffs input = expect === result
         $ filter fst
         $ sample @System 
         $ bundle 
-        $ system (semiParallelFIRTransposed (const macRealReal) coeffs) (0 : input ++ repeat 0) (cycle [False, True])
+        $ system (semiParallelFIRTransposed (const macRealReal) coeffs) (0 : input ++ repeat 0) ens
     swizzle = Clash.concat . Clash.transpose . Clash.reverse
 
 --Semi-parallel FIR filter has lots of tests because it is confusing
