@@ -24,6 +24,7 @@ module Clash.DSP.FIRFilter (
     integrate,
     semiParallelFIRSystolic,
     semiParallelFIRTransposed,
+    semiParallelFIRTransposedBlockRam,
     semiParallelFIR
     ) where
 
@@ -338,6 +339,73 @@ semiParallelFIRTransposed mac coeffs valid sampleIn = (validOut, dataOut, ready)
 
     validOut :: Signal dom Bool
     validOut =  register False (stageCounter .==. pure maxBound)
+
+semiParallelFIRTransposedBlockRam
+    :: forall dom numStages coeffsPerStage coeffType inputType outputType
+    .  (HiddenClockResetEnable dom, KnownNat numStages, KnownNat coeffsPerStage, 1 <= coeffsPerStage, NFDataX inputType, Num inputType, NFDataX outputType, Num outputType, NFDataX coeffType)
+    => MAC dom coeffType inputType outputType
+    -> Vec numStages (Vec coeffsPerStage coeffType)
+    -> Signal dom Bool
+    -> Signal dom inputType
+    -> (Signal dom Bool, Signal dom outputType, Signal dom Bool)
+semiParallelFIRTransposedBlockRam mac coeffs valid sampleIn = (validOut, dataOut, ready)
+    where
+
+    stageCounter :: Signal dom (Index coeffsPerStage)
+    stageCounter =  regEn maxBound globalStep $ wrappingInc <$> stageCounter
+        where
+        wrappingInc x
+            | x == maxBound = 0
+            | otherwise     = x + 1
+
+    writePtr :: Signal dom (Index (numStages * coeffsPerStage))
+    writePtr =  regEn 0 (ready .&&. valid) $ step <$> writePtr
+        where
+        step x 
+            | x == maxBound = 0
+            | otherwise     = x + 1
+
+    readPtr :: Signal dom (Index (numStages * coeffsPerStage))
+    readPtr =  regEn 0 globalStep $ step <$> readPtr <*> ready <*> writePtr
+        where
+        step _   True  writePtr = writePtr
+        step ptr _     _
+            | ptr < snatToNum (SNat @ numStages)
+                = ptr + snatToNum (SNat @ ((coeffsPerStage - 1) * numStages))
+            | otherwise 
+                = ptr - snatToNum (SNat @ numStages)
+
+    --Clash's BlockRam doesn't support a read enable!
+    --So fake it with an async ram followed by a register
+    --TODO: check this synthesizes to a block ram
+    sampleRamOut :: Signal dom inputType
+    sampleRamOut 
+        = regEn 0 globalStep $ asyncRam 
+            (SNat @ (numStages * coeffsPerStage)) 
+            readPtr 
+            (mux (ready .&&. valid) (Just <$> bundle (writePtr, sampleIn)) (pure Nothing))
+
+    globalStep :: Signal dom Bool
+    globalStep =  valid .||. stageCounter ./=. pure maxBound
+
+    ready :: Signal dom Bool
+    ready =  stageCounter .==. pure maxBound 
+
+    newCascadeIn :: Signal dom Bool
+    newCascadeIn =  regEn False globalStep $ stageCounter .==. 0
+
+    dataOut :: Signal dom outputType
+    dataOut =  foldl accumFunc (pure 0) coeffs
+        where
+        accumFunc :: Signal dom outputType -> Vec coeffsPerStage coeffType -> Signal dom outputType
+        accumFunc cascadeIn coeffs = accum
+            where
+            cascadeIn' = mux newCascadeIn cascadeIn accum
+            coeff      = regEn (errorX "initial coeff") globalStep $ fmap (coeffs !!) stageCounter
+            accum      = regEn 0 globalStep $ mac globalStep coeff sampleRamOut cascadeIn' 
+
+    validOut :: Signal dom Bool
+    validOut =  globalStep .&&. regEn False globalStep (regEn False globalStep (stageCounter .==. pure maxBound))
 
 semiParallelFIR 
     :: forall dom a n m n' m'. (HiddenClockResetEnable dom, Num a, KnownNat n, KnownNat m, n ~ (n' + 1), m ~ (m' + 1), NFDataX a)

@@ -26,6 +26,8 @@ spec = describe "FIR filters" $ do
         specify "Semi-parallel 2"     $ property $ prop_semiParallelFIRSystolicMultiStage
     describe "Semi-parallel transposed" $ do
         specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRTransposed
+    describe "Semi-parallel transposed block ram" $ do
+        specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRTransposedBlockam
     describe "Semi-parallel" $ do
         specify "semi parallel 1"     $ property $ prop_semiParallelFIR1
         specify "semi parallel 2"     $ property $ prop_semiParallelFIR2
@@ -153,6 +155,24 @@ prop_semiParallelFIRTransposed coeffs input (InfiniteList ens _) = expect === re
         $ sample @System 
         $ bundle 
         $ system (semiParallelFIRTransposed (const macRealReal) coeffs) (0 : input ++ repeat 0) ens
+    swizzle = Clash.concat . Clash.transpose . Clash.reverse
+
+prop_semiParallelFIRTransposedBlockam :: Vec 2 (Vec 3 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_semiParallelFIRTransposedBlockam coeffs input (InfiniteList ens _) = expect === result
+    where
+    expect 
+        = take (length input) 
+        $ drop 5 --Drop the Xs since the asyncRam doesnt support initial values
+        $ sample @System 
+        $ goldenFIR (swizzle coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
+    result
+        = take (length input) 
+        $ drop 6 --Drop the Xs since the asyncRam doesnt support initial values
+        $ map snd
+        $ filter fst
+        $ sample @System 
+        $ bundle 
+        $ system (semiParallelFIRTransposedBlockRam (const macRealReal) coeffs) (0 : input ++ repeat 0) ens
     swizzle = Clash.concat . Clash.transpose . Clash.reverse
 
 --Semi-parallel FIR filter has lots of tests because it is confusing
