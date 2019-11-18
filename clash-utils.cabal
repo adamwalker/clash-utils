@@ -43,6 +43,7 @@ library
         Clash.Xilinx.Adder,
         Clash.Xilinx.Carry,
         Clash.Stream.FieldExtract,
+        Clash.Stream.Pipeline,
         Clash.Stream.Stream,
         Clash.Sort, 
         Clash.GrayCode, 
@@ -117,7 +118,8 @@ Test-Suite test
         MultiplierSpec,
         CICFilterSpec,
         MultiPortBlockRamSpec,
-        XilinxAdderSpec
+        XilinxAdderSpec,
+        StreamPipelineSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.14, 
