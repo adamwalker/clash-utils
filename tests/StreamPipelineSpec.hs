@@ -13,6 +13,7 @@ import Clash.Stream.Pipeline
 spec = describe "Stream pipeline" $ do
     specify "test the test" $ property $ prop dummy
     specify "pipeline"      $ property $ prop pipeline
+    specify "skid buffer"   $ property $ prop skidBuffer
 
 streamList 
     :: (HiddenClockResetEnable dom, NFDataX a)
