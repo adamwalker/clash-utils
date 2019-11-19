@@ -218,7 +218,7 @@ firSystolicHalfBand macPreAdd coeffs en x = foldl func 0 $ zip3 (map pure coeffs
 
 macUnit
     :: forall n dom coeffType inputType outputType
-    .  (HiddenClockResetEnable dom, KnownNat n, NFDataX inputType, Num inputType, NFDataX outputType, Num outputType)
+    .  (HiddenClockResetEnable dom, KnownNat n, NFDataX inputType, Num inputType, NFDataX outputType, Num outputType, Num coeffType, NFDataX coeffType)
     => MAC dom coeffType inputType outputType
     -> Vec n coeffType                               -- ^ Filter coefficients
     -> Signal dom (Index n)                          -- ^ Index to multiply
@@ -227,15 +227,14 @@ macUnit
     -> Signal dom outputType                         -- ^ Sample
     -> Signal dom inputType                          -- ^ MAC cascade in
     -> (Signal dom outputType, Signal dom inputType) -- ^ (MAC'd sample out, delayed input sample out)
-macUnit mac coeffs idx shiftSamples step cascadeIn sampleIn = (macD, sampleOut)
+macUnit mac coeffs idx shiftSamples step cascadeIn sampleIn = (macD, sampleToMul)
     where
 
     sampleShiftReg :: Signal dom (Vec n inputType)
     sampleShiftReg =  regEn (repeat 0) (step .&&. shiftSamples) $ (+>>) <$> sampleIn <*> sampleShiftReg
 
-    sampleToMul = (!!) <$> sampleShiftReg <*> idx
-    coeffToMul  = (coeffs !!) <$> idx
-    sampleOut   = regEn 0 step sampleToMul
+    sampleToMul = regEn 0 step $ (!!) <$> sampleShiftReg <*> idx
+    coeffToMul  = regEn 0 step $ (coeffs !!) <$> idx
     macD        = regEn 0 step $ mac step coeffToMul sampleToMul cascadeIn
 
 integrate
@@ -250,7 +249,7 @@ integrate step reset sampleIn = sum
 
 semiParallelFIRSystolic
     :: forall numStages coeffsPerStage coeffType inputType outputType dom
-    .  (HiddenClockResetEnable dom, KnownNat coeffsPerStage, KnownNat numStages, NFDataX inputType, NFDataX outputType, Num inputType, Num outputType)
+    .  (HiddenClockResetEnable dom, KnownNat coeffsPerStage, KnownNat numStages, NFDataX inputType, NFDataX outputType, Num inputType, Num outputType, Num coeffType, NFDataX coeffType)
     => MAC dom coeffType inputType outputType
     -> Vec (numStages + 1) (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
     -> Signal dom Bool                                           -- ^ Input valid
@@ -283,7 +282,7 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
     indices =  iterateI (regEn 0 globalStep) address
 
     validOut :: Signal dom Bool
-    validOut =  regEn False globalStep $ last indices .==. 0
+    validOut =  globalStep .&&. (regEn False globalStep $ regEn False globalStep $ last indices .==. 0)
 
     dataOut :: Signal dom outputType
     dataOut =  integrate globalStep validOut $ fst sampleOut
@@ -293,7 +292,7 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
 
 semiParallelFIRTransposed
     :: forall dom numStages coeffsPerStage coeffType inputType outputType
-    .  (HiddenClockResetEnable dom, KnownNat numStages, KnownNat coeffsPerStage, 1 <= coeffsPerStage, NFDataX inputType, Num inputType, NFDataX outputType, Num outputType)
+    .  (HiddenClockResetEnable dom, KnownNat numStages, KnownNat coeffsPerStage, 1 <= coeffsPerStage, NFDataX inputType, Num inputType, NFDataX outputType, Num outputType, Num coeffType, NFDataX coeffType)
     => MAC dom coeffType inputType outputType
     -> Vec numStages (Vec coeffsPerStage coeffType)
     -> Signal dom Bool
