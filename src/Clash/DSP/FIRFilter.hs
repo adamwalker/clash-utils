@@ -404,7 +404,7 @@ semiParallelFIRTransposedBlockRam mac coeffs valid sampleIn = (validOut, dataOut
             accum      = regEn 0 globalStep $ mac globalStep coeff sampleRamOut cascadeIn' 
 
     validOut :: Signal dom Bool
-    validOut =  globalStep .&&. regEn False globalStep (regEn False globalStep (stageCounter .==. pure maxBound))
+    validOut =  register False (stageCounter .==. 0)
 
 semiParallelFIR 
     :: forall dom a n m n' m'. (HiddenClockResetEnable dom, Num a, KnownNat n, KnownNat m, n ~ (n' + 1), m ~ (m' + 1), NFDataX a)
