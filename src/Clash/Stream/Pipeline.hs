@@ -1,18 +1,18 @@
 module Clash.Stream.Pipeline (
-        pipeline,
+        forwardPipeline,
         skidBuffer
     ) where
 
 import Clash.Prelude
 
-pipeline
+forwardPipeline
     :: forall dom a
     .  (HiddenClockResetEnable dom, NFDataX a)
     => Signal dom Bool
     -> Signal dom a
     -> Signal dom Bool
     -> (Signal dom Bool, Signal dom a, Signal dom Bool)
-pipeline vldIn datIn readyIn = (vldOut, datOut, readyOut)
+forwardPipeline vldIn datIn readyIn = (vldOut, datOut, readyOut)
     where
 
     readyOut :: Signal dom Bool
