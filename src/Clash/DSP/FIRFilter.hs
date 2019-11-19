@@ -235,7 +235,7 @@ macUnit mac coeffs idx shiftSamples step cascadeIn sampleIn = (macD, sampleOut)
 
     sampleToMul = (!!) <$> sampleShiftReg <*> idx
     coeffToMul  = (coeffs !!) <$> idx
-    sampleOut   = regEn 0 (step .&&. shiftSamples) sampleToMul
+    sampleOut   = regEn 0 step sampleToMul
     macD        = regEn 0 step $ mac step coeffToMul sampleToMul cascadeIn
 
 integrate
