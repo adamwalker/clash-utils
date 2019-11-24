@@ -53,13 +53,13 @@ streamList samples enables = unbundle . mealy step (samples, enables)
     step (  (x:xs), (True:es))   True  = ((xs, es), (True, x))
     step (_,        _)           _     = (([], []), (False, errorX "ran out of stream"))
 
-system :: forall dom a. HiddenClockResetEnable dom => Vec 2 [[Int]] -> [Bool] -> [Bool] -> Signal dom (Bool, Bool, Int)
+system :: forall dom a. HiddenClockResetEnable dom => Vec 4 [[Int]] -> [Bool] -> [Bool] -> Signal dom (Bool, Bool, Int)
 system streams vldIns readyIns = bundle (vldOut .&&. readySig, eofOut, datOut)
     where
 
     readySig = fromList readyIns
     
-    streams' :: Vec 2 (Signal dom Bool, Signal dom (Int, Bool))
+    streams' :: Vec 4 (Signal dom Bool, Signal dom (Int, Bool))
     streams' =  Clash.zipWith (\x readys -> streamList (toStreamList x) vldIns readys) streams readys
 
     (vldOut, eofOut, datOut) = unbundle streamOut
@@ -73,7 +73,7 @@ system streams vldIns readyIns = bundle (vldOut .&&. readySig, eofOut, datOut)
 
 prop_mux :: InfiniteList Bool -> InfiniteList Bool -> Property
 prop_mux (InfiniteList validIns _) (InfiniteList readyIns _) 
-    = forAll (sequenceA (Clash.repeat (listOf (listOf1 arbitrary)))) $ \(lists :: Vec 2 [[Int]]) ->
+    = forAll (sequenceA (Clash.repeat (listOf (listOf1 arbitrary)))) $ \(lists :: Vec 4 [[Int]]) ->
     let 
         flatList :: [[Int]]
         flatList = concat $ toList lists
