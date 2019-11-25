@@ -8,53 +8,15 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck hiding ((.&&.), sample)
 
+import Clash.Stream.Test
 import Clash.Stream.Mux
 
 import Data.List (sort)
 import Data.Maybe (isNothing)
 
 spec = describe "Stream mux" $ do
-    specify "test the test" $ property $ prop_test
-    specify "stream mux"    $ property $ prop streamMux
-    specify "stream mux"    $ property $ prop streamMuxBiased
-
-toStream :: [a] -> [(a, Bool)]
-toStream []     = error "toStream: empty list"
-toStream [x]    = [(x, True)]
-toStream (x:xs) = (x, False) : toStream xs
-
-toStreamList :: [[a]] -> [(a, Bool)]
-toStreamList =  concatMap toStream 
-
-fromStream :: [(a, Bool)] -> ([a], [(a, Bool)])
-fromStream [(x, False)] = ([x], [])
-fromStream ((x, last) : xs) 
-    | last      = ([x], xs)
-    | otherwise = let (ys, zs) = fromStream xs in (x:ys, zs)
-
-fromStreamList :: [(a, Bool)] -> [[a]]
-fromStreamList [] = []
-fromStreamList xs = 
-    let (first, rest) = fromStream xs
-    in  first : fromStreamList rest
-
-prop_test = forAll (listOf (listOf1 arbitrary)) $ \(lists :: [[Int]]) -> 
-    fromStreamList (toStreamList lists) === lists
-
-streamList 
-    :: (HiddenClockResetEnable dom, NFDataX a)
-    => [a]
-    -> [Bool]
-    -> Signal dom Bool
-    -> (Signal dom Bool, Signal dom a)
-streamList samples enables = unbundle . mealy step (samples, enables)
-    where
-    step :: ([a], [Bool]) -> Bool -> (([a], [Bool]), (Bool, a))
-    step (l@(x:xs), es@(True:_)) False = ((l, es),  (True, x))
-    step (l@(x:xs), (e:es))      False = ((l, es),  (e, x))
-    step (l@(x:xs), (False:es))  True  = ((l, es),  (False, x))
-    step (  (x:xs), (True:es))   True  = ((xs, es), (True, x))
-    step (_,        _)           _     = (([], []), (False, errorX "ran out of stream"))
+    specify "stream mux" $ property $ prop streamMux
+    specify "stream mux" $ property $ prop streamMuxBiased
 
 type MuxType a
     =  forall dom

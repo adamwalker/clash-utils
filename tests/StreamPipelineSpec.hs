@@ -8,6 +8,7 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck hiding ((.&&.), sample)
 
+import Clash.Stream.Test
 import Clash.Stream.Pipeline
 
 spec = describe "Stream pipeline" $ do
@@ -15,20 +16,6 @@ spec = describe "Stream pipeline" $ do
     specify "forward pipeline" $ property $ prop forwardPipeline
     specify "skid buffer"      $ property $ prop skidBuffer
     specify "combined"         $ property $ prop combined
-
-streamList 
-    :: (HiddenClockResetEnable dom, NFDataX a)
-    => [a]
-    -> [Bool]
-    -> Signal dom Bool
-    -> (Signal dom Bool, Signal dom a)
-streamList samples enables = unbundle . mealy step (samples, enables)
-    where
-    step :: ([a], [Bool]) -> Bool -> (([a], [Bool]), (Bool, a))
-    step (l@(x:xs), es@(True:_)) False = ((l, es),  (True, x))
-    step (l@(x:xs), (e:es))      False = ((l, es),  (e, x))
-    step (l@(x:xs), (False:es))  True  = ((l, es),  (False, x))
-    step (  (x:xs), (True:es))   True  = ((xs, es), (True, x))
 
 type StreamOperator a
     =  forall dom
