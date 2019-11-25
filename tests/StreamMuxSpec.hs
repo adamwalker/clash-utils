@@ -15,8 +15,9 @@ import Data.List (sort)
 import Data.Maybe (isNothing)
 
 spec = describe "Stream mux" $ do
-    specify "stream mux" $ property $ prop streamMux
-    specify "stream mux" $ property $ prop streamMuxBiased
+    specify "pipelined"   $ property $ prop streamMux
+    specify "low latency" $ property $ prop streamMuxLowLatency
+    specify "biased"      $ property $ prop streamMuxBiased
 
 type MuxType a
     =  forall dom
