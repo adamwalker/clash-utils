@@ -46,6 +46,7 @@ library
         Clash.Stream.Mux,
         Clash.Stream.Pipeline,
         Clash.Stream.Stream,
+        Clash.Stream.Test,
         Clash.Sort, 
         Clash.GrayCode, 
         Clash.LFSR,
@@ -121,7 +122,8 @@ Test-Suite test
         MultiPortBlockRamSpec,
         XilinxAdderSpec,
         StreamPipelineSpec
-        StreamMuxSpec
+        StreamMuxSpec,
+        StreamTestSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.14, 
