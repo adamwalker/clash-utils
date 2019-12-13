@@ -157,7 +157,6 @@ genOps doRecent initial = genOps' $ GenState (Map.fromList initial) []
 
 data OpState
     = LookupState (Maybe String)
-    | InsertState Bool
     | IdleState
     deriving (Generic, NFDataX)
 
@@ -189,6 +188,7 @@ testHarness hashFuncs cuckoo ops = result
     modification = mux delete (pure (Just Nothing)) (mux insert (Just . Just <$> value) (pure Nothing))
     (lookupVal, busy) = cuckoo hashFuncs key modification 
 
+    --TB
     emptyControlSigs :: (key, String, Bool, Bool)
     emptyControlSigs = (def, "", False, False)
 
@@ -201,24 +201,21 @@ testHarness hashFuncs cuckoo ops = result
     step Success _ = (Success, (Just True,  emptyControlSigs))
     step Failure _ = (Failure, (Just False, emptyControlSigs))
 
-    step (InProgress IdleState ops) _ = (ns, (Nothing, out))
-        where (out, ns) = nextState ops
+    step st (_, True) = (st, (Nothing, emptyControlSigs))
 
-    step (InProgress (InsertState first) ops) (_, busy)
-        | first || busy = (InProgress (InsertState False) ops, (Nothing, emptyControlSigs))
-        | otherwise     = (ns, (Nothing, out))
-        where (out, ns) = nextState ops
-
-    step (InProgress (LookupState val) ops) (lookupVal, _) 
-        | val == lookupVal = (ns,      (Nothing, out))
-        | otherwise        = (Failure, (Nothing, emptyControlSigs)) 
-        where (out, ns) = nextState ops
+    step (InProgress st ops) (lookupVal, _) = step' st
+        where
+        step' IdleState         = (ns, (Nothing, out))
+        step' (LookupState val) 
+            | val == lookupVal = (ns,      (Nothing, out))
+            | otherwise        = (Failure, (Nothing, emptyControlSigs)) 
+        (out, ns) = nextState ops
 
     nextState []                     = (emptyControlSigs,         Success)
-    nextState (Lookup key val : ops) = ((key, "",  False, False), InProgress (LookupState val)  ops)
-    nextState (Insert key val : ops) = ((key, val, True,  False), InProgress (InsertState True) ops)
-    nextState (Delete key     : ops) = ((key, "",  False, True),  InProgress IdleState          (Idle : ops))
-    nextState (Idle           : ops) = (emptyControlSigs,         InProgress IdleState          ops)
+    nextState (Lookup key val : ops) = ((key, "",  False, False), InProgress (LookupState val) ops)
+    nextState (Insert key val : ops) = ((key, val, True,  False), InProgress IdleState         ops)
+    nextState (Delete key     : ops) = ((key, "",  False, True),  InProgress IdleState         ops)
+    nextState (Idle           : ops) = (emptyControlSigs,         InProgress IdleState         ops)
 
 hashFuncs :: Vec 3 ([Word8] -> Unsigned 10)
 hashFuncs = Clash.map (\idx x -> fromIntegral $ (`mod` 1024) $ hashWithSalt idx x) (iterateI (+1) 0)

@@ -144,7 +144,7 @@ cuckooPipelineInsert
         Signal dom (Maybe v), -- Lookup result
         Signal dom Bool       -- Combined busy signal
         )                            -- ^ (Lookup result, Combined busy signal)
-cuckooPipelineInsert hashFuncs toLookup modification = (luRes, or <$> sequenceA busys)
+cuckooPipelineInsert hashFuncs toLookup modification = (luRes, busy)
     where
 
     --Instantiate the pipeline
@@ -154,7 +154,8 @@ cuckooPipelineInsert hashFuncs toLookup modification = (luRes, or <$> sequenceA 
         $  insertD
         :> repeat (pure Nothing)
 
-    modificationD = register Nothing modification
+    busy          = (isJust <$> modificationD) .||. (or <$> sequenceA busys)
+    modificationD = register Nothing $ mux busy (pure Nothing) modification
     toLookupD     = register (errorX "toLookupD") toLookup
 
     --Form an insert from our modification in case the key is not found in any tables
