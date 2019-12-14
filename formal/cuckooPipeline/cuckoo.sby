@@ -1,0 +1,18 @@
+[options]
+mode bmc
+depth 100
+
+[engines]
+smtbmc z3
+smtbmc yices
+smtbmc boolector
+
+[script]
+read -formal formal.sv 
+read -formal cuckoo.v
+prep -top formal
+
+[files]
+verilog/Main/cuckoo/cuckoo.v
+verilog/Main/cuckoo/fold6ED2EBCBAF05FF95.inc
+formal.sv
