@@ -13,4 +13,4 @@ spec = describe "Stream test utils" $ do
     specify "test the tests" $ property $ prop_test
 
 prop_test = forAll (listOf (listOf1 arbitrary)) $ \(lists :: [[Int]]) -> 
-    fromStreamList (toStreamList lists) == lists
+    fromPacketStreamList (toPacketStreamList lists) == lists

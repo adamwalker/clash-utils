@@ -36,7 +36,7 @@ system mux streams vldIns readyIns = bundle (vldOut .&&. readySig, eofOut, datOu
     readySig = fromList readyIns
     
     streams' :: Vec 4 (Signal dom Bool, Signal dom (Int, Bool))
-    streams' =  Clash.zipWith (\x readys -> streamList (toStreamList x) vldIns readys) streams readys
+    streams' =  Clash.zipWith (\x readys -> streamList (toPacketStreamList x) vldIns readys) streams readys
 
     (vldOut, eofOut, datOut) = unbundle streamOut
 
@@ -55,7 +55,7 @@ prop mux (InfiniteList validIns _) (InfiniteList readyIns _)
         flatList = concat $ toList lists
         result 
             = take (length flatList)
-            $ fromStreamList 
+            $ fromPacketStreamList 
             $ map snd 
             $ filter fst 
             $ map swizzle 

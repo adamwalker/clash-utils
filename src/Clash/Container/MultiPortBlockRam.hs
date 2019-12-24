@@ -10,9 +10,9 @@ import Clash.Prelude
 multiPortBlockRam 
     :: forall dom nWrites nWrites' nReads n addrBits
     .  (HiddenClockResetEnable dom, nWrites ~ (nWrites' + 1), KnownNat n, KnownNat addrBits, KnownNat nWrites)
-    => Vec nReads (Signal dom (Unsigned addrBits))
-    -> Vec nWrites (Signal dom (Maybe (Unsigned addrBits, BitVector n)))
-    -> Vec nReads (Signal dom (BitVector n))
+    => Vec nReads (Signal dom (Unsigned addrBits))                       -- ^ Read ports
+    -> Vec nWrites (Signal dom (Maybe (Unsigned addrBits, BitVector n))) -- ^ Write ports
+    -> Vec nReads (Signal dom (BitVector n))                             -- ^ Read results
 multiPortBlockRam reads writes = readReads
     where
 

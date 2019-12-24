@@ -1,3 +1,4 @@
+-- | Utilities for multiplexing streams consisting of data, and valid, ready signals
 module Clash.Stream.Mux (
         streamMux,
         streamMuxLowLatency,
@@ -8,6 +9,7 @@ import Clash.Prelude
 
 import Data.Maybe (isNothing)
 
+-- | Multiplex streams. There is a one cycle delay between when an input asserts valid and when the output valid is asserted.
 streamMux
     :: forall dom m a. (HiddenClockResetEnable dom, KnownNat m, 1 <= m)
     => Signal dom Bool                    -- ^ Downstream ready
@@ -37,6 +39,7 @@ streamMux ready streams = (readys, activeStream)
         func (Just idx) (True, True, _) _        = Nothing
         func st         _               _        = st
 
+-- | Multiplex streams. There is no delay between when an input asserts valid and when the output valid is asserted. Makes timing a bit more difficult as a result.
 streamMuxLowLatency
     :: forall dom m a. (HiddenClockResetEnable dom, KnownNat m, 1 <= m)
     => Signal dom Bool                    -- ^ Downstream ready
@@ -72,6 +75,7 @@ streamMuxLowLatency ready streams = (readys, activeStream)
         func (Just idx) (True, True, _) = Nothing
         func st         _               = st
 
+-- | Multiplex streams. There is a single cycle delay for all inputs except the first, which is combinational. 
 streamMuxBiased
     :: forall dom m m' a. (HiddenClockResetEnable dom, KnownNat m, m ~ (m' + 1))
     => Signal dom Bool                    -- ^ Downstream ready
