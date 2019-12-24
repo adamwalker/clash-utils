@@ -1,0 +1,17 @@
+[options]
+mode bmc
+depth 1
+
+[engines]
+smtbmc z3
+smtbmc yices
+smtbmc boolector
+
+[script]
+read -formal formal.sv 
+read -formal koggeStone.v
+prep -top formal
+
+[files]
+verilog/Main/koggeStone/koggeStone.v
+formal.sv
