@@ -1,0 +1,19 @@
+[options]
+mode bmc
+depth 1
+
+[engines]
+smtbmc z3
+smtbmc yices
+smtbmc boolector
+
+[script]
+read -formal formal.sv 
+read -formal binary_to_gray.v
+read -formal gray_to_binary.v
+prep -top formal
+
+[files]
+verilog/Main/binary_to_gray/binary_to_gray.v
+verilog/Main/gray_to_binary/gray_to_binary.v
+formal.sv
