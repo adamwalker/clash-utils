@@ -1,3 +1,4 @@
+{-# LANGUAGE DuplicateRecordFields #-}
 -- | Network header types
 module Clash.Network.Types where
 
@@ -33,5 +34,19 @@ data UDPHeader = UDPHeader {
     destPort    :: BitVector 16,
     udpLen      :: BitVector 16,
     udpChecksum :: BitVector 16
+} deriving (Generic, BitPack, Show, ShowX, Eq, Ord)
+
+-- | [TCP header](https://en.wikipedia.org/wiki/Transmission_Control_Protocol)
+data TCPHeader = TCPHeader {
+    sourcePort    :: BitVector 16,
+    destPort      :: BitVector 16,
+    seqNum        :: BitVector 32,
+    ackNum        :: BitVector 32,
+    dataOffset    :: BitVector 4,
+    reserved      :: BitVector 3,
+    flags         :: BitVector 9,
+    windowSize    :: BitVector 16,
+    checksum      :: BitVector 16,
+    urgentPointer :: BitVector 16
 } deriving (Generic, BitPack, Show, ShowX, Eq, Ord)
 
