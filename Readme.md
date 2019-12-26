@@ -24,7 +24,7 @@ A random collection of reusable [Clash](http://www.clash-lang.org/) designs/exam
 * [Multi port block rams](http://www.eecg.toronto.edu/~steffan/papers/laforest_xor_fpga12.pdf)
 * Regular expression matching
 
-Each design has a [Hspec](https://hspec.github.io/) testsuite/specification in the [/tests](https://github.com/adamwalker/clash-utils/tree/master/tests) subdirectory.
+Each design has a [Hspec](https://hspec.github.io/) testsuite/specification in the [/tests](https://github.com/adamwalker/clash-utils/tree/master/tests) subdirectory. A handful of designs have [formal properties](https://symbiyosys.readthedocs.io/en/latest/) in the [/formal](https://github.com/adamwalker/clash-utils/tree/master/formal) directory.
 
 ## Status
 
