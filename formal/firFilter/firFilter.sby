@@ -1,0 +1,21 @@
+[options]
+mode prove
+depth 8
+append 5
+
+[engines]
+smtbmc z3
+smtbmc yices
+smtbmc boolector
+
+[script]
+read -formal formal.sv 
+read -formal golden_fir.v
+read -formal transposed_fir.v
+prep -top formal
+
+[files]
+verilog/Main/golden_fir/golden_fir.v
+verilog/Main/golden_fir/fold6ED2EBCBAF05FF95.inc
+verilog/Main/transposed_fir/transposed_fir.v
+formal.sv
