@@ -1,4 +1,4 @@
-module SortSpec where
+module BitonicSortSpec where
 
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
@@ -7,7 +7,7 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck
 import Data.List
-import Clash.Sort
+import Clash.Sort.Bitonic
 
 --Bitonic sorting network
 spec = describe "Bitonic sort" $ do

@@ -5,7 +5,7 @@
 
     __FPGA proven__ but only for small vectors since it is (currently) purely combinational.
 -}
-module Clash.Sort (
+module Clash.Sort.Bitonic (
     bitonicMerge,
     bitonicSort, 
     bitonicSorterExample,
