@@ -1,5 +1,6 @@
 module Clash.Sort.Insertion (
-        sortedInsert
+        sortedInsert,
+        sortedDelete
     ) where
 
 import Clash.Prelude
@@ -38,4 +39,26 @@ sortedInsert x xs = firstItem :> (middleItems :< lastItem)
 
     lastItem :: a
     lastItem =  bool (last xs) x (last comparisons)
+
+-- | Efficiently delete an item from a sorted vector, assuming the item is in the vector
+sortedDelete 
+    :: forall n a
+    .  Ord a 
+    => a             -- ^ Item to delete
+    -> Vec (n + 1) a -- ^ Sorted input vector
+    -> Vec n a       -- ^ Vector with item deleted, or the last element deleted if the item wasn't present
+sortedDelete x xs = res
+    where
+
+    comparisons :: Vec (n + 1) Bool
+    comparisons =  map (< x) xs
+
+    vPairs :: Vec n (a, a)
+    vPairs =  zip (tail xs) (init xs)
+
+    res :: Vec n a
+    res = zipWith func (init comparisons) vPairs
+        where
+        func True  (_, y) = y
+        func False (y, _) = y
 
