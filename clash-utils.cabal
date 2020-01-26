@@ -27,6 +27,7 @@ library
         Clash.Container.Cuckoo,
         Clash.Container.CuckooPipeline,
         Clash.Container.MultiPortBlockRam,
+        Clash.Container.PriorityQueue
         Clash.Crypto.AES,
         Clash.Crypto.SHA3,
         Clash.DSP.CICFilter,
@@ -125,7 +126,8 @@ Test-Suite test
         XilinxAdderSpec,
         StreamPipelineSpec
         StreamMuxSpec,
-        StreamTestSpec
+        StreamTestSpec,
+        PriorityQueueSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.14, 
@@ -148,6 +150,7 @@ Test-Suite test
         ghc-typelits-knownnat,
         ghc-typelits-extra,
         regex-tdfa,
+        mtl,
         clash-utils
     hs-source-dirs:      tests
     default-language:    Haskell2010
