@@ -32,12 +32,12 @@ streamMux ready streams = (readys, activeStream)
         maybeSelect vec = maybe (False, False, errorX "No stream selected") (vec !!)
 
     currentlyActive :: Signal dom (Maybe (Index m))
-    currentlyActive = regEn Nothing ready (func <$> currentlyActive <*> activeStream <*> sequenceA streams)
+    currentlyActive = register Nothing $ func <$> currentlyActive <*> activeStream <*> ready <*> sequenceA streams
         where
-        func :: Maybe (Index m) -> (Bool, Bool, a) -> Vec m (Bool, Bool, a) -> Maybe (Index m)
-        func Nothing    _               requests = findIndex (\(v, _, _) -> v) requests
-        func (Just idx) (True, True, _) _        = Nothing
-        func st         _               _        = st
+        func :: Maybe (Index m) -> (Bool, Bool, a) -> Bool -> Vec m (Bool, Bool, a) -> Maybe (Index m)
+        func Nothing    _               _    requests = findIndex (\(v, _, _) -> v) requests
+        func (Just idx) (True, True, _) True _        = Nothing
+        func st         _               _    _        = st
 
 -- | Multiplex streams. There is no delay between when an input asserts valid and when the output valid is asserted. Makes timing a bit more difficult as a result.
 streamMuxLowLatency
@@ -69,11 +69,11 @@ streamMuxLowLatency ready streams = (readys, activeStream)
         func st      _        = st
 
     nextActive :: Signal dom (Maybe (Index m))
-    nextActive = regEn Nothing ready $ func <$> currentlyActive <*> activeStream
+    nextActive = register Nothing $ func <$> currentlyActive <*> activeStream <*> ready
         where
-        func :: Maybe (Index m) -> (Bool, Bool, a) -> Maybe (Index m)
-        func (Just idx) (True, True, _) = Nothing
-        func st         _               = st
+        func :: Maybe (Index m) -> (Bool, Bool, a) -> Bool -> Maybe (Index m)
+        func (Just idx) (True, True, _) True = Nothing
+        func st         _               _    = st
 
 -- | Multiplex streams. There is a single cycle delay for all inputs except the first, which is combinational. 
 streamMuxBiased
@@ -104,10 +104,10 @@ streamMuxBiased ready streams = (readys, activeStream)
     hack _ (vld, _,   _) = vld
 
     currentlyActive :: Signal dom (Maybe (Index m))
-    currentlyActive = regEn Nothing ready (func <$> currentlyActive <*> activeStream <*> (imap hack <$> sequenceA streams))
+    currentlyActive = register Nothing $ func <$> currentlyActive <*> activeStream <*> (imap hack <$> sequenceA streams) <*> ready
         where
-        func :: Maybe (Index m) -> (Bool, Bool, a) -> Vec m Bool -> Maybe (Index m)
-        func Nothing    _               requests = findIndex id requests
-        func (Just idx) (True, True, _) _        = Nothing
-        func st         _               _        = st
+        func :: Maybe (Index m) -> (Bool, Bool, a) -> Vec m Bool -> Bool -> Maybe (Index m)
+        func Nothing    _               requests _    = findIndex id requests
+        func (Just idx) (True, True, _) _        True = Nothing
+        func st         _               _        _    = st
 
