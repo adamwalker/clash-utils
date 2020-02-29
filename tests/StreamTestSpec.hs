@@ -11,6 +11,9 @@ import Clash.Stream.Test
 
 spec = describe "Stream test utils" $ do
     specify "test the tests" $ property $ prop_test
+    specify "test the test"  $ property $ propStreamIdentity dummy
+
+dummy = (,,)
 
 prop_test = forAll (listOf (listOf1 arbitrary)) $ \(lists :: [[Int]]) -> 
     fromPacketStreamList (toPacketStreamList lists) == lists

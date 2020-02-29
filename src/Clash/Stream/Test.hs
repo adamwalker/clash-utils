@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 -- | Utilities for testing streams consisting of data and valid+ready signals
 module Clash.Stream.Test (
         streamList,
@@ -5,11 +6,14 @@ module Clash.Stream.Test (
         toPacketStream, 
         toPacketStreamList,
         fromPacketStream,
-        fromPacketStreamList
+        fromPacketStreamList,
+        StreamOperator,
+        propStreamIdentity
     ) where
 
-import Clash.Prelude
-import qualified Prelude
+import Clash.Prelude (NFDataX, System, Signal, HiddenClockResetEnable, fromList, bundle, unbundle, mealy, errorX, sample, (.&&.))
+import Prelude
+import Test.QuickCheck hiding (sample, (.&&.))
 
 -- | Create a stream from a list
 streamList
@@ -71,4 +75,38 @@ fromPacketStreamList [] = []
 fromPacketStreamList xs = 
     let (first, rest) = fromPacketStream xs
     in  first : fromPacketStreamList rest
+
+-- | Type for operations on streams
+type StreamOperator a
+    =  forall dom
+    .  HiddenClockResetEnable dom
+    => Signal dom Bool                                  -- ^ Input valid
+    -> Signal dom a                                     -- ^ Data
+    -> Signal dom Bool                                  -- ^ Downstream ready
+    -> (Signal dom Bool, Signal dom a, Signal dom Bool) -- ^ (Output valid, output data, ready)
+
+-- | Helper property for stream operations that should be the identity
+propStreamIdentity :: StreamOperator Int -> InfiniteList Bool -> [Int] -> InfiniteList Bool -> Property
+propStreamIdentity op (InfiniteList ens _) datas (InfiniteList readys _) = res === datas
+    where
+    res 
+        = take (length datas) 
+        $ map snd 
+        $ filter fst 
+        $ sample @System 
+        $ bundle 
+        $ system op (datas ++ repeat 0) (False : ens) readys
+    system 
+        :: forall dom a
+        .  (HiddenClockResetEnable dom, NFDataX a, Num a)
+        => StreamOperator a
+        -> [a]
+        -> [Bool]
+        -> [Bool]
+        -> (Signal dom Bool, Signal dom a)
+    system streamOp dat ens readys = (vld .&&. backPressure, out)
+        where
+        backPressure         = fromList readys
+        (valids, dataStream) = streamList dat ens ready
+        (vld, out, ready)    = streamOp valids dataStream backPressure
 

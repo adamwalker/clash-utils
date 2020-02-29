@@ -12,45 +12,9 @@ import Clash.Stream.Test
 import Clash.Stream.Pipeline
 
 spec = describe "Stream pipeline" $ do
-    specify "test the test"    $ property $ prop dummy
-    specify "forward pipeline" $ property $ prop forwardPipeline
-    specify "skid buffer"      $ property $ prop skidBuffer
-    specify "combined"         $ property $ prop combined
-
-type StreamOperator a
-    =  forall dom
-    .  HiddenClockResetEnable dom
-    => Signal dom Bool                                  -- ^ Input valid
-    -> Signal dom a                                     -- ^ Data
-    -> Signal dom Bool                                  -- ^ Downstream ready
-    -> (Signal dom Bool, Signal dom a, Signal dom Bool) -- ^ (Output valid, output data, ready)
-
-system 
-    :: forall dom a
-    .  (HiddenClockResetEnable dom, NFDataX a, Num a)
-    => StreamOperator a
-    -> [a]
-    -> [Bool]
-    -> [Bool]
-    -> (Signal dom Bool, Signal dom a)
-system streamOp dat ens readys = (vld .&&. backPressure, out)
-    where
-    backPressure         = fromList readys
-    (valids, dataStream) = streamList dat ens ready
-    (vld, out, ready)    = streamOp valids dataStream backPressure
-
-dummy = (,,)
-
-prop :: StreamOperator Int -> InfiniteList Bool -> [Int] -> InfiniteList Bool -> Property
-prop op (InfiniteList ens _) datas (InfiniteList readys _) = res === datas
-    where
-    res 
-        = take (length datas) 
-        $ map snd 
-        $ filter fst 
-        $ sample @System 
-        $ bundle 
-        $ system op (datas ++ repeat 0) (False : ens) readys
+    specify "forward pipeline" $ property $ propStreamIdentity forwardPipeline
+    specify "skid buffer"      $ property $ propStreamIdentity skidBuffer
+    specify "combined"         $ property $ propStreamIdentity combined
 
 combined
     :: forall dom a
