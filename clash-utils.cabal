@@ -54,6 +54,7 @@ library
         Clash.Stream.FieldExtract,
         Clash.Stream.Mux,
         Clash.Stream.Pipeline,
+        Clash.Stream.Resize,
         Clash.Stream.Stream,
         Clash.Stream.Test,
         Clash.Xilinx.Adder,
@@ -127,6 +128,7 @@ Test-Suite test
         XilinxAdderSpec,
         StreamPipelineSpec
         StreamMuxSpec,
+        StreamResizeSpec,
         StreamTestSpec,
         PriorityQueueSpec
     build-depends:       
