@@ -5,6 +5,7 @@ module Clash.Misc(
     swapEndian, 
     mealyEn,
     count,
+    upDownCounter,
     (++##),
     watchdog,
     setReset,
@@ -74,6 +75,20 @@ count
 count inc = res
     where
     res = regEn 0 inc $ res + 1
+
+-- | Counts up and down
+upDownCounter 
+    :: (HiddenClockResetEnable dom, Num a, NFDataX a)
+    => Signal dom Bool -- ^ Increment count
+    -> Signal dom Bool -- ^ Decrement count
+    -> Signal dom a    -- ^ Count
+upDownCounter up down = count
+    where
+    count = register 0 $ func <$> count <*> up <*> down
+        where
+        func count True  False = count + 1
+        func count False True  = count - 1
+        func count _     _     = count
 
 -- | Concatenates signals containing BitVectors
 (++##) :: KnownNat m => Signal dom (BitVector n) -> Signal dom (BitVector m) -> Signal dom (BitVector (n + m))
