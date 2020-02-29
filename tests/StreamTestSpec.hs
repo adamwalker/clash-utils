@@ -10,8 +10,9 @@ import Test.QuickCheck hiding ((.&&.), sample)
 import Clash.Stream.Test
 
 spec = describe "Stream test utils" $ do
-    specify "test the tests" $ property $ prop_test
-    specify "test the test"  $ property $ propStreamIdentity dummy
+    specify "test the tests"                    $ property $ prop_test
+    specify "test the identity stream property" $ property $ propStreamIdentity dummy
+    specify "test the identity packet property" $ property $ propPacketsIdentity @Int dummy
 
 dummy = (,,)
 

@@ -8,10 +8,11 @@ module Clash.Stream.Test (
         fromPacketStream,
         fromPacketStreamList,
         StreamOperator,
-        propStreamIdentity
+        propStreamIdentity,
+        propPacketsIdentity
     ) where
 
-import Clash.Prelude (NFDataX, System, Signal, HiddenClockResetEnable, fromList, bundle, unbundle, mealy, errorX, sample, (.&&.))
+import Clash.Prelude (NFDataX, System, Signal, HiddenClockResetEnable, fromList, bundle, unbundle, mealy, errorX, sample, (.&&.), Default(..))
 import Prelude
 import Test.QuickCheck hiding (sample, (.&&.))
 
@@ -60,7 +61,7 @@ toPacketStream (x:xs) = (x, False) : toPacketStream xs
 
 -- | Add an eof flag to a list of packets
 toPacketStreamList :: [[a]] -> [(a, Bool)]
-toPacketStreamList =  Prelude.concatMap toPacketStream 
+toPacketStreamList = concatMap toPacketStream 
 
 -- | Extract a packet from a stream by reading until an eof
 fromPacketStream :: [(a, Bool)] -> ([a], [(a, Bool)])
@@ -109,4 +110,38 @@ propStreamIdentity op (InfiniteList ens _) datas (InfiniteList readys _) = res =
         backPressure         = fromList readys
         (valids, dataStream) = streamList dat ens ready
         (vld, out, ready)    = streamOp valids dataStream backPressure
+
+propPacketsIdentity
+    :: (NFDataX a, Default a, Eq a, Show a, Arbitrary a) 
+    => StreamOperator (a, Bool) 
+    -> InfiniteList Bool 
+    -> InfiniteList Bool 
+    -> Property
+propPacketsIdentity op (InfiniteList ens _) (InfiniteList readys _) = 
+    forAll (listOf (listOf1 arbitrary)) $ \datas -> 
+    let 
+        res 
+            = take (length datas) 
+            $ fromPacketStreamList
+            $ map snd 
+            $ filter fst 
+            $ sample @System 
+            $ bundle 
+            $ system op datas (False : ens) readys
+    in
+        res === datas
+    where
+    system 
+        :: forall dom a
+        .  (HiddenClockResetEnable dom, NFDataX a, Default a)
+        => StreamOperator (a, Bool)
+        -> [[a]]
+        -> [Bool]
+        -> [Bool]
+        -> (Signal dom Bool, Signal dom (a, Bool))
+    system streamOp packets ens readys = (vld .&&. readySig, out)
+        where
+        readySig             = fromList readys
+        (valids, dataStream) = streamList (toPacketStreamList packets ++ repeat (def, False)) ens ready
+        (vld, out, ready)    = streamOp valids dataStream readySig
 
