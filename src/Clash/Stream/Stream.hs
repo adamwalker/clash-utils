@@ -39,12 +39,12 @@ dropStream SNat streamIn = bundle (vldOut, eofOut, datIn)
         func Nothing     _      = Nothing
 
 -- | Group data from successive clock cycles into larger chunks
-widenStream 
+widenStream
     :: forall n dom gated sync a
     .  (HiddenClockResetEnable dom, KnownNat n, 1 <= n, NFDataX a)
     => Signal dom (Bool, Bool, a)
-    -> Signal dom (Bool, Vec n a)
-widenStream streamIn = bundle (vldOut, sequenceA saved)
+    -> Signal dom (Bool, Bool, Vec n a)
+widenStream streamIn = bundle (vldOut, eofOut, sequenceA saved)
     where
 
     (vldIn, eofIn, datIn) = unbundle streamIn
@@ -52,6 +52,9 @@ widenStream streamIn = bundle (vldOut, sequenceA saved)
     --TODO: what if there are less than n then an eof?
     vldOut :: Signal dom Bool
     vldOut =  register False $ vldIn .&&. (writePtr .==. pure maxBound)
+
+    eofOut :: Signal dom Bool
+    eofOut =  register False eofIn
 
     writePtr :: Signal dom (Index n)
     writePtr =  regEn 0 vldIn $ func <$> writePtr <*> eofIn
