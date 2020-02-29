@@ -87,7 +87,13 @@ type StreamOperator a
     -> (Signal dom Bool, Signal dom a, Signal dom Bool) -- ^ (Output valid, output data, ready)
 
 -- | Helper property for stream operations that should be the identity
-propStreamIdentity :: StreamOperator Int -> InfiniteList Bool -> [Int] -> InfiniteList Bool -> Property
+propStreamIdentity 
+    :: (NFDataX a, Default a, Eq a, Show a)
+    => StreamOperator a 
+    -> InfiniteList Bool 
+    -> [a] 
+    -> InfiniteList Bool 
+    -> Property
 propStreamIdentity op (InfiniteList ens _) datas (InfiniteList readys _) = res === datas
     where
     res 
@@ -96,10 +102,10 @@ propStreamIdentity op (InfiniteList ens _) datas (InfiniteList readys _) = res =
         $ filter fst 
         $ sample @System 
         $ bundle 
-        $ system op (datas ++ repeat 0) (False : ens) readys
+        $ system op (datas ++ repeat def) (False : ens) readys
     system 
         :: forall dom a
-        .  (HiddenClockResetEnable dom, NFDataX a, Num a)
+        .  (HiddenClockResetEnable dom, NFDataX a)
         => StreamOperator a
         -> [a]
         -> [Bool]

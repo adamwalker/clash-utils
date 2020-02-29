@@ -12,9 +12,9 @@ import Clash.Stream.Test
 import Clash.Stream.Pipeline
 
 spec = describe "Stream pipeline" $ do
-    specify "forward pipeline" $ property $ propStreamIdentity forwardPipeline
-    specify "skid buffer"      $ property $ propStreamIdentity skidBuffer
-    specify "combined"         $ property $ propStreamIdentity combined
+    specify "forward pipeline" $ property $ propStreamIdentity @Int forwardPipeline
+    specify "skid buffer"      $ property $ propStreamIdentity @Int skidBuffer
+    specify "combined"         $ property $ propStreamIdentity @Int combined
 
 combined
     :: forall dom a
