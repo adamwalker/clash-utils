@@ -12,12 +12,25 @@ import Data.Sequence (Seq, (|>))
 import qualified Data.Sequence as Seq
 import Data.Maybe
 import Clash.Container.FIFO
+import Clash.Stream.Test
 
 --FIFO
 --This software model should behave identically to the hardare FIFO
 spec = describe "FIFO" $ do
-    specify "equivalent to software model" $ property prop_FIFOs
+    specify "data streams through FIFO"                  $ property $ propStreamIdentity fifoStream
+    specify "equivalent to software model"               $ property prop_FIFOs
     specify "maybe version equivalent to software model" $ property prop_FIFOMaybe
+
+fifoStream
+    :: forall a dom
+    .  (HiddenClockResetEnable dom)
+    => Signal dom Bool                                    -- ^ Input valid
+    -> Signal dom Int                                     -- ^ Data
+    -> Signal dom Bool                                    -- ^ Downstream ready
+    -> (Signal dom Bool, Signal dom Int, Signal dom Bool) -- ^ (Output valid, output data, ready)
+fifoStream valid dat ready = (not <$> empty, dat', not <$> full)
+    where
+    (dat', empty, full, _) = blockRamFIFO (SNat @8) ready dat valid
 
 fifoStep :: Int -> (Int, Seq a) -> (Bool, a, Bool) -> ((Int, Seq a), (a, Bool, Bool, Int))
 fifoStep size (lastSize, storage) (readEn, writeValue, writeEn) = ((nextSize, storage''), (extract storage, empty, full, nItems)) 
