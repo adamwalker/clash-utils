@@ -160,14 +160,14 @@ prependHeader vec streamIn ready = (bundle (vldOut, eofOut, datOut), readyOut)
     (vldIn, eofIn, datIn) = unbundle streamIn
 
     state :: Signal dom (PrependHeaderState n)
-    state =  register Idle $ func <$> state <*> vldIn <*> ready
+    state =  register Idle $ func <$> state <*> vldIn <*> ready <*> eofIn
         where
-        func Idle         True  _    = Header 0
-        func (Header cnt) _     True 
-            | cnt == maxBound        = Payload
-            | otherwise              = Header $ cnt + 1
-        func Payload      False _    = Idle
-        func st           _     _    = st
+        func Idle         True  _    _    = Header 0
+        func (Header cnt) _     True _
+            | cnt == maxBound             = Payload
+            | otherwise                   = Header $ cnt + 1
+        func Payload      True  _    True = Idle
+        func st           _     _    _    = st
 
     vldOut = func <$> state <*> vldIn
         where
