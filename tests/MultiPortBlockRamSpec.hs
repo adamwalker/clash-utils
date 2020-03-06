@@ -23,8 +23,10 @@ spec = describe "Multi port block ram" $ do
 --TODO: this is silly
 instance NFDataX (IntMap a)
     where 
-    deepErrorX = const (IntMap.empty)
-    rnfX = const ()
+    deepErrorX   = const (IntMap.empty)
+    hasUndefined = pure False
+    ensureSpine  = id
+    rnfX         = const ()
 
 goldenMultiPortBlockRam 
     :: forall dom nWrites nWrites' nReads n addrBits

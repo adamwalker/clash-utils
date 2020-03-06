@@ -43,7 +43,7 @@ carryN cIn s d = (pack $ reverse $ zipWith xor (init c) sBits, pack $ reverse $ 
 -- | Xilinx Ultrascale(+) carry8 primitive. TODO: verilog/VHDL primitive definition.
 carry8 = carryN @8
 
-{-# ANN carry4 (InlinePrimitive Verilog $ unindent [i|
+{-# ANN carry4 (InlinePrimitive [Verilog] $ unindent [i|
   [ { "BlackBox" :
       { "name" : "Clash.Xilinx.Carry.carry4"
       , "kind" : "Declaration"
