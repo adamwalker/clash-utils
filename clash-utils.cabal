@@ -55,7 +55,7 @@ library
         Clash.Stream.Mux,
         Clash.Stream.Pipeline,
         Clash.Stream.Resize,
-        Clash.Stream.Stream,
+        Clash.Stream.Packet,
         Clash.Stream.Test,
         Clash.Xilinx.Adder,
         Clash.Xilinx.Carry

@@ -1,7 +1,7 @@
 {-|
     __FPGA proven__
 -}
-module Clash.Stream.Stream (
+module Clash.Stream.Packet (
         dropStream,
         packetize,
         prependHeader,
