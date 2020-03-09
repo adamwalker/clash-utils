@@ -4,8 +4,7 @@
 module Clash.Stream.Packet (
         dropStream,
         packetize,
-        prependHeader,
-        swapNibbles
+        prependHeader
     ) where
 
 import Clash.Prelude
@@ -112,7 +111,4 @@ prependHeader vec streamIn ready = (bundle (vldOut, eofOut, datOut), readyOut)
         func _       _     = False
 
     eofOut = eofIn .&&. (state .==. pure Payload)
-
-swapNibbles :: KnownNat n => Vec (2 * n) a -> Vec (2 * n) a
-swapNibbles = concat . map reverse . unconcat (SNat @ 2)
 

@@ -10,7 +10,8 @@ module Clash.Misc(
     watchdog,
     setReset,
     wideWriteMem,
-    prioSelectCarryChain
+    prioSelectCarryChain,
+    swapNibbles
     ) where
 
 import Clash.Prelude
@@ -153,3 +154,5 @@ prioSelectCarryChain x = reverse $ unpack $ (complement packed + 1) .&. packed
     where
     packed = pack $ reverse x
 
+swapNibbles :: KnownNat n => Vec (2 * n) a -> Vec (2 * n) a
+swapNibbles = concat . map reverse . unconcat (SNat @ 2)
