@@ -109,13 +109,13 @@ cuckooPipeline
     :: forall dom m n k v. (HiddenClockResetEnable dom, KnownNat n, Eq k, KnownNat m, NFDataX k, NFDataX v)
     => Vec (m + 1) (k -> Unsigned n)                     -- ^ Hash functions for each stage
     -> Signal dom k                                      -- ^ Key to lookup or modify
-    -> Signal dom (Maybe (Maybe v))                      -- ^ Modification. Nothing == no modification. Just Nothing == delete. Just (Just X) == overwrite with X
+    -> Vec (m + 1) (Signal dom (Maybe (Maybe v)))        -- ^ Modification. Nothing == no modification. Just Nothing == delete. Just (Just X) == overwrite with X
     -> Vec (m + 1) (Signal dom (Maybe (TableEntry k v))) -- ^ Vector of inserts. If you know a key is not in the table, you can insert it in any idle pipeline stage.
     -> (
-        Signal dom (Maybe v),         -- Lookup result
-        Vec (m + 1) (Signal dom Bool) -- Vector of pipeline busy signals
+        Vec (m + 1) (Signal dom (Maybe v)),              -- Lookup result
+        Vec (m + 1) (Signal dom Bool)                    -- Vector of pipeline busy signals
         )                                                -- ^ (Lookup result, Vector of pipeline busy signals)
-cuckooPipeline hashFuncs toLookup modificationD inserts = (fold (liftA2 (<|>)) lookupResults, busys)
+cuckooPipeline hashFuncs toLookup modificationsD inserts = (lookupResults, busys)
     where
 
     --Save the lookup key for comparison with the table entry key in the next cycle
@@ -123,9 +123,9 @@ cuckooPipeline hashFuncs toLookup modificationD inserts = (fold (liftA2 (<|>)) l
     keyD =  register (errorX "Cuckoo: initial keyD") toLookup
 
     --Construct the pipeline
-    (accum, res) = mapAccumL func accum $ zip hashFuncs inserts
+    (accum, res) = mapAccumL func accum $ zip3 hashFuncs inserts modificationsD
         where
-        func accum (hashFunc, insert) = 
+        func accum (hashFunc, insert, modificationD) = 
             let (toEvict, lookupResult, insertBusy) = cuckooPipelineStage hashFunc toLookup keyD insert modificationD accum
             in  (toEvict, (lookupResult, insertBusy))
 
@@ -150,13 +150,14 @@ cuckooPipelineInsert hashFuncs toLookup modification = (luRes, busy)
     --Instantiate the pipeline
     --Modifications are passed straight in. This works fine for inserts since none of the stages will match and there will be no writeback.
     --If none of the stages matched, then we insert into the first pipeline stage (only) on the next cycle.
-    (luRes, busys) = cuckooPipeline hashFuncs toLookup modificationD 
+    (lookupResults, busys) = cuckooPipeline hashFuncs toLookup (repeat modificationD)
         $  insertD
         :> repeat (pure Nothing)
 
     busy          = (isJust <$> modificationD) .||. (or <$> sequenceA busys)
     modificationD = register Nothing $ mux busy (pure Nothing) modification
     toLookupD     = register (errorX "toLookupD") toLookup
+    luRes         = fold (liftA2 (<|>)) lookupResults
 
     --Form an insert from our modification in case the key is not found in any tables
     insertD :: Signal dom (Maybe (TableEntry k v))
