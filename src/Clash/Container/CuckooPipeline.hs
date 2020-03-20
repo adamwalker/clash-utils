@@ -11,6 +11,7 @@ module Clash.Container.CuckooPipeline (
     cuckooPipelineStage,
     cuckooPipeline,
     cuckooPipelineInsert,
+    cuckooPipelineMultiMap,
     exampleDesign
     ) where
 
@@ -132,7 +133,7 @@ cuckooPipeline hashFuncs toLookup modificationsD inserts = (lookupResults, busys
     --Combine the results and busy signals from the individual pipelines
     (lookupResults, busys) = unzip res
 
-{-| Convenince wrapper for the cuckooPipeline that checks whether keys are present before inserting them. If found, it does a modification instead.
+{-| Convenience wrapper for cuckooPipeline that checks whether keys are present before inserting them. If found, it does a modification instead.
   | Only allows one insertion at a time so it is less efficient for inserts than `cuckooPipeline`
 -}
 cuckooPipelineInsert
@@ -165,6 +166,53 @@ cuckooPipelineInsert hashFuncs toLookup modification = (luRes, busy)
         where
         func key (Just (Just value)) False = Just $ TableEntry key value
         func _   _                   _     = Nothing
+
+{-| Convenience wrapper for cuckooPipeline.
+  | Implements a multimap with a bounded number of values
+  | FPGA proven, but doesn't have randomised tests yet
+-}
+cuckooPipelineMultiMap
+    :: forall dom m n k i v. (HiddenClockResetEnable dom, KnownNat n, Eq k, Eq i, KnownNat m, NFDataX k, NFDataX v, NFDataX i)
+    => Vec (m + 1) (k -> Unsigned n)    -- ^ Hash functions for each stage
+    -> Signal dom k                     -- ^ Key to lookup, modify or insert
+    -> Signal dom (Maybe (i, Maybe v))  -- ^ Modification. Nothing == no modification. Just Nothing == delete. Just (Just X) == insert or overwrite existing value at key
+    -> (
+        Vec (m + 1) (Signal dom (Maybe (i, v))), -- Lookup results
+        Signal dom Bool                          -- Combined busy signal
+        )                               -- ^ (Lookup results, combined busy signal)
+cuckooPipelineMultiMap hashFuncs toLookup modification = (lookupResults, busy)
+    where
+
+    --Instantiate the pipeline
+    (lookupResults, busys) = cuckooPipeline hashFuncs toLookup modificationsD
+        $  insertD
+        :> repeat (pure Nothing)
+
+    --We are busy the cycle after a modification, or if an insert is in progress
+    busy           = (isJust <$> modificationD) .||. (or <$> sequenceA busys)
+    --Save the modification for writeback on the next cycle
+    modificationD  = register Nothing $ mux busy (pure Nothing) modification
+    --Save the lookup key for comparison on the next cycle
+    toLookupD      = register (errorX "toLookupD") toLookup
+
+    --Calculate the modification/delete writebacks for each table
+    modificationsD :: Vec (m + 1) (Signal dom (Maybe (Maybe (i, v))))
+    modificationsD = map (liftA2 func modificationD) lookupResults
+        where
+        func :: Maybe (i, Maybe v) -> Maybe (i, v) -> Maybe (Maybe (i, v))
+        func (Just (modIdx, modValue)) (Just (tableIdx, tableValue))
+            | modIdx == tableIdx = Just $ (modIdx, ) <$> modValue
+            | otherwise          = Nothing
+        func _                         _ = Nothing
+
+    --Form an insert from our modification in case the key is not found in any tables
+    insertD :: Signal dom (Maybe (TableEntry k (i, v)))
+    insertD =  func <$> toLookupD <*> modificationD <*> (all isNothing <$> sequenceA modificationsD)
+        where
+        func key (Just (idxUpdate, Just valueUpdate)) True
+            = Just $ TableEntry key (idxUpdate, valueUpdate)
+        func _ _ _
+            = Nothing
 
 -- | An example cuckoo hashtable top level design
 exampleDesign
