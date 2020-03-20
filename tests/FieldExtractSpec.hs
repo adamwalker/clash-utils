@@ -45,23 +45,35 @@ spec = describe "Message receiver" $ do
         property $ forAll (choose (0, 255)) $ \offset -> 
             forAll (choose (offset `quot` 4 + 1, 64)) $ \pktLen -> 
                 \val -> 
-                    ((simulate_lazy @System (testParser (byteExtractAccum (fromIntegral offset))) $ streamBytes $ valAtIdx ((pktLen + 1) * 4) offset val) !! pktLen) == val
+                    let res = simulate_lazy @System (testParser (byteExtractAccum (fromIntegral offset))) 
+                            $ streamBytes 
+                            $ valAtIdx ((pktLen + 1) * 4) offset val
+                    in  res !! pktLen == val
 
     it "fieldExtract" $
         property $ forAll (choose (0, 252)) $ \offset -> 
-                forAll (choose ((offset + 3) `quot` 4 + 1, 64)) $ \pktLen -> 
-                    \(v@(x :> y :> z :> w :> Nil) :: Vec 4 (BitVector 8)) -> 
-                        ((simulate_lazy @System (testParser (fieldExtractAccum (fromIntegral offset))) $ streamBytes $ fieldAtIdx ((pktLen + 1) * 4) offset [x, y, z, w]) !! pktLen) == v
+            forAll (choose ((offset + 3) `quot` 4 + 1, 64)) $ \pktLen -> 
+                \(v@(x :> y :> z :> w :> Nil) :: Vec 4 (BitVector 8)) -> 
+                    let res = simulate_lazy @System (testParser (fieldExtractAccum (fromIntegral offset))) 
+                            $ streamBytes 
+                            $ fieldAtIdx ((pktLen + 1) * 4) offset [x, y, z, w]
+                    in res !! pktLen == v
 
     it "byteExtractComb" $ 
         property $ forAll (choose (0, 255)) $ \offset -> 
             forAll (choose (offset `quot` 4 + 1, 64)) $ \pktLen -> 
                 \val -> 
-                    ((simulate_lazy @System (testParser (byteExtractAccumComb (fromIntegral offset))) $ streamBytes $ valAtIdx (pktLen * 4) offset val) !! (pktLen - 1)) == val
+                    let res = simulate_lazy @System (testParser (byteExtractAccumComb (fromIntegral offset))) 
+                            $ streamBytes 
+                            $ valAtIdx (pktLen * 4) offset val 
+                    in res !! (pktLen - 1) == val
 
     it "fieldExtractComb" $
         property $ forAll (choose (0, 252)) $ \offset -> 
             forAll (choose ((offset + 3) `quot` 4 + 1, 64)) $ \pktLen -> 
                 \(v@(x :> y :> z :> w :> Nil) :: Vec 4 (BitVector 8)) -> 
-                    ((simulate_lazy @System (testParser (fieldExtractAccumComb (fromIntegral offset))) $ streamBytes $ fieldAtIdx (pktLen * 4) offset [x, y, z, w]) !! (pktLen - 1)) == v
+                    let res = simulate_lazy @System (testParser (fieldExtractAccumComb (fromIntegral offset))) 
+                            $ streamBytes 
+                            $ fieldAtIdx (pktLen * 4) offset [x, y, z, w]
+                    in res !! (pktLen - 1) == v
 
