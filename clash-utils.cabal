@@ -51,6 +51,7 @@ library
         Clash.Serialize,
         Clash.Sort.Bitonic, 
         Clash.Sort.Insertion, 
+        Clash.Stream.Chain,
         Clash.Stream.FieldExtract,
         Clash.Stream.Mux,
         Clash.Stream.Pipeline,
