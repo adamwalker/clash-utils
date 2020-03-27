@@ -10,6 +10,7 @@ module Clash.Container.CuckooPipeline (
     TableEntry(..),
     cuckooPipelineStage,
     cuckooPipeline,
+    cuckooPipelineInsert',
     cuckooPipelineInsert,
     cuckooPipelineMultiMap,
     exampleDesign
@@ -133,6 +134,37 @@ cuckooPipeline hashFuncs toLookup modificationsD inserts = (lookupResults, busys
     --Combine the results and busy signals from the individual pipelines
     (lookupResults, busys) = unzip res
 
+-- | Same as `cuckooPipelineInsert` but the insert/modification value is supplied on the second cycle
+cuckooPipelineInsert'
+    :: forall dom m n k v. (HiddenClockResetEnable dom, KnownNat n, Eq k, KnownNat m, NFDataX k, NFDataX v)
+    => Vec (m + 1) (k -> Unsigned n) -- ^ Hash functions for each stage
+    -> Signal dom k                  -- ^ Key to lookup, modify or insert
+    -> Signal dom (Maybe (Maybe v))  -- ^ Modification. Nothing == no modification. Just Nothing == delete. Just (Just X) == insert or overwrite existing value at key
+    -> (
+        Signal dom (Maybe v), -- Lookup result
+        Signal dom Bool       -- Combined busy signal
+        )                            -- ^ (Lookup result, Combined busy signal)
+cuckooPipelineInsert' hashFuncs toLookup modificationD = (luRes, or <$> sequenceA busys)
+    where
+
+    --Instantiate the pipeline
+    --Modifications are passed straight in. This works fine for inserts since none of the stages will match and there will be no writeback.
+    --If none of the stages matched, then we insert into the first pipeline stage (only) on the next cycle.
+    (lookupResults, busys) = cuckooPipeline hashFuncs toLookup (repeat modificationD) 
+        $  insertD
+        :> repeat (pure Nothing)
+
+    toLookupD = register (errorX "toLookupD") toLookup
+    luRes     = fold (liftA2 (<|>)) lookupResults
+
+    --Form an insert from our modification in case the key is not found in any tables
+    insertD :: Signal dom (Maybe (TableEntry k v))
+    insertD =  func <$> toLookupD <*> modificationD <*> (isJust <$> luRes)
+        where
+        func key (Just (Just value)) False = Just $ TableEntry key value
+        func _   _                   _     = Nothing
+
+
 {-| Convenience wrapper for cuckooPipeline that checks whether keys are present before inserting them. If found, it does a modification instead.
   | Only allows one insertion at a time so it is less efficient for inserts than `cuckooPipeline`
 -}
@@ -147,25 +179,9 @@ cuckooPipelineInsert
         )                            -- ^ (Lookup result, Combined busy signal)
 cuckooPipelineInsert hashFuncs toLookup modification = (luRes, busy)
     where
-
-    --Instantiate the pipeline
-    --Modifications are passed straight in. This works fine for inserts since none of the stages will match and there will be no writeback.
-    --If none of the stages matched, then we insert into the first pipeline stage (only) on the next cycle.
-    (lookupResults, busys) = cuckooPipeline hashFuncs toLookup (repeat modificationD)
-        $  insertD
-        :> repeat (pure Nothing)
-
-    busy          = (isJust <$> modificationD) .||. (or <$> sequenceA busys)
-    modificationD = register Nothing $ mux busy (pure Nothing) modification
-    toLookupD     = register (errorX "toLookupD") toLookup
-    luRes         = fold (liftA2 (<|>)) lookupResults
-
-    --Form an insert from our modification in case the key is not found in any tables
-    insertD :: Signal dom (Maybe (TableEntry k v))
-    insertD =  func <$> toLookupD <*> modificationD <*> (isJust <$> luRes)
-        where
-        func key (Just (Just value)) False = Just $ TableEntry key value
-        func _   _                   _     = Nothing
+    (luRes, busy') = cuckooPipelineInsert' hashFuncs toLookup modificationD 
+    busy           = (isJust <$> modificationD) .||. busy'
+    modificationD  = register Nothing $ mux busy (pure Nothing) modification
 
 {-| Convenience wrapper for cuckooPipeline.
   | Implements a multimap with a bounded number of values
