@@ -30,13 +30,25 @@ spec = describe "CuckooPipeline hash table" $ do
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
         forAll (take 4000 <$> genOps False preInserts) $ \ops -> 
-        last (sampleN @System 50000 (testHarness 0 hashFuncs cuckooPipelineInsert (map (uncurry Insert) preInserts ++ ops))) == Just True
+        last (sampleN @System 50000 (testHarness 0 hashFuncs (cuckooPipelineInsert (SNat @ 0)) (map (uncurry Insert) preInserts ++ ops))) == Just True
 
     specify "Works with randomised operations and recently modified keys" $
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
         forAll (take 4000 <$> genOps True preInserts) $ \ops -> 
-        last (sampleN @System 50000 (testHarness 0 hashFuncs cuckooPipelineInsert (map (uncurry Insert) preInserts ++ ops))) == Just True
+        last (sampleN @System 50000 (testHarness 0 hashFuncs (cuckooPipelineInsert (SNat @ 0)) (map (uncurry Insert) preInserts ++ ops))) == Just True
+
+    specify "Works with randomised operations and a pipeline stage" $
+        noShrinking $
+        forAll (vectorOf 2500 arbitrary) $ \preInserts ->
+        forAll (take 4000 <$> genOps False preInserts) $ \ops -> 
+        last (sampleN @System 50000 (testHarness 1 hashFuncs (cuckooPipelineInsert (SNat @ 1)) (map (uncurry Insert) preInserts ++ ops))) == Just True
+
+    specify "Works with randomised operations and recently modified keys and a pipeline stage" $
+        noShrinking $
+        forAll (vectorOf 2500 arbitrary) $ \preInserts ->
+        forAll (take 4000 <$> genOps True preInserts) $ \ops -> 
+        last (sampleN @System 50000 (testHarness 1 hashFuncs (cuckooPipelineInsert (SNat @ 1)) (map (uncurry Insert) preInserts ++ ops))) == Just True
 
 data Op key
     = Lookup key (Maybe String)
