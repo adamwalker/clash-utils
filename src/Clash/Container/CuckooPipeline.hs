@@ -8,7 +8,7 @@
  -}
 module Clash.Container.CuckooPipeline (
     TableEntry(..),
-    cuckooPipelineStage,
+    cuckooStage,
     cuckooPipeline,
     cuckooPipelineInsert',
     cuckooPipelineInsert,
@@ -30,7 +30,7 @@ data TableEntry k v = TableEntry {
 {-| One stage in the cuckoo pipeline
     Each stage manages its own table and has its own hash function
 -}
-cuckooPipelineStage 
+cuckooStage 
     :: forall dom n k v. (HiddenClockResetEnable dom, KnownNat n, Eq k, NFDataX k, NFDataX v)
     => (k -> Unsigned n)                     -- ^ Hash function for this stage
     -> Signal dom k                          -- ^ Key to be looked up. For modifications and deletes, set this input
@@ -44,7 +44,7 @@ cuckooPipelineStage
         Signal dom (Maybe v),                --Lookup result
         Signal dom Bool                      --Busy
         )                                    -- ^ (Outgoing value to be evicted, Lookup result, Busy)
-cuckooPipelineStage hashFunc toLookup keyD insertVal modificationD incomingEviction = (
+cuckooStage hashFunc toLookup keyD insertVal modificationD incomingEviction = (
         mux evicting fromMem (pure Nothing), 
         luRes,
         isJust <$> incomingEviction
@@ -128,7 +128,7 @@ cuckooPipeline hashFuncs toLookup modificationsD inserts = (lookupResults, busys
     (accum, res) = mapAccumL func accum $ zip3 hashFuncs inserts modificationsD
         where
         func accum (hashFunc, insert, modificationD) = 
-            let (toEvict, lookupResult, insertBusy) = cuckooPipelineStage hashFunc toLookup keyD insert modificationD accum
+            let (toEvict, lookupResult, insertBusy) = cuckooStage hashFunc toLookup keyD insert modificationD accum
             in  (toEvict, (lookupResult, insertBusy))
 
     --Combine the results and busy signals from the individual pipelines
