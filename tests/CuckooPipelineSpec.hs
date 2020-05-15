@@ -30,13 +30,13 @@ spec = describe "CuckooPipeline hash table" $ do
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
         forAll (take 4000 <$> genOps False preInserts) $ \ops -> 
-        last (sampleN @System 50000 (testHarness hashFuncs cuckooPipelineInsert (map (uncurry Insert) preInserts ++ ops))) == Just True
+        last (sampleN @System 50000 (testHarness 0 hashFuncs cuckooPipelineInsert (map (uncurry Insert) preInserts ++ ops))) == Just True
 
     specify "Works with randomised operations and recently modified keys" $
         noShrinking $
         forAll (vectorOf 2500 arbitrary) $ \preInserts ->
         forAll (take 4000 <$> genOps True preInserts) $ \ops -> 
-        last (sampleN @System 50000 (testHarness hashFuncs cuckooPipelineInsert (map (uncurry Insert) preInserts ++ ops))) == Just True
+        last (sampleN @System 50000 (testHarness 0 hashFuncs cuckooPipelineInsert (map (uncurry Insert) preInserts ++ ops))) == Just True
 
 data Op key
     = Lookup key (Maybe String)
@@ -156,7 +156,7 @@ genOps doRecent initial = genOps' $ GenState (Map.fromList initial) []
                 )
 
 data OpState
-    = LookupState (Maybe String)
+    = LookupState Int (Maybe String)
     | IdleState
     deriving (Generic, NFDataX)
 
@@ -177,11 +177,12 @@ type Cuckoo = forall dom m n k v. (HiddenClockResetEnable dom, KnownNat m, Known
 
 testHarness 
     :: forall dom key. (HiddenClockResetEnable dom, Ord key, Default key, NFDataX key)
-    => (Vec 3 (key -> Unsigned 10))
+    => Int
+    -> (Vec 3 (key -> Unsigned 10))
     -> Cuckoo
     -> [Op key] 
     -> Signal dom (Maybe Bool)
-testHarness hashFuncs cuckoo ops = result
+testHarness readLatency hashFuncs cuckoo ops = result
     where
 
     --DUT
@@ -206,16 +207,18 @@ testHarness hashFuncs cuckoo ops = result
     step (InProgress st ops) (lookupVal, _) = step' st
         where
         step' IdleState         = (ns, (Nothing, out))
-        step' (LookupState val) 
+        step' (LookupState 0 val) 
             | val == lookupVal = (ns,      (Nothing, out))
             | otherwise        = (Failure, (Nothing, emptyControlSigs)) 
+        step' (LookupState wait val)
+            = (InProgress (LookupState (wait - 1) val) ops, (Nothing, emptyControlSigs))
         (out, ns) = nextState ops
 
     nextState []                     = (emptyControlSigs,         Success)
-    nextState (Lookup key val : ops) = ((key, "",  False, False), InProgress (LookupState val) ops)
-    nextState (Insert key val : ops) = ((key, val, True,  False), InProgress IdleState         ops)
-    nextState (Delete key     : ops) = ((key, "",  False, True),  InProgress IdleState         ops)
-    nextState (Idle           : ops) = (emptyControlSigs,         InProgress IdleState         ops)
+    nextState (Lookup key val : ops) = ((key, "",  False, False), InProgress (LookupState readLatency val) ops)
+    nextState (Insert key val : ops) = ((key, val, True,  False), InProgress IdleState           ops)
+    nextState (Delete key     : ops) = ((key, "",  False, True),  InProgress IdleState           ops)
+    nextState (Idle           : ops) = (emptyControlSigs,         InProgress IdleState           ops)
 
 hashFuncs :: Vec 3 ([Word8] -> Unsigned 10)
 hashFuncs = Clash.map (\idx x -> fromIntegral $ (`mod` 1024) $ hashWithSalt idx x) (iterateI (+1) 0)
