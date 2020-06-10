@@ -57,6 +57,7 @@ cuckooStage SNat hashFunc toLookup keyD insertVal modificationD incomingEviction
 
     --Choose what to insert
     --Prefer the incoming eviction from the previous stage, otherwise it will get dropped
+    muxedIncoming :: Signal dom (Maybe (TableEntry k v))
     muxedIncoming = liftA2 (<|>) incomingEviction insertVal
     
     --Choose what to hash
