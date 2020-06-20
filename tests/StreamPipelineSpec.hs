@@ -12,20 +12,8 @@ import Clash.Stream.Test
 import Clash.Stream.Pipeline
 
 spec = describe "Stream pipeline" $ do
-    specify "forward pipeline"  $ property $ propStreamIdentity @Int forwardPipeline
-    specify "backward pipeline" $ property $ propStreamIdentity @Int backwardPipeline
-    specify "combined"          $ property $ propStreamIdentity @Int combined
-
-combined
-    :: forall dom a
-    .  (HiddenClockResetEnable dom, NFDataX a)
-    => Signal dom Bool
-    -> Signal dom a
-    -> Signal dom Bool
-    -> (Signal dom Bool, Signal dom a, Signal dom Bool)
-combined vldIn datIn readyIn = (p3Vld, p3Dat, p1Rdy)
-    where
-    (p1Vld, p1Dat, p1Rdy) = forwardPipeline  vldIn datIn p2Rdy
-    (p2Vld, p2Dat, p2Rdy) = backwardPipeline p1Vld p1Dat p3Rdy
-    (p3Vld, p3Dat, p3Rdy) = forwardPipeline  p2Vld p2Dat readyIn
+    specify "forward pipeline"                    $ property $ propStreamIdentity @Int forwardPipeline
+    specify "backward pipeline"                   $ property $ propStreamIdentity @Int backwardPipeline
+    specify "skid buffer with registered inputs"  $ property $ propStreamIdentity @Int skidBufferInReg
+    specify "skid buffer with registered outputs" $ property $ propStreamIdentity @Int skidBufferOutReg
 
