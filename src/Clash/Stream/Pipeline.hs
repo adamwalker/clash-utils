@@ -1,12 +1,12 @@
 -- | Utilities for pipelining streams consisting of data, and valid, ready signals
 module Clash.Stream.Pipeline (
         forwardPipeline,
-        skidBuffer
+        backwardPipeline
     ) where
 
 import Clash.Prelude
 
--- | Break combinational paths in the forward direction only
+-- | Break combinational paths in the forward (valid and data) direction only
 forwardPipeline
     :: forall dom a
     .  (HiddenClockResetEnable dom, NFDataX a)
@@ -26,15 +26,15 @@ forwardPipeline vldIn datIn readyIn = (vldOut, datOut, readyOut)
     datOut :: Signal dom a
     datOut =  regEn (errorX "initial stream forwardPipeline value") readyOut datIn
 
--- | Break combinational paths in both the forward and reverse directions. https://zipcpu.com/blog/2019/05/22/skidbuffer.html.
-skidBuffer
+-- | Break combinational paths in the backwards (ready) direction only
+backwardPipeline
     :: forall dom a
     .  (HiddenClockResetEnable dom, NFDataX a)
     => Signal dom Bool
     -> Signal dom a
     -> Signal dom Bool
     -> (Signal dom Bool, Signal dom a, Signal dom Bool)
-skidBuffer vldIn datIn readyIn = (vldOut, datOut, bufferEmpty)
+backwardPipeline vldIn datIn readyIn = (vldOut, datOut, bufferEmpty)
     where
     bufferEmpty :: Signal dom Bool
     bufferEmpty =  register True $ fmap not vldOut .||. readyIn
@@ -43,7 +43,8 @@ skidBuffer vldIn datIn readyIn = (vldOut, datOut, bufferEmpty)
     vldOut =  fmap not bufferEmpty .||. vldIn
 
     datSaved :: Signal dom a
-    datSaved =  regEn (errorX "initial skid buffer pipeline value") bufferEmpty datIn
+    datSaved =  regEn (errorX "initial stream backwardPipeline value") bufferEmpty datIn
 
     datOut :: Signal dom a
     datOut =  mux bufferEmpty datIn datSaved 
+
