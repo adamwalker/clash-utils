@@ -21,10 +21,10 @@ forwardPipeline vldIn datIn readyIn = (vldOut, datOut, readyOut)
     readyOut =  readyIn .||. fmap not vldOut
 
     vldOut :: Signal dom Bool
-    vldOut =  register False $ vldIn .||. (vldOut .&&. fmap not readyIn)
+    vldOut =  register False $ vldIn .||. fmap not readyOut
 
     datOut :: Signal dom a
-    datOut =  regEn (errorX "initial stream pipeline value") readyOut datIn
+    datOut =  regEn (errorX "initial stream forwardPipeline value") readyOut datIn
 
 -- | Break combinational paths in both the forward and reverse directions. https://zipcpu.com/blog/2019/05/22/skidbuffer.html.
 skidBuffer
