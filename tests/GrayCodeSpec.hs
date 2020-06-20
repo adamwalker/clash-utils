@@ -12,12 +12,16 @@ import Clash.GrayCode
 
 --Gray code
 spec = describe "Gray code" $ do
-    specify "binaryToGray . grayToBinary == id" $ property prop_grayCode
-    specify "grayToBinary . binaryToGray == id" $ property prop_grayCode2
+    specify "binaryToGray . grayToBinary == id"       $ property prop_grayCode
+    specify "grayToBinary . binaryToGray == id"       $ property prop_grayCode2
+    specify "grayToBinary equiv grayToBinaryLogDepth" $ property prop_grayEquiv
 
 prop_grayCode :: BitVector 32 -> Bool
 prop_grayCode x = x == binaryToGray (grayToBinary x)
 
 prop_grayCode2 :: BitVector 32 -> Bool
 prop_grayCode2 x = x == grayToBinary (binaryToGray x)
+
+prop_grayEquiv :: BitVector 32 -> Bool
+prop_grayEquiv x = grayToBinary x == grayToBinaryLogDepth x
 
