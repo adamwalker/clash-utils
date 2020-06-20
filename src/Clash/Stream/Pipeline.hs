@@ -39,10 +39,10 @@ backwardPipeline
 backwardPipeline vldIn datIn readyIn = (vldOut, datOut, bufferEmpty)
     where
     bufferEmpty :: Signal dom Bool
-    bufferEmpty =  register True $ fmap not vldOut .||. readyIn
+    bufferEmpty =  register True $ readyIn .||. fmap not vldOut 
 
     vldOut :: Signal dom Bool
-    vldOut =  fmap not bufferEmpty .||. vldIn
+    vldOut =  vldIn .||. fmap not bufferEmpty
 
     datSaved :: Signal dom a
     datSaved =  regEn (errorX "initial stream backwardPipeline value") bufferEmpty datIn
