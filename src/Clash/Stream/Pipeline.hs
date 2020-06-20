@@ -34,19 +34,16 @@ skidBuffer
     -> Signal dom a
     -> Signal dom Bool
     -> (Signal dom Bool, Signal dom a, Signal dom Bool)
-skidBuffer vldIn datIn readyIn = (vldOut, datOut, readyOut)
+skidBuffer vldIn datIn readyIn = (vldOut, datOut, bufferEmpty)
     where
-    buffered :: Signal dom Bool
-    buffered =  register False $ (vldIn .||. buffered) .&&. fmap not readyIn
-
-    readyOut :: Signal dom Bool
-    readyOut =  fmap not buffered
+    bufferEmpty :: Signal dom Bool
+    bufferEmpty =  register True $ fmap not vldOut .||. readyIn
 
     vldOut :: Signal dom Bool
-    vldOut =  buffered .||. vldIn
+    vldOut =  fmap not bufferEmpty .||. vldIn
 
     datSaved :: Signal dom a
-    datSaved =  regEn (errorX "initial skid buffer pipeline value") readyOut datIn
+    datSaved =  regEn (errorX "initial skid buffer pipeline value") bufferEmpty datIn
 
     datOut :: Signal dom a
-    datOut =  mux buffered datSaved datIn
+    datOut =  mux bufferEmpty datIn datSaved 
