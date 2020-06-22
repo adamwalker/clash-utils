@@ -50,7 +50,7 @@ backwardPipeline vldIn datIn readyIn = (vldOut, datOut, bufferEmpty)
     datOut :: Signal dom a
     datOut =  mux bufferEmpty datIn datSaved 
 
--- | Break combinational paths in both the forward and reverse directions. Inputs are registered. http://fpgacpu.ca/fpga/Pipeline_Skid_Buffer.html
+-- | Break combinational paths in both the forward and reverse directions. Input data is registered. http://fpgacpu.ca/fpga/Pipeline_Skid_Buffer.html
 skidBufferInReg
     :: forall dom a
     .  (HiddenClockResetEnable dom, NFDataX a)
@@ -63,7 +63,7 @@ skidBufferInReg vldIn datIn readyIn = (p2Vld, p2Dat, p1Rdy)
     (p1Vld, p1Dat, p1Rdy) = forwardPipeline  vldIn datIn p2Rdy
     (p2Vld, p2Dat, p2Rdy) = backwardPipeline p1Vld p1Dat readyIn
 
--- | Break combinational paths in both the forward and reverse directions. Outputs are registered. http://fpgacpu.ca/fpga/Pipeline_Skid_Buffer.html
+-- | Break combinational paths in both the forward and reverse directions. Output data is registered. http://fpgacpu.ca/fpga/Pipeline_Skid_Buffer.html
 skidBufferOutReg
     :: forall dom a
     .  (HiddenClockResetEnable dom, NFDataX a)
