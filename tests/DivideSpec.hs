@@ -10,11 +10,11 @@ import Test.QuickCheck
 import Clash.Arithmetic.Divide
 
 --Divider
-spec = describe "Divder" $ 
+spec = describe "Divider" $ 
     specify "divides" $ property prop_Divider
     
-prop_Divider :: BitVector 32 -> BitVector 32 -> Bool
-prop_Divider x y = q == q' && r == r'
+prop_Divider :: BitVector 32 -> BitVector 32 -> Property
+prop_Divider x y = (y /= 0) ==> (q == q' && r == r')
     where
     (q, r)   = quotRem x y
     (q', r') = combDivide x y
