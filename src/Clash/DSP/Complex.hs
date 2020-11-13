@@ -28,3 +28,5 @@ imagPart (_ :+ y) = y
 fromComplex (a C.:+ b) = a :+ b
 toComplex   (a :+ b)   = a C.:+ b
 
+conjugate :: Num a => Complex a -> Complex a
+conjugate (x :+ y) = x :+ (-y)
