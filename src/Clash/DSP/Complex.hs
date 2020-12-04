@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveLift, DeriveGeneric, DeriveAnyClass, DeriveFunctor, StandaloneDeriving #-}
+{-# LANGUAGE DeriveLift, DeriveGeneric, DeriveAnyClass, DeriveTraversable, StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-} --For the BitPack instance
 module Clash.DSP.Complex where
 
@@ -9,7 +9,7 @@ import GHC.Generics
 import qualified Data.Complex as C
 
 {-| I defined my own complex type so that I can write a Num instance without the RealFloat constraint. TODO: think about whether this is really a good idea. -}
-data Complex a = a :+ a deriving (Show, Lift, Generic, ShowX, NFDataX, Functor)
+data Complex a = a :+ a deriving (Show, Lift, Generic, ShowX, NFDataX, Functor, Foldable, Traversable)
 
 deriving instance (BitPack a, KnownNat (BitSize a)) => BitPack (Complex a)
 
