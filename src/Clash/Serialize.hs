@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, UndecidableInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 {-| Bitvector serialization and deserialization using the Cereal library -}
 module Clash.Serialize where

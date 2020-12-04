@@ -1,5 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-
 {-| 
     Block ram FWFT (first word fallthrough) FIFOs.
 

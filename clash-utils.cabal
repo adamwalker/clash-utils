@@ -67,6 +67,7 @@ library
         TypeOperators, 
         DataKinds, 
         FlexibleContexts, 
+        FlexibleInstances, 
         TypeApplications, 
         BinaryLiterals, 
         GADTs,
@@ -74,7 +75,10 @@ library
         TypeFamilies,
         TupleSections,
         DeriveGeneric,
-        DeriveAnyClass
+        DeriveAnyClass,
+        DeriveTraversable,
+        DeriveLift,
+        StandaloneDeriving
     if impl(ghc >= 8.6)
         default-extensions: NoStarIsType
     build-depends:       

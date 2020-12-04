@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveLift, DeriveGeneric, DeriveAnyClass, DeriveTraversable, StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-} --For the BitPack instance
 module Clash.DSP.Complex where
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, DeriveGeneric, DeriveAnyClass #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 {-| Another <https://en.wikipedia.org/wiki/Cuckoo_hashing Cuckoo hashtable>.
 

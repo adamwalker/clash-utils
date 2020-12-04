@@ -1,5 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-
 {-| <https://en.wikipedia.org/wiki/Cyclic_redundancy_check Cyclic redundancy check> 
     
     This module provides several different ways of computing CRCs:
