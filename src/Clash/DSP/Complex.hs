@@ -19,6 +19,10 @@ instance Num a => Num (Complex a) where
     (a :+ b) * (c :+ d) = (a * c - b * d) :+ (a * d + b * c)
     fromInteger x       = (fromInteger x :+ 0)
 
+instance Applicative Complex where
+    pure a = a :+ a
+    f :+ g <*> a :+ b = f a :+ g b
+
 realPart :: Complex a -> a
 realPart (x :+ _) = x
 
