@@ -37,6 +37,7 @@ library
         Clash.DSP.FFTSerial,
         Clash.DSP.FIRFilter, 
         Clash.DSP.IIRFilter, 
+        Clash.DSP.MAC
         Clash.ErrorControl.CRC, 
         Clash.ErrorControl.Hamming, 
         Clash.GrayCode, 
