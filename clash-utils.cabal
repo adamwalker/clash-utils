@@ -35,7 +35,8 @@ library
         Clash.DSP.CORDIC, 
         Clash.DSP.FFT, 
         Clash.DSP.FFTSerial,
-        Clash.DSP.FIRFilter, 
+        Clash.DSP.FIR.FIRFilter, 
+        Clash.DSP.FIR.SemiParallel, 
         Clash.DSP.IIRFilter, 
         Clash.DSP.MAC
         Clash.ErrorControl.CRC, 

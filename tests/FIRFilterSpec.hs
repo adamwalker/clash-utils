@@ -9,7 +9,8 @@ import Test.Hspec
 import Test.QuickCheck hiding (sample)
 
 import qualified Data.List.Split as S
-import Clash.DSP.FIRFilter
+import Clash.DSP.FIR.FIRFilter
+import Clash.DSP.FIR.SemiParallel
 
 --FIR filter testing
 --Check that both optimised filters return the same results as the unoptimised one
