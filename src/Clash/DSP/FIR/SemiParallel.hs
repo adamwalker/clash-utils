@@ -10,6 +10,7 @@ import Clash.Prelude
 
 import Clash.DSP.Complex
 import Clash.DSP.MAC
+import Clash.Counter
 
 macUnit
     :: forall n dom coeffType inputType outputType
@@ -67,11 +68,7 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
     shifts =  iterateI (regEn False globalStep) $ address .==. pure maxBound
 
     address :: Signal dom (Index coeffsPerStage)
-    address = regEn maxBound globalStep (wrappingInc <$> address)
-        where
-        wrappingInc x
-            | x == maxBound = 0
-            | otherwise     = x + 1
+    address = wrappingCounter maxBound globalStep
 
     indices :: Vec (numStages + 1) (Signal dom (Index coeffsPerStage))
     indices =  iterateI (regEn 0 globalStep) address
@@ -103,11 +100,7 @@ semiParallelFIRTransposed mac coeffs valid sampleIn = (validOut, dataOut, ready)
     delayLine =  iterateI delayStage sampleIn
 
     stageCounter :: Signal dom (Index coeffsPerStage)
-    stageCounter =  regEn 0 globalStep $ wrappingInc <$> stageCounter
-        where
-        wrappingInc x
-            | x == maxBound = 0
-            | otherwise     = x + 1
+    stageCounter =  wrappingCounter 0 globalStep
 
     globalStep :: Signal dom Bool
     globalStep =  valid .||. stageCounter ./=. 0
@@ -146,11 +139,7 @@ semiParallelFIRTransposedBlockRam mac coeffs valid sampleIn = (validOut, dataOut
     where
 
     stageCounter :: Signal dom (Index coeffsPerStage)
-    stageCounter =  regEn maxBound globalStep $ wrappingInc <$> stageCounter
-        where
-        wrappingInc x
-            | x == maxBound = 0
-            | otherwise     = x + 1
+    stageCounter =  wrappingCounter maxBound globalStep 
 
     writePtr :: Signal dom (Index (numStages * coeffsPerStage))
     writePtr =  regEn 0 (ready .&&. valid) $ step <$> writePtr
