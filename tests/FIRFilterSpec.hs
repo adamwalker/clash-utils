@@ -29,10 +29,6 @@ spec = describe "FIR filters" $ do
         specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRTransposed
     describe "Semi-parallel transposed block ram" $ do
         specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRTransposedBlockam
-    describe "Semi-parallel" $ do
-        specify "semi parallel 1"     $ property $ prop_semiParallelFIR1
-        specify "semi parallel 2"     $ property $ prop_semiParallelFIR2
-        specify "semi parallel 3"     $ property $ prop_semiParallelFIR3
 
 goldenFIR 
     :: (HiddenClockResetEnable dom, Num a, KnownNat n, NFDataX a)
@@ -175,32 +171,4 @@ prop_semiParallelFIRTransposedBlockam coeffs input (InfiniteList ens _) = expect
         $ bundle 
         $ system (semiParallelFIRTransposedBlockRam (const macRealReal) coeffs) (0 : input ++ repeat 0) ens
     swizzle = Clash.concat . Clash.transpose . Clash.reverse
-
---Semi-parallel FIR filter has lots of tests because it is confusing
-prop_semiParallelFIR1 :: Vec 9 (Signed 32) -> [Signed 32] -> Bool
-prop_semiParallelFIR1 coeffs input = res1 == res2
-    where
-    coeffs2 :: Vec 3 (Vec 3 (Signed 32))
-    coeffs2 =  Clash.unconcatI coeffs
-    input'  =  input ++ repeat 0
-    res1    =  take 50 $ simulate @System (goldenFIR coeffs (pure True)) input'
-    res2    =  take 50 $ map head $ S.chunksOf 3 $ drop 9 $ simulate @System (semiParallelFIR coeffs2 (pure True)) (concatMap ((++ [0, 0]) . pure) input' ++ repeat 0)
-
-prop_semiParallelFIR2 :: Vec 15 (Signed 32) -> [Signed 32] -> Bool
-prop_semiParallelFIR2 coeffs input = res1 == res2
-    where
-    coeffs2 :: Vec 5 (Vec 3 (Signed 32))
-    coeffs2 =  Clash.unconcatI coeffs
-    input'  =  input ++ repeat 0
-    res1    =  take 50 $ simulate @System (goldenFIR coeffs (pure True)) input'
-    res2    =  take 50 $ map head $ S.chunksOf 3 $ drop 11 $ simulate @System (semiParallelFIR coeffs2 (pure True)) (concatMap ((++ [0, 0]) . pure) input' ++ repeat 0)
-
-prop_semiParallelFIR3 :: Vec 20 (Signed 32) -> [Signed 32] -> Bool
-prop_semiParallelFIR3 coeffs input = res1 == res2
-    where
-    coeffs2 :: Vec 5 (Vec 4 (Signed 32))
-    coeffs2 =  Clash.unconcatI coeffs
-    input'  =  input ++ repeat 0
-    res1    =  take 50 $ simulate @System (goldenFIR coeffs (pure True)) input'
-    res2    =  take 50 $ map head $ S.chunksOf 4 $ drop 12 $ simulate @System (semiParallelFIR coeffs2 (pure True)) (concatMap ((++ [0, 0, 0]) . pure) input' ++ repeat 0)
 
