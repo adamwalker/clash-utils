@@ -10,8 +10,8 @@ import Test.QuickCheck
 import qualified Numeric.FFT as FFT
 import qualified Data.Complex as C
 import Clash.DSP.Complex (Complex, fromComplex, toComplex)
-import Clash.DSP.FFTSerial
-import Clash.DSP.FFT
+import Clash.DSP.FFT.FFTSerial
+import Clash.DSP.FFT.FFT (twiddleFactors)
 
 --serial FFT
 spec = describe "Serial FFTs" $ do
