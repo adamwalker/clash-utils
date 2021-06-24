@@ -46,7 +46,7 @@ macUnit mac coeffs idx shiftSamples step cascadeIn sampleIn = (macD, sampleToMul
 integrateAndDump
     :: (HiddenClockResetEnable dom, Num a, NFDataX a)
     => Signal dom Bool -- ^ Input valid
-    -> Signal dom Bool -- ^ Reset accumulator to 0. Will apply to new data on _this_ cycle.
+    -> Signal dom Bool -- ^ Reset accumulator to 0.
     -> Signal dom a    -- ^ Data in
     -> Signal dom a    -- ^ Integrated data out
 integrateAndDump step reset sampleIn = sum
@@ -71,14 +71,17 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
             -> (Signal dom outputType, Signal dom inputType)
         func (cascadeIn, sampleIn) (coeffs, idx, shift) = macUnit mac coeffs idx shift globalStep cascadeIn sampleIn
 
-    globalStep :: Signal dom Bool
-    globalStep =  address ./=. pure maxBound .||. valid
-
-    shifts :: Vec (numStages + 1) (Signal dom Bool)
-    shifts =  iterateI (regEn False globalStep) $ address .==. pure maxBound
-
     address :: Signal dom (Index coeffsPerStage)
     address = wrappingCounter maxBound globalStep
+
+    ready :: Signal dom Bool
+    ready =  address .==. pure maxBound
+
+    globalStep :: Signal dom Bool
+    globalStep =  not <$> ready .||. valid
+
+    shifts :: Vec (numStages + 1) (Signal dom Bool)
+    shifts =  iterateI (regEn False globalStep) ready
 
     indices :: Vec (numStages + 1) (Signal dom (Index coeffsPerStage))
     indices =  iterateI (regEn 0 globalStep) address
@@ -88,9 +91,6 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
 
     dataOut :: Signal dom outputType
     dataOut =  integrateAndDump globalStep validOut $ fst sampleOut
-
-    ready :: Signal dom Bool
-    ready =  address .==. pure maxBound
 
 semiParallelFIRTransposed
     :: forall dom numStages coeffsPerStage coeffType inputType outputType
