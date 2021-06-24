@@ -27,7 +27,8 @@ library
         Clash.Container.Cuckoo,
         Clash.Container.CuckooPipeline,
         Clash.Container.MultiPortBlockRam,
-        Clash.Container.PriorityQueue
+        Clash.Container.PriorityQueue,
+        Clash.Counter, 
         Clash.Crypto.AES,
         Clash.Crypto.SHA3,
         Clash.DSP.CICFilter,
