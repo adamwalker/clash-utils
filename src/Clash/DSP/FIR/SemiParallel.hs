@@ -12,6 +12,16 @@ import Clash.DSP.Complex
 import Clash.DSP.MAC
 import Clash.Counter
 
+shiftReg 
+    :: (HiddenClockResetEnable dom, NFDataX a, KnownNat n, Num a)
+    => Signal dom Bool
+    -> Signal dom a
+    -> Signal dom (Vec n a)
+shiftReg shift dat = res
+    where
+    res = regEn (repeat 0) shift 
+        $ (+>>) <$> dat <*> res
+
 macUnit
     :: forall n dom coeffType inputType outputType
     .  (HiddenClockResetEnable dom, KnownNat n, NFDataX inputType, Num inputType, NFDataX outputType, Num outputType, Num coeffType, NFDataX coeffType)
@@ -27,7 +37,7 @@ macUnit mac coeffs idx shiftSamples step cascadeIn sampleIn = (macD, sampleToMul
     where
 
     sampleShiftReg :: Signal dom (Vec n inputType)
-    sampleShiftReg =  regEn (repeat 0) (step .&&. shiftSamples) $ (+>>) <$> sampleIn <*> sampleShiftReg
+    sampleShiftReg =  shiftReg (step .&&. shiftSamples) sampleIn
 
     sampleToMul = regEn 0 step $ (!!) <$> sampleShiftReg <*> idx
     coeffToMul  = regEn 0 step $ (coeffs !!) <$> idx
