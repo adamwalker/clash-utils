@@ -1,6 +1,6 @@
 module Clash.DSP.FIR.SemiParallel (
         macUnit,
-        integrate,
+        integrateAndDump,
         semiParallelFIRSystolic,
         semiParallelFIRTransposed,
         semiParallelFIRTransposedBlockRam,
@@ -33,13 +33,13 @@ macUnit mac coeffs idx shiftSamples step cascadeIn sampleIn = (macD, sampleToMul
     coeffToMul  = regEn 0 step $ (coeffs !!) <$> idx
     macD        = regEn 0 step $ mac step coeffToMul sampleToMul cascadeIn
 
-integrate
+integrateAndDump
     :: (HiddenClockResetEnable dom, Num a, NFDataX a)
     => Signal dom Bool -- ^ Input valid
     -> Signal dom Bool -- ^ Reset accumulator to 0. Will apply to new data on _this_ cycle.
     -> Signal dom a    -- ^ Data in
     -> Signal dom a    -- ^ Integrated data out
-integrate step reset sampleIn = sum
+integrateAndDump step reset sampleIn = sum
     where
     sum = regEn 0 step $ mux reset 0 sum + sampleIn
 
@@ -77,7 +77,7 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
     validOut =  globalStep .&&. (regEn False globalStep $ regEn False globalStep $ last indices .==. 0)
 
     dataOut :: Signal dom outputType
-    dataOut =  integrate globalStep validOut $ fst sampleOut
+    dataOut =  integrateAndDump globalStep validOut $ fst sampleOut
 
     ready :: Signal dom Bool
     ready =  address .==. pure maxBound
