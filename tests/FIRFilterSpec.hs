@@ -61,8 +61,8 @@ systemNoReady
     => FilterNoReady dom a
     -> [a]
     -> [Bool]
-    -> (Signal dom Bool, Signal dom a)
-systemNoReady filter samples ens = (valids, out)
+    -> Signal dom (Bool, a)
+systemNoReady filter samples ens = bundle (valids, out)
     where
     (valids, sampleStream) = streamList samples ens (pure True)
     out                    = filter valids sampleStream
@@ -77,7 +77,6 @@ prop_FilterTransposed coeffs input (InfiniteList ens _) = expect === result
         $ drop 1 
         $ map snd . filter fst
         $ sample @System 
-        $ bundle
         $ systemNoReady (firTransposed (const (liftA3 macRealReal)) (Clash.reverse coeffs)) (input ++ repeat 0) (True : ens)
 
 prop_FilterSystolic :: Vec 16 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
@@ -90,7 +89,6 @@ prop_FilterSystolic coeffs input (InfiniteList ens _) = expect === result
         $ drop 16 
         $ map snd . filter fst
         $ sample @System 
-        $ bundle
         $ systemNoReady (firSystolic (const (liftA3 macRealReal)) coeffs) (input ++ repeat 0) (True : ens)
 
 prop_FilterSystolicSymmetric :: Vec 16 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
@@ -103,7 +101,6 @@ prop_FilterSystolicSymmetric coeffs input (InfiniteList ens _)= expect === resul
         $ drop 16 
         $ map snd . filter fst
         $ sample @System 
-        $ bundle
         $ systemNoReady (firSystolicSymmetric (const (liftA4 macPreAddRealReal)) coeffs) (input ++ repeat 0) (True : ens)
 
 prop_FilterSymmetric :: Vec 16 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
@@ -116,7 +113,6 @@ prop_FilterSymmetric coeffs input (InfiniteList ens _) = expect === result
         $ drop 1
         $ map snd . filter fst
         $ sample @System 
-        $ bundle
         $ systemNoReady (firSymmetric (const (liftA4 macPreAddRealReal)) coeffs) (input ++ repeat 0) (True : ens)
 
 prop_systolicSymmetric :: Vec 16 (Signed 32) -> Signed 32 -> [Signed 32] -> InfiniteList Bool -> Property
@@ -129,7 +125,6 @@ prop_systolicSymmetric coeffs mid input (InfiniteList ens _) = expect === result
         $ drop 17 
         $ map snd . filter fst
         $ sample @System 
-        $ bundle
         $ systemNoReady (firSystolicSymmetricOdd (const (liftA4 macPreAddRealReal)) (coeffs Clash.++ Clash.singleton mid)) (input ++ repeat 0) (True : ens)
 
 prop_systolicHalfBand :: Vec 16 (Signed 32) -> Signed 32 -> [Signed 32] -> InfiniteList Bool -> Property
@@ -142,7 +137,6 @@ prop_systolicHalfBand coeffs mid input (InfiniteList ens _) = expect === result
         $ drop 17 
         $ map snd . filter fst
         $ sample @System 
-        $ bundle
         $ systemNoReady (firSystolicHalfBand (const (liftA4 macPreAddRealReal)) (coeffs Clash.++ Clash.singleton mid)) (input ++ repeat 0) (True : ens)
     coeffs' 
         = Clash.init (Clash.merge coeffs (Clash.repeat 0))
@@ -172,8 +166,8 @@ system
     => Filter dom a
     -> [a]
     -> [Bool]
-    -> (Signal dom Bool, Signal dom a)
-system filter samples ens = (vld, out)
+    -> Signal dom (Bool, a)
+system filter samples ens = bundle (vld, out)
     where
     (valids, sampleStream) = streamList samples ens ready
     (vld, out, ready)      = filter valids sampleStream
@@ -187,7 +181,6 @@ prop_semiParallelFIRSystolic coeffs input (InfiniteList ens _) = expect === resu
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ bundle 
         $ system (semiParallelFIRSystolic (const macRealReal) (singleton coeffs)) (input ++ repeat 0) ens
 
 prop_semiParallelFIRSystolicMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
@@ -199,7 +192,6 @@ prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expec
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ bundle 
         $ system (semiParallelFIRSystolic (const macRealReal) coeffs) (input ++ repeat 0) ens
 
 prop_semiParallelFIRTransposed :: Vec 4 (Vec 3 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
@@ -211,7 +203,6 @@ prop_semiParallelFIRTransposed coeffs input (InfiniteList ens _) = expect === re
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ bundle 
         $ system (semiParallelFIRTransposed (const macRealReal) coeffs) (0 : input ++ repeat 0) ens
     swizzle = Clash.concat . Clash.transpose . Clash.reverse
 
@@ -228,7 +219,6 @@ prop_semiParallelFIRTransposedBlockam coeffs input (InfiniteList ens _) = expect
         $ drop 6 --Drop the Xs since the asyncRam doesnt support initial values
         $ map snd . filter fst
         $ sample @System 
-        $ bundle 
         $ system (semiParallelFIRTransposedBlockRam (const macRealReal) coeffs) (0 : input ++ repeat 0) ens
     swizzle = Clash.concat . Clash.transpose . Clash.reverse
 
