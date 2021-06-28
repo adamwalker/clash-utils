@@ -12,6 +12,17 @@ import Clash.DSP.Complex
 import Clash.DSP.MAC
 import Clash.Counter
 
+--Integrate and dump. If the dump input is high, the accumulator input to the addition is zeroed on the current cycle.
+integrateAndDump
+    :: (HiddenClockResetEnable dom, Num a, NFDataX a)
+    => Signal dom Bool -- ^ Input valid
+    -> Signal dom Bool -- ^ Reset accumulator to 0.
+    -> Signal dom a    -- ^ Data in
+    -> Signal dom a    -- ^ Integrated data out
+integrateAndDump step reset sampleIn = sum
+    where
+    sum = regEn 0 step $ mux reset 0 sum + sampleIn
+
 shiftReg 
     :: (HiddenClockResetEnable dom, NFDataX a, KnownNat n, Num a)
     => Signal dom Bool
@@ -22,6 +33,9 @@ shiftReg shift dat = res
     res = regEn (repeat 0) shift 
         $ (+>>) <$> dat <*> res
 
+--Multiply and accumulate unit
+--Keeps a shift register of samples, and a coefficient ROM
+--Registers after reading the shift register and coefficient rom
 macUnit
     :: forall n dom coeffType inputType outputType
     .  (HiddenClockResetEnable dom, KnownNat n, NFDataX inputType, Num inputType, NFDataX outputType, Num outputType, Num coeffType, NFDataX coeffType)
@@ -42,16 +56,6 @@ macUnit mac coeffs idx shiftSamples step cascadeIn sampleIn = (macD, sampleToMul
     sampleToMul = regEn 0 step $ (!!) <$> sampleShiftReg <*> idx
     coeffToMul  = regEn 0 step $ (coeffs !!) <$> idx
     macD        = regEn 0 step $ mac step coeffToMul sampleToMul cascadeIn
-
-integrateAndDump
-    :: (HiddenClockResetEnable dom, Num a, NFDataX a)
-    => Signal dom Bool -- ^ Input valid
-    -> Signal dom Bool -- ^ Reset accumulator to 0.
-    -> Signal dom a    -- ^ Data in
-    -> Signal dom a    -- ^ Integrated data out
-integrateAndDump step reset sampleIn = sum
-    where
-    sum = regEn 0 step $ mux reset 0 sum + sampleIn
 
 semiParallelFIRSystolic
     :: forall numStages coeffsPerStage coeffType inputType outputType dom
