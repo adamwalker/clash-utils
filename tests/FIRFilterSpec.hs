@@ -11,6 +11,7 @@ import Test.QuickCheck hiding (sample)
 import qualified Data.List.Split as S
 import Clash.DSP.FIR.FIRFilter
 import Clash.DSP.FIR.SemiParallel
+import Clash.DSP.FIR.Polyphase
 
 --FIR filter testing
 --Check that both optimised filters return the same results as the unoptimised one
@@ -29,6 +30,11 @@ spec = describe "FIR filters" $ do
         specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRTransposed
     describe "Semi-parallel transposed block ram" $ do
         specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRTransposedBlockam
+    describe "Polyphase" $ do
+        specify "Decimate"               $ property $ prop_polyphaseDecim
+        specify "Decimate multi stage"   $ property $ prop_polyphaseDecimMultiStage
+        specify "Decimate multi stage 2" $ property $ prop_polyphaseDecimMultiStage2
+        specify "Decimate back pressure" $ property $ prop_polyphaseDecimMultiStage2_backPressure
 
 goldenFIR 
     :: (HiddenClockResetEnable dom, Num a, KnownNat n, NFDataX a)
@@ -155,11 +161,6 @@ streamList samples enables = unbundle . mealy step (samples, enables)
     step (l@(x:xs), (False:es))  True  = ((l, es),  (False, x))
     step (  (x:xs), (True:es))   True  = ((xs, es), (True, x))
 
-type Filter dom a
-    =  Signal dom Bool                                  -- ^ Input valid
-    -> Signal dom a                                     -- ^ Sample
-    -> (Signal dom Bool, Signal dom a, Signal dom Bool) -- ^ (Output valid, output data, ready)
-
 system 
     :: forall dom a
     .  (HiddenClockResetEnable dom, NFDataX a, Num a)
@@ -221,4 +222,91 @@ prop_semiParallelFIRTransposedBlockam coeffs input (InfiniteList ens _) = expect
         $ sample @System 
         $ system (semiParallelFIRTransposedBlockRam (const macRealReal) coeffs) (0 : input ++ repeat 0) ens
     swizzle = Clash.concat . Clash.transpose . Clash.reverse
+
+stride :: Int -> [a] -> [a]
+stride s = go
+    where
+    go (x:xs) = x : go (Prelude.drop s xs)
+    go _      = []
+
+fst3 (x, _, _) = x
+snd3 (_, y, _) = y
+
+prop_polyphaseDecim :: Vec 2 (Vec 2 (Signed 32)) -> [Signed 32] -> Property
+prop_polyphaseDecim coeffs input = expect === result
+    where
+    expect
+        = Prelude.take (Prelude.length input)
+        $ stride 1 
+        $ sample @System 
+        $ goldenFIR (Clash.concat $ Clash.transpose coeffs) (pure True) (fromList $ 0 : input Prelude.++ Prelude.repeat 0)
+    result 
+        = Prelude.take (Prelude.length input) 
+        $ Prelude.map snd3
+        $ Prelude.filter fst3
+        $ sample @System 
+        $ bundle 
+        $ polyphaseDecim filters (pure True) (fromList $ 0 : input Prelude.++ Prelude.repeat 0) 
+    filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) . singleton) $ Clash.reverse coeffs
+
+prop_polyphaseDecimMultiStage :: Vec 2 (Vec 4 (Vec 2 (Signed 32))) -> [Signed 32] -> Property
+prop_polyphaseDecimMultiStage coeffs input = expect === result
+    where
+    expect
+        = Prelude.take (Prelude.length input)
+        $ stride 1 
+        $ sample @System 
+        $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input Prelude.++ Prelude.repeat 0)
+    result 
+        = Prelude.take (Prelude.length input) 
+        $ Prelude.map snd3
+        $ Prelude.drop 1
+        $ Prelude.filter fst3
+        $ sample @System 
+        $ bundle 
+        $ polyphaseDecim filters (pure True) (fromList $ 0 : input Prelude.++ Prelude.repeat 0) 
+    filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
+
+prop_polyphaseDecimMultiStage2 :: Vec 4 (Vec 4 (Vec 4 (Signed 32))) -> [Signed 32] -> Property
+prop_polyphaseDecimMultiStage2 coeffs input = expect === result
+    where
+    expect
+        = Prelude.take (Prelude.length input)
+        $ Prelude.drop 3
+        $ stride 3 
+        $ sample @System 
+        $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input Prelude.++ Prelude.repeat 0)
+    result 
+        = Prelude.take (Prelude.length input) 
+        $ Prelude.map snd3
+        $ Prelude.drop 3
+        $ Prelude.filter fst3
+        $ sample @System 
+        $ bundle 
+        $ polyphaseDecim filters (pure True) (fromList $ 0 : input Prelude.++ Prelude.repeat 0) 
+    filters :: HiddenClockResetEnable dom => Vec 4 (Filter dom (Signed 32))
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
+
+--Phases contain long MAC groups so must assert backpressure
+prop_polyphaseDecimMultiStage2_backPressure :: Vec 4 (Vec 4 (Vec 8 (Signed 32))) -> [Signed 32] -> Property
+prop_polyphaseDecimMultiStage2_backPressure coeffs input = expect === result
+    where
+    expect
+        = Prelude.take (Prelude.length input)
+        $ Prelude.drop 3
+        $ stride 3 
+        $ sample @System 
+        $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input Prelude.++ Prelude.repeat 0)
+    result 
+        = Prelude.take (Prelude.length input) 
+        $ Prelude.map snd
+        $ Prelude.drop 3
+        $ Prelude.filter fst
+        $ sample @System 
+        $ bundle 
+        $ system (polyphaseDecim filters) (input Prelude.++ Prelude.repeat 0) (repeat True)
+    filters :: HiddenClockResetEnable dom => Vec 4 (Filter dom (Signed 32))
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
