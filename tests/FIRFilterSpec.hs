@@ -74,11 +74,11 @@ prop_FilterTransposed coeffs input (InfiniteList ens _) = expect === result
         = goldenExpect coeffs input
     result 
         = take (length input) 
-        $ drop 2 
+        $ drop 1 
         $ map snd . filter fst
         $ sample @System 
         $ bundle
-        $ systemNoReady (firTransposed (const (liftA3 macRealReal)) (Clash.reverse coeffs)) (0 : input ++ repeat 0) (True : ens)
+        $ systemNoReady (firTransposed (const (liftA3 macRealReal)) (Clash.reverse coeffs)) (input ++ repeat 0) (True : ens)
 
 prop_FilterSystolic :: Vec 16 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_FilterSystolic coeffs input (InfiniteList ens _) = expect === result
@@ -87,11 +87,11 @@ prop_FilterSystolic coeffs input (InfiniteList ens _) = expect === result
         = goldenExpect coeffs input
     result 
         = take (length input) 
-        $ drop 17 
+        $ drop 16 
         $ map snd . filter fst
         $ sample @System 
         $ bundle
-        $ systemNoReady (firSystolic (const (liftA3 macRealReal)) coeffs) (0 : input ++ repeat 0) (True : ens)
+        $ systemNoReady (firSystolic (const (liftA3 macRealReal)) coeffs) (input ++ repeat 0) (True : ens)
 
 prop_FilterSystolicSymmetric :: Vec 16 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_FilterSystolicSymmetric coeffs input (InfiniteList ens _)= expect === result
@@ -100,11 +100,11 @@ prop_FilterSystolicSymmetric coeffs input (InfiniteList ens _)= expect === resul
         = goldenExpect (coeffs Clash.++ Clash.reverse coeffs) input
     result
         = take (length input) 
-        $ drop 17 
+        $ drop 16 
         $ map snd . filter fst
         $ sample @System 
         $ bundle
-        $ systemNoReady (firSystolicSymmetric (const (liftA4 macPreAddRealReal)) coeffs) (0 : input ++ repeat 0) (True : ens)
+        $ systemNoReady (firSystolicSymmetric (const (liftA4 macPreAddRealReal)) coeffs) (input ++ repeat 0) (True : ens)
 
 prop_FilterSymmetric :: Vec 16 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_FilterSymmetric coeffs input (InfiniteList ens _) = expect === result
@@ -113,11 +113,11 @@ prop_FilterSymmetric coeffs input (InfiniteList ens _) = expect === result
         = goldenExpect (Clash.reverse coeffs Clash.++ coeffs) input
     result
         = take (length input) 
-        $ drop 2
+        $ drop 1
         $ map snd . filter fst
         $ sample @System 
         $ bundle
-        $ systemNoReady (firSymmetric (const (liftA4 macPreAddRealReal)) coeffs) (0 : input ++ repeat 0) (True : ens)
+        $ systemNoReady (firSymmetric (const (liftA4 macPreAddRealReal)) coeffs) (input ++ repeat 0) (True : ens)
 
 prop_systolicSymmetric :: Vec 16 (Signed 32) -> Signed 32 -> [Signed 32] -> InfiniteList Bool -> Property
 prop_systolicSymmetric coeffs mid input (InfiniteList ens _) = expect === result
@@ -126,11 +126,11 @@ prop_systolicSymmetric coeffs mid input (InfiniteList ens _) = expect === result
         = goldenExpect (coeffs Clash.++ Clash.singleton mid Clash.++ Clash.reverse coeffs) input
     result
         = take (length input) 
-        $ drop 18 
+        $ drop 17 
         $ map snd . filter fst
         $ sample @System 
         $ bundle
-        $ systemNoReady (firSystolicSymmetricOdd (const (liftA4 macPreAddRealReal)) (coeffs Clash.++ Clash.singleton mid)) (0 : input ++ repeat 0) (True : ens)
+        $ systemNoReady (firSystolicSymmetricOdd (const (liftA4 macPreAddRealReal)) (coeffs Clash.++ Clash.singleton mid)) (input ++ repeat 0) (True : ens)
 
 prop_systolicHalfBand :: Vec 16 (Signed 32) -> Signed 32 -> [Signed 32] -> InfiniteList Bool -> Property
 prop_systolicHalfBand coeffs mid input (InfiniteList ens _) = expect === result
@@ -139,11 +139,11 @@ prop_systolicHalfBand coeffs mid input (InfiniteList ens _) = expect === result
         = goldenExpect (coeffs' Clash.++ Clash.singleton mid Clash.++ Clash.reverse coeffs') input
     result 
         = take (length input) 
-        $ drop 18 
+        $ drop 17 
         $ map snd . filter fst
         $ sample @System 
         $ bundle
-        $ systemNoReady (firSystolicHalfBand (const (liftA4 macPreAddRealReal)) (coeffs Clash.++ Clash.singleton mid)) (0 : input ++ repeat 0) (True : ens)
+        $ systemNoReady (firSystolicHalfBand (const (liftA4 macPreAddRealReal)) (coeffs Clash.++ Clash.singleton mid)) (input ++ repeat 0) (True : ens)
     coeffs' 
         = Clash.init (Clash.merge coeffs (Clash.repeat 0))
 
