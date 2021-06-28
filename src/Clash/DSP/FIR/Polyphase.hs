@@ -40,19 +40,24 @@ polyphaseDecim filters valid sampleIn = (outputReady, summed, inputReady)
         where
         func idx filter = filter (valid .&&. activePhase .==. pure idx) sampleIn 
 
+    --Track which filter phase output is expected next
+    activeOutputPhase :: Signal dom (Index numPhases)
+    activeOutputPhase = wrappingCounter 0 currentIsValid
+
     --Wait until the next phase is valid
     currentValid :: Signal dom (Maybe (Index numPhases))
     currentValid =  findIndex id <$> sequenceA valids
 
-    --Select the filter output to sum
-    toSum :: Signal dom a
-    toSum =  liftA2 (!!) (sequenceA dats) (fromJust <$> currentValid)
+    currentIsValid :: Signal dom Bool
+    currentIsValid =  liftA2 (!!) (sequenceA valids) activeOutputPhase
 
     --Sum the filter outputs
     summed = integrateAndDump 
-        (isJust <$> currentValid) 
-        (currentValid .==. (Just <$> 0)) 
-        toSum
+        currentIsValid 
+        (activeOutputPhase .==. 0) 
+        (liftA2 (!!) (sequenceA dats) activeOutputPhase)
 
     outputReady = register False $ currentValid .==. pure (Just maxBound)
+    ----TODO
+    --outputReady = register False $ currentIsValid .&&. (activeOutputPhase .==. (pure maxBound))
 
