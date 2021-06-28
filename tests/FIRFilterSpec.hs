@@ -38,6 +38,11 @@ goldenFIR
     -> Signal dom a
 goldenFIR = fir (*) (+)
 
+goldenExpect coeffs input
+    = take (length input) 
+    $ sample @System 
+    $ goldenFIR coeffs (pure True) (fromList $ 0 : input ++ repeat 0) 
+
 macRealReal c i a = c * i + a
 
 macPreAddRealReal c x y a = c * (x + y) + a
@@ -48,9 +53,7 @@ prop_FilterTransposed :: Vec 16 (Signed 32) -> [Signed 32] -> Property
 prop_FilterTransposed coeffs input = expect === result
     where
     expect 
-        = take (length input) 
-        $ sample @System 
-        $ goldenFIR coeffs (pure True) (fromList $ 0 : input ++ repeat 0) 
+        = goldenExpect coeffs input
     result 
         = take (length input) 
         $ drop 1 
@@ -61,9 +64,7 @@ prop_FilterSystolic :: Vec 16 (Signed 32) -> [Signed 32] -> Property
 prop_FilterSystolic coeffs input = expect === result
     where
     expect 
-        = take (length input) 
-        $ sample @System 
-        $ goldenFIR coeffs (pure True) (fromList $ 0 : input ++ repeat 0)
+        = goldenExpect coeffs input
     result 
         = take (length input) 
         $ drop 16 
@@ -74,9 +75,7 @@ prop_FilterSystolicSymmetric :: Vec 16 (Signed 32) -> [Signed 32] -> Property
 prop_FilterSystolicSymmetric coeffs input = expect === result
     where
     expect 
-        = take (length input) 
-        $ sample @System 
-        $ goldenFIR (coeffs Clash.++ Clash.reverse coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
+        = goldenExpect (coeffs Clash.++ Clash.reverse coeffs) input
     result
         = take (length input) 
         $ drop 16 
@@ -86,10 +85,8 @@ prop_FilterSystolicSymmetric coeffs input = expect === result
 prop_FilterSymmetric :: Vec 16 (Signed 32) -> [Signed 32] -> Property
 prop_FilterSymmetric coeffs input = expect === result
     where
-    expect
-        = take (length input) 
-        $ sample @System 
-        $ goldenFIR (Clash.reverse coeffs Clash.++ coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
+    expect 
+        = goldenExpect (Clash.reverse coeffs Clash.++ coeffs) input
     result
         = take (length input) 
         $ drop 1
@@ -100,9 +97,7 @@ prop_systolicSymmetric :: Vec 16 (Signed 32) -> Signed 32 -> [Signed 32] -> Prop
 prop_systolicSymmetric coeffs mid input = expect === result
     where
     expect 
-        = take (length input) 
-        $ sample @System 
-        $ goldenFIR (coeffs Clash.++ Clash.singleton mid Clash.++ Clash.reverse coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
+        = goldenExpect (coeffs Clash.++ Clash.singleton mid Clash.++ Clash.reverse coeffs) input
     result
         = take (length input) 
         $ drop 17 
@@ -113,9 +108,7 @@ prop_systolicHalfBand :: Vec 16 (Signed 32) -> Signed 32 -> [Signed 32] -> Prope
 prop_systolicHalfBand coeffs mid input = expect === result
     where
     expect 
-        = take (length input) 
-        $ sample @System 
-        $ goldenFIR (coeffs' Clash.++ Clash.singleton mid Clash.++ Clash.reverse coeffs') (pure True) (fromList $ 0 : input ++ repeat 0)
+        = goldenExpect (coeffs' Clash.++ Clash.singleton mid Clash.++ Clash.reverse coeffs') input
     result 
         = take (length input) 
         $ drop 17 
@@ -159,13 +152,10 @@ prop_semiParallelFIRSystolic :: Vec 4 (Signed 32) -> [Signed 32] -> InfiniteList
 prop_semiParallelFIRSystolic coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = take (length input) 
-        $ sample @System 
-        $ goldenFIR coeffs (pure True) (fromList $ 0 : input ++ repeat 0)
+        = goldenExpect coeffs input
     result
         = take (length input) 
-        $ map snd
-        $ filter fst
+        $ map snd . filter fst
         $ sample @System 
         $ bundle 
         $ system (semiParallelFIRSystolic (const macRealReal) (singleton coeffs)) (input ++ repeat 0) ens
@@ -174,13 +164,10 @@ prop_semiParallelFIRSystolicMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 3
 prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = take (length input) 
-        $ sample @System 
-        $ goldenFIR (Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
+        = goldenExpect (Clash.concat coeffs) input
     result
         = take (length input) 
-        $ map snd
-        $ filter fst
+        $ map snd . filter fst
         $ sample @System 
         $ bundle 
         $ system (semiParallelFIRSystolic (const macRealReal) coeffs) (input ++ repeat 0) ens
@@ -189,13 +176,10 @@ prop_semiParallelFIRTransposed :: Vec 4 (Vec 3 (Signed 32)) -> [Signed 32] -> In
 prop_semiParallelFIRTransposed coeffs input (InfiniteList ens _) = expect === result
     where
     expect 
-        = take (length input) 
-        $ sample @System 
-        $ goldenFIR (swizzle coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
+        = goldenExpect (swizzle coeffs) input
     result
         = take (length input) 
-        $ map snd
-        $ filter fst
+        $ map snd . filter fst
         $ sample @System 
         $ bundle 
         $ system (semiParallelFIRTransposed (const macRealReal) coeffs) (0 : input ++ repeat 0) ens
@@ -212,8 +196,7 @@ prop_semiParallelFIRTransposedBlockam coeffs input (InfiniteList ens _) = expect
     result
         = take (length input) 
         $ drop 6 --Drop the Xs since the asyncRam doesnt support initial values
-        $ map snd
-        $ filter fst
+        $ map snd . filter fst
         $ sample @System 
         $ bundle 
         $ system (semiParallelFIRTransposedBlockRam (const macRealReal) coeffs) (0 : input ++ repeat 0) ens
