@@ -131,7 +131,6 @@ prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expec
         $ goldenFIR (Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result
         = take (length input) 
-        $ drop 3
         $ map snd
         $ filter fst
         $ sample @System 

@@ -91,7 +91,10 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
     indices =  iterateI (regEn 0 globalStep) address
 
     validOut :: Signal dom Bool
-    validOut =  globalStep .&&. (regEn False globalStep $ regEn False globalStep $ last indices .==. 0)
+    validOut 
+        --TODO: globalStep here is not good for timing
+        =    globalStep 
+        .&&. last (generate (SNat @ 3) (regEn False globalStep) (last indices .==. pure maxBound))
 
     dataOut :: Signal dom outputType
     dataOut =  integrateAndDump globalStep validOut $ fst sampleOut
