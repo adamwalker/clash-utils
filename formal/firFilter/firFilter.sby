@@ -15,7 +15,6 @@ read -formal transposed_fir.v
 prep -top formal
 
 [files]
-verilog/Main/golden_fir/golden_fir.v
-verilog/Main/golden_fir/fold6ED2EBCBAF05FF95.inc
-verilog/Main/transposed_fir/transposed_fir.v
+verilog/Main.topEntity1/golden_fir.v
+verilog/Main.topEntity2/transposed_fir.v
 formal.sv

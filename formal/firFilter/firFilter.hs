@@ -1,6 +1,6 @@
 import Clash.Prelude
 
-import Clash.DSP.FIRFilter
+import Clash.DSP.FIR.FIRFilter
 
 goldenFIR 
     :: HiddenClockResetEnable dom

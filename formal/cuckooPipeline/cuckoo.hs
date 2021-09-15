@@ -18,7 +18,7 @@ hashtable
         )                        -- ^ (Lookup valid, Lookup result, busy)
 hashtable lu modify delete val = (isJust <$> res, fromJust <$> res, busy)
     where
-    (res, busy) = cuckooPipelineInsert hashFunctions lu (cmd <$> modify <*> delete <*> val)
+    (res, busy) = cuckooPipelineInsert (SNat @ 0) hashFunctions lu (cmd <$> modify <*> delete <*> val)
     cmd modify delete val
         | modify && delete = Just Nothing
         | modify           = Just $ Just val

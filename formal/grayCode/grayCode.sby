@@ -14,6 +14,6 @@ read -formal gray_to_binary.v
 prep -top formal
 
 [files]
-verilog/Main/binary_to_gray/binary_to_gray.v
-verilog/Main/gray_to_binary/gray_to_binary.v
+verilog/Main.topEntity1/binary_to_gray.v
+verilog/Main.topEntity2/gray_to_binary.v
 formal.sv

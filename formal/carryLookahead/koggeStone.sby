@@ -13,5 +13,5 @@ read -formal koggeStone.v
 prep -top formal
 
 [files]
-verilog/Main/koggeStone/koggeStone.v
+verilog/Main.topEntity/koggeStone.v
 formal.sv
