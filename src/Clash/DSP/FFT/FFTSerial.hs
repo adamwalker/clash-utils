@@ -10,6 +10,7 @@ module Clash.DSP.FFT.FFTSerial (
 
 import Clash.Prelude
 
+import Clash.Counter(count)
 import Clash.DSP.Complex
 import Clash.DSP.FFT.FFT(halveTwiddles)
 
@@ -31,7 +32,7 @@ fftSerialDITStep twiddles en input = bundle (butterflyHighOutput, butterflyLowOu
     where
 
     counter :: Signal dom (BitVector (n + 1))
-    counter = regEn 0 en (counter + 1)
+    counter = count 0 en
 
     (stage' :: Signal dom (BitVector 1), address' :: Signal dom (BitVector n)) = unbundle $ split <$> counter
 
@@ -94,7 +95,7 @@ fftSerialDIFStep twiddles en input = bundle (upperRamReadResult, regEn 0 en lowe
 
     --The state
     counter :: Signal dom (BitVector (n + 1))
-    counter = regEn 0 en (counter + 1)
+    counter = count 0 en 
 
     (stage' :: Signal dom (BitVector 1), address' :: Signal dom (BitVector n)) = unbundle $ split <$> counter
 
