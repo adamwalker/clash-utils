@@ -9,6 +9,7 @@ module Clash.DSP.FFT.FFTSerial (
     ) where
 
 import Clash.Prelude
+import Data.Function
 
 import Clash.Counter(count)
 import Clash.DSP.Complex
@@ -117,14 +118,14 @@ fftSerialDIFStep twiddles en input = bundle (upperRamReadResult, regEn 0 en lowe
 -- | Example serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
 fftSerialDIT
     :: forall dom a. (HiddenClockResetEnable dom, Num a, NFDataX a)
-    => Vec 4 (Complex a)             -- ^ Precomputed twiddle factors
+    => Vec 4 (Complex a)                 -- ^ Precomputed twiddle factors
     -> Signal dom Bool                   -- ^ Input enable signal
     -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
     -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
-fftSerialDIT twiddles en input = 
-    fftSerialDITStep twiddles (de . de . de . de $ en) $ 
-    fftSerialDITStep cexp2    (de en) $ 
-    fftBase en input
+fftSerialDIT twiddles en input  
+    = fftBase en input
+    & fftSerialDITStep cexp2    (de en)  
+    & fftSerialDITStep twiddles (de . de . de . de $ en) 
 
     where
 
@@ -136,14 +137,14 @@ fftSerialDIT twiddles en input =
 -- | Example serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
 fftSerialDIF
     :: forall dom a. (HiddenClockResetEnable dom, Num a, NFDataX a)
-    => Vec 4 (Complex a)             -- ^ Precomputed twiddle factors
+    => Vec 4 (Complex a)                 -- ^ Precomputed twiddle factors
     -> Signal dom Bool                   -- ^ Input enable signal
     -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
     -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
-fftSerialDIF twiddles en input = 
-    fftBase (de . de . de . de . de . de . de $ en) $
-    fftSerialDIFStep cexp2    (de . de . de . de $ en) $ 
-    fftSerialDIFStep twiddles en input
+fftSerialDIF twiddles en input 
+    = fftSerialDIFStep twiddles en input
+    & fftSerialDIFStep cexp2    (de . de . de . de $ en) 
+    & fftBase (de . de . de . de . de . de . de $ en) 
 
     where
 
