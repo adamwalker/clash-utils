@@ -89,25 +89,6 @@ fftSerialDITStep twiddles en input = bundle (butterflyHighOutput, butterflyLowOu
     butterflyHighOutput = butterflyHighInput + twiddled
     butterflyLowOutput  = butterflyHighInput - twiddled 
 
--- | Example serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
-fftSerialDIT
-    :: forall dom a. (HiddenClockResetEnable dom, Num a, NFDataX a)
-    => Vec 4 (Complex a)             -- ^ Precomputed twiddle factors
-    -> Signal dom Bool                   -- ^ Input enable signal
-    -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
-    -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
-fftSerialDIT twiddles en input = 
-    fftSerialDITStep twiddles (de . de . de . de $ en) $ 
-    fftSerialDITStep cexp2    (de en) $ 
-    fftBase en input
-
-    where
-
-    de = register False
-
-    cexp2 :: Vec 2 (Complex a)
-    cexp2 = halveTwiddles twiddles
-
 --Decimation in frequency
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
 -- | A step in the serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. 
@@ -132,6 +113,25 @@ fftSerialDIFStep twiddles en input = bundle (upperRamReadResult, regEn 0 en lowe
 
     --The FIFOs
     (upperRamReadResult, lowerData) = fftReorder en address butterflyHighOutput butterflyLowOutput
+
+-- | Example serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
+fftSerialDIT
+    :: forall dom a. (HiddenClockResetEnable dom, Num a, NFDataX a)
+    => Vec 4 (Complex a)             -- ^ Precomputed twiddle factors
+    -> Signal dom Bool                   -- ^ Input enable signal
+    -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
+    -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
+fftSerialDIT twiddles en input = 
+    fftSerialDITStep twiddles (de . de . de . de $ en) $ 
+    fftSerialDITStep cexp2    (de en) $ 
+    fftBase en input
+
+    where
+
+    de = register False
+
+    cexp2 :: Vec 2 (Complex a)
+    cexp2 = halveTwiddles twiddles
 
 -- | Example serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
 fftSerialDIF
