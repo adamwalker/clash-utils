@@ -124,12 +124,13 @@ fftSerialDIT
     -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
 fftSerialDIT twiddles en input  
     = fftBase en input
-    & fftSerialDITStep cexp2    (de en)  
-    & fftSerialDITStep twiddles (de . de . de . de $ en) 
+    & fftSerialDITStep cexp2    stage2En
+    & fftSerialDITStep twiddles stage3En
 
     where
 
-    de = register False
+    stage2En = register False en
+    stage3En = last $ generate (SNat @ 3) (register False) stage2En
 
     cexp2 :: Vec 2 (Complex a)
     cexp2 = halveTwiddles twiddles
@@ -143,12 +144,13 @@ fftSerialDIF
     -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
 fftSerialDIF twiddles en input 
     = fftSerialDIFStep twiddles en input
-    & fftSerialDIFStep cexp2    (de . de . de . de $ en) 
-    & fftBase (de . de . de . de . de . de . de $ en) 
+    & fftSerialDIFStep cexp2    stage2En 
+    & fftBase                   stage3En 
 
     where
 
-    de = register False
+    stage2En = last $ generate (SNat @ 4) (register False) en
+    stage3En = last $ generate (SNat @ 3) (register False) stage2En
 
     cexp2 :: Vec 2 (Complex a)
     cexp2 = halveTwiddles twiddles
