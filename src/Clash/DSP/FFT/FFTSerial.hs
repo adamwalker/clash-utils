@@ -14,7 +14,11 @@ import Clash.Counter(count)
 import Clash.DSP.Complex
 import Clash.DSP.FFT.FFT(halveTwiddles)
 
-fftBase :: (HiddenClockResetEnable dom, Num a, NFDataX a) => Signal dom Bool -> Signal dom (Complex a, Complex a) -> Signal dom (Complex a, Complex a)
+fftBase 
+    :: (HiddenClockResetEnable dom, Num a, NFDataX a) 
+    => Signal dom Bool 
+    -> Signal dom (Complex a, Complex a) 
+    -> Signal dom (Complex a, Complex a)
 fftBase en = regEn (0, 0) en . fmap func
     where
     func (x, y) = (x + y, x - y)
