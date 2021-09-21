@@ -14,6 +14,7 @@ module Clash.DSP.CORDIC (
     CordicState(..),
     cordicStep,
     cordicSteps,
+    cordicPipeline,
     cordicExample
     ) where
 
@@ -42,7 +43,7 @@ data CordicState a b = CordicState {
 
 {-| Perform one step of the CORDIC algorithm. Can be used to calculate sine and cosine as well as calculate the magnitude and phase of a complex number. See the tests to see how this is done. This pure function can be used iteratively by feeding the output back into the input, pipelined by instantiating it several times with registers in between, or combinationally. `cordicSteps` may be useful for this. -}
 cordicStep 
-    :: (Ord a, Num a, Bits a, Num b, Ord b, KnownNat n) 
+    :: (Num a, Bits a, Num b, KnownNat n) 
     => (CordicState a b -> Bool) -- ^ Function that determines the direction of rotation. See the tests for an example.
     -> Index n                   -- ^ Iteration index of this step
     -> b                         -- ^ Arctan for this index
@@ -62,7 +63,7 @@ cordicStep dir idx a state@(CordicState (x :+ y) arg) = CordicState (nextX :+ ne
 
 {-| Perform n iterations of the CORDIC algorithm -}
 cordicSteps
-    :: (Ord a, Num a, Bits a, Num b, Ord b,  KnownNat n, KnownNat m) 
+    :: (Num a, Bits a, Num b, KnownNat n, KnownNat m) 
     => (CordicState a b -> Bool) -- ^ Function that determines the direction of rotation
     -> Index m                   -- ^ Iteration index of these steps
     -> Vec n b                   -- ^ Vector of arctan values
@@ -71,6 +72,35 @@ cordicSteps
 cordicSteps dir start = flip (ifoldl cordicStep') 
     where 
     cordicStep' accum index con = cordicStep dir (start + resize index) con accum
+
+cordicPipeline
+    :: forall dom a b m numStages numPerStage
+    .  HiddenClockResetEnable dom
+    => KnownNat numStages
+    => (NFDataX a, Bits a, Num a)
+    => (NFDataX b, Num b)
+    => KnownNat numPerStage
+    => KnownNat m
+    => (CordicState a b -> Bool)
+    -> Index m
+    -> Vec numStages (Vec numPerStage b)
+    -> Signal dom Bool
+    -> Signal dom (CordicState a b)
+    -> Signal dom (CordicState a b)
+cordicPipeline dir start consts en input 
+    = foldl (flip step) input (zip (iterateI (+ (snatToNum (SNat @ numPerStage))) start) consts)
+    where 
+
+    step (idx, coeff) 
+        = regEn (errorX "Initial CORDIC pipe") en 
+        . fmap (step' idx coeff)
+        where
+        step' 
+            :: Index m 
+            -> Vec numPerStage b
+            -> CordicState a b 
+            -> CordicState a b
+        step' = cordicSteps dir
 
 {-| An example synthesizeable CORDIC implementation. Finds the magnitude and phase of a complex number. Consists of an 8 deep pipeline. Each pipeline stages performs two CORDIC iterations for a total of 16 iterations. Processes one input per cycle. Latency is 8 cycles. -}
 cordicExample 
