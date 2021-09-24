@@ -256,11 +256,12 @@ prop_polyphaseDecim coeffs input (InfiniteList ens _) = expect === result
 --2 phases
 --4 stages in semi parallel filter
 --2 coefficients in filter
-prop_polyphaseDecimMultiStage :: Vec 2 (Vec 4 (Vec 2 (Signed 32))) -> [Signed 32] -> Property
-prop_polyphaseDecimMultiStage coeffs input = expect === result
+prop_polyphaseDecimMultiStage :: Vec 2 (Vec 4 (Vec 2 (Signed 32))) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_polyphaseDecimMultiStage coeffs input (InfiniteList ens _) = expect === result
     where
     expect
         = take (length input)
+        $ drop 1
         $ stride 1 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
@@ -268,7 +269,7 @@ prop_polyphaseDecimMultiStage coeffs input = expect === result
         = take (length input) 
         $ map snd . drop 1 . filter fst
         $ sample @System 
-        $ system (polyphaseDecim filters) (input ++ repeat 0) (repeat True)
+        $ system (polyphaseDecim filters) (input ++ repeat 0) ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
