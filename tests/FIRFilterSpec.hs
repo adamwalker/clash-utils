@@ -160,6 +160,8 @@ streamList samples enables = unbundle . mealy step (samples, enables)
     step (l@(x:xs), (e:es))      False = ((l, es),  (e, x))
     step (l@(x:xs), (False:es))  True  = ((l, es),  (False, x))
     step (  (x:xs), (True:es))   True  = ((xs, es), (True, x))
+    step ([],       _)           _     = error "Data list empty"
+    step (_,        [])          _     = error "Enable list empty"
 
 system 
     :: forall dom a
@@ -264,12 +266,9 @@ prop_polyphaseDecimMultiStage coeffs input = expect === result
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
         = take (length input) 
-        $ map snd3
-        $ drop 1
-        $ filter fst3
+        $ map snd . drop 1 . filter fst
         $ sample @System 
-        $ bundle 
-        $ polyphaseDecim filters (pure True) (fromList $ 0 : input ++ repeat 0) 
+        $ system (polyphaseDecim filters) (input ++ repeat 0) (repeat True)
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
