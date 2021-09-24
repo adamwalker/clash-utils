@@ -232,6 +232,9 @@ stride s = go
 fst3 (x, _, _) = x
 snd3 (_, y, _) = y
 
+--2 phases
+--1 stage in semi parallel filter
+--2 coefficients in filter
 prop_polyphaseDecim :: Vec 2 (Vec 1 (Vec 2 (Signed 32))) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_polyphaseDecim coeffs input (InfiniteList ens _) = expect === result
     where
@@ -248,6 +251,9 @@ prop_polyphaseDecim coeffs input (InfiniteList ens _) = expect === result
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
+--2 phases
+--4 stages in semi parallel filter
+--2 coefficients in filter
 prop_polyphaseDecimMultiStage :: Vec 2 (Vec 4 (Vec 2 (Signed 32))) -> [Signed 32] -> Property
 prop_polyphaseDecimMultiStage coeffs input = expect === result
     where
@@ -267,6 +273,9 @@ prop_polyphaseDecimMultiStage coeffs input = expect === result
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
+--4 phases
+--4 stages in semi parallel filter
+--4 coefficients in filter
 prop_polyphaseDecimMultiStage2 :: Vec 4 (Vec 4 (Vec 4 (Signed 32))) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_polyphaseDecimMultiStage2 coeffs input (InfiniteList ens _) = expect === result
     where
@@ -285,6 +294,9 @@ prop_polyphaseDecimMultiStage2 coeffs input (InfiniteList ens _) = expect === re
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
 --Phases contain long MAC groups so must assert backpressure
+--4 phases
+--4 stages in semi parallel filter
+--8 coefficients in filter
 prop_polyphaseDecimMultiStage2_backPressure :: Vec 4 (Vec 4 (Vec 8 (Signed 32))) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_polyphaseDecimMultiStage2_backPressure coeffs input (InfiniteList ens _) = expect === result
     where
