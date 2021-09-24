@@ -343,8 +343,7 @@ prop_polyphaseDecimMultiStage2_backPressure coeffs input (InfiniteList ens _) = 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
         = take (length input) 
-        $ map snd
-        $ filter fst
+        $ map snd . filter fst
         $ sample @System 
         $ system (polyphaseDecim filters) (input ++ repeat 0) ens
     filters :: HiddenClockResetEnable dom => Vec 4 (Filter dom (Signed 32))
@@ -364,8 +363,7 @@ prop_polyphaseDecimMultiStage3_backPressure coeffs input (InfiniteList ens _) = 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
         = take (length input) 
-        $ map snd
-        $ filter fst
+        $ map snd . filter fst
         $ sample @System 
         $ system (polyphaseDecim filters) (input ++ repeat 0) ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
