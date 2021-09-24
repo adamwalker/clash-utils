@@ -73,7 +73,7 @@ systemNoReady
     -> Signal dom (Bool, a)
 systemNoReady filter samples ens = bundle (valids, out)
     where
-    (valids, sampleStream) = streamList samples ens (pure True)
+    (valids, sampleStream) = streamList (samples ++ repeat 0) ens (pure True)
     out                    = filter valids sampleStream
 
 prop_FilterTransposed :: Vec 16 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
@@ -86,7 +86,7 @@ prop_FilterTransposed coeffs input (InfiniteList ens _) = expect === result
         $ drop 1 
         $ map snd . filter fst
         $ sample @System 
-        $ systemNoReady (firTransposed (const (liftA3 macRealReal)) (Clash.reverse coeffs)) (input ++ repeat 0) (True : ens)
+        $ systemNoReady (firTransposed (const (liftA3 macRealReal)) (Clash.reverse coeffs)) input (True : ens)
 
 prop_FilterSystolic :: Vec 16 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_FilterSystolic coeffs input (InfiniteList ens _) = expect === result
@@ -98,7 +98,7 @@ prop_FilterSystolic coeffs input (InfiniteList ens _) = expect === result
         $ drop 16 
         $ map snd . filter fst
         $ sample @System 
-        $ systemNoReady (firSystolic (const (liftA3 macRealReal)) coeffs) (input ++ repeat 0) (True : ens)
+        $ systemNoReady (firSystolic (const (liftA3 macRealReal)) coeffs) input (True : ens)
 
 prop_FilterSystolicSymmetric :: Vec 16 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_FilterSystolicSymmetric coeffs input (InfiniteList ens _)= expect === result
@@ -110,7 +110,7 @@ prop_FilterSystolicSymmetric coeffs input (InfiniteList ens _)= expect === resul
         $ drop 16 
         $ map snd . filter fst
         $ sample @System 
-        $ systemNoReady (firSystolicSymmetric (const (liftA4 macPreAddRealReal)) coeffs) (input ++ repeat 0) (True : ens)
+        $ systemNoReady (firSystolicSymmetric (const (liftA4 macPreAddRealReal)) coeffs) input (True : ens)
 
 prop_FilterSymmetric :: Vec 16 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_FilterSymmetric coeffs input (InfiniteList ens _) = expect === result
@@ -122,7 +122,7 @@ prop_FilterSymmetric coeffs input (InfiniteList ens _) = expect === result
         $ drop 1
         $ map snd . filter fst
         $ sample @System 
-        $ systemNoReady (firSymmetric (const (liftA4 macPreAddRealReal)) coeffs) (input ++ repeat 0) (True : ens)
+        $ systemNoReady (firSymmetric (const (liftA4 macPreAddRealReal)) coeffs) input (True : ens)
 
 prop_systolicSymmetric :: Vec 16 (Signed 32) -> Signed 32 -> [Signed 32] -> InfiniteList Bool -> Property
 prop_systolicSymmetric coeffs mid input (InfiniteList ens _) = expect === result
@@ -134,7 +134,7 @@ prop_systolicSymmetric coeffs mid input (InfiniteList ens _) = expect === result
         $ drop 17 
         $ map snd . filter fst
         $ sample @System 
-        $ systemNoReady (firSystolicSymmetricOdd (const (liftA4 macPreAddRealReal)) (coeffs Clash.++ Clash.singleton mid)) (input ++ repeat 0) (True : ens)
+        $ systemNoReady (firSystolicSymmetricOdd (const (liftA4 macPreAddRealReal)) (coeffs Clash.++ Clash.singleton mid)) input (True : ens)
 
 prop_systolicHalfBand :: Vec 16 (Signed 32) -> Signed 32 -> [Signed 32] -> InfiniteList Bool -> Property
 prop_systolicHalfBand coeffs mid input (InfiniteList ens _) = expect === result
@@ -146,7 +146,7 @@ prop_systolicHalfBand coeffs mid input (InfiniteList ens _) = expect === result
         $ drop 17 
         $ map snd . filter fst
         $ sample @System 
-        $ systemNoReady (firSystolicHalfBand (const (liftA4 macPreAddRealReal)) (coeffs Clash.++ Clash.singleton mid)) (input ++ repeat 0) (True : ens)
+        $ systemNoReady (firSystolicHalfBand (const (liftA4 macPreAddRealReal)) (coeffs Clash.++ Clash.singleton mid)) input (True : ens)
     coeffs' 
         = Clash.init (Clash.merge coeffs (Clash.repeat 0))
 
@@ -175,7 +175,7 @@ system
     -> Signal dom (Bool, a)
 system filter samples ens = bundle (vld, out)
     where
-    (valids, sampleStream) = streamList samples ens ready
+    (valids, sampleStream) = streamList (samples ++ repeat 0) ens ready
     (vld, out, ready)      = filter valids sampleStream
 
 prop_semiParallelFIRSystolic :: Vec 4 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
@@ -187,7 +187,7 @@ prop_semiParallelFIRSystolic coeffs input (InfiniteList ens _) = expect === resu
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolic (const macRealReal) (singleton coeffs)) (input ++ repeat 0) ens
+        $ system (semiParallelFIRSystolic (const macRealReal) (singleton coeffs)) input ens
 
 prop_semiParallelFIRSystolicMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expect === result 
@@ -198,7 +198,7 @@ prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expec
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolic (const macRealReal) coeffs) (input ++ repeat 0) ens
+        $ system (semiParallelFIRSystolic (const macRealReal) coeffs) input ens
 
 prop_semiParallelFIRTransposed :: Vec 4 (Vec 3 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRTransposed coeffs input (InfiniteList ens _) = expect === result
@@ -209,7 +209,7 @@ prop_semiParallelFIRTransposed coeffs input (InfiniteList ens _) = expect === re
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRTransposed (const macRealReal) coeffs) (0 : input ++ repeat 0) ens
+        $ system (semiParallelFIRTransposed (const macRealReal) coeffs) (0 : input) ens
     swizzle = Clash.concat . Clash.transpose . Clash.reverse
 
 prop_semiParallelFIRTransposedBlockam :: Vec 2 (Vec 3 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
@@ -225,7 +225,7 @@ prop_semiParallelFIRTransposedBlockam coeffs input (InfiniteList ens _) = expect
         $ drop 6 --Drop the Xs since the asyncRam doesnt support initial values
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRTransposedBlockRam (const macRealReal) coeffs) (0 : input ++ repeat 0) ens
+        $ system (semiParallelFIRTransposedBlockRam (const macRealReal) coeffs) (0 : input) ens
     swizzle = Clash.concat . Clash.transpose . Clash.reverse
 
 stride :: Int -> [a] -> [a]
@@ -249,7 +249,7 @@ prop_polyphaseDecim coeffs input (InfiniteList ens _) = expect === result
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (polyphaseDecim filters) (input ++ repeat 0) ens
+        $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
@@ -268,7 +268,7 @@ prop_polyphaseDecimMultiStage coeffs input (InfiniteList ens _) = expect === res
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (polyphaseDecim filters) (input ++ repeat 0) ens
+        $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
@@ -287,7 +287,7 @@ prop_polyphaseDecimMultiStage2 coeffs input (InfiniteList ens _) = expect === re
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (polyphaseDecim filters) (input ++ repeat 0) ens
+        $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
@@ -306,7 +306,7 @@ prop_polyphaseDecimMultiStage3 coeffs input (InfiniteList ens _) = expect === re
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (polyphaseDecim filters) (input ++ repeat 0) ens
+        $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 4 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
@@ -325,7 +325,7 @@ prop_polyphaseDecimMultiStage4 coeffs input (InfiniteList ens _) = expect === re
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (polyphaseDecim filters) (input ++ repeat 0) ens
+        $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 3 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
@@ -345,7 +345,7 @@ prop_polyphaseDecimMultiStage2_backPressure coeffs input (InfiniteList ens _) = 
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (polyphaseDecim filters) (input ++ repeat 0) ens
+        $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 4 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
@@ -365,7 +365,7 @@ prop_polyphaseDecimMultiStage3_backPressure coeffs input (InfiniteList ens _) = 
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (polyphaseDecim filters) (input ++ repeat 0) ens
+        $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
