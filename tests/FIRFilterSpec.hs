@@ -261,13 +261,12 @@ prop_polyphaseDecimMultiStage coeffs input (InfiniteList ens _) = expect === res
     where
     expect
         = take (length input)
-        $ drop 1
         $ stride 1 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
         = take (length input) 
-        $ map snd . drop 1 . filter fst
+        $ map snd . filter fst
         $ sample @System 
         $ system (polyphaseDecim filters) (input ++ repeat 0) ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
@@ -281,13 +280,12 @@ prop_polyphaseDecimMultiStage2 coeffs input (InfiniteList ens _) = expect === re
     where
     expect
         = take (length input)
-        $ drop 1
         $ stride 1 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
         = take (length input) 
-        $ map snd . drop 1 . filter fst
+        $ map snd . filter fst
         $ sample @System 
         $ system (polyphaseDecim filters) (input ++ repeat 0) ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
@@ -301,13 +299,12 @@ prop_polyphaseDecimMultiStage3 coeffs input (InfiniteList ens _) = expect === re
     where
     expect
         = take (length input)
-        $ drop 3
         $ stride 3 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
         = take (length input) 
-        $ map snd . drop 3 . filter fst
+        $ map snd . filter fst
         $ sample @System 
         $ system (polyphaseDecim filters) (input ++ repeat 0) ens
     filters :: HiddenClockResetEnable dom => Vec 4 (Filter dom (Signed 32))
@@ -321,13 +318,12 @@ prop_polyphaseDecimMultiStage4 coeffs input (InfiniteList ens _) = expect === re
     where
     expect
         = take (length input)
-        $ drop 2
         $ stride 2 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
         = take (length input) 
-        $ map snd . drop 2 . filter fst
+        $ map snd . filter fst
         $ sample @System 
         $ system (polyphaseDecim filters) (input ++ repeat 0) ens
     filters :: HiddenClockResetEnable dom => Vec 3 (Filter dom (Signed 32))
@@ -342,13 +338,11 @@ prop_polyphaseDecimMultiStage2_backPressure coeffs input (InfiniteList ens _) = 
     where
     expect
         = take (length input)
-        $ drop 3
         $ stride 3 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
         = take (length input) 
-        $ drop 3
         $ map snd
         $ filter fst
         $ sample @System 
@@ -365,13 +359,11 @@ prop_polyphaseDecimMultiStage3_backPressure coeffs input (InfiniteList ens _) = 
     where
     expect
         = take (length input)
-        $ drop 1
         $ stride 1 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
         = take (length input) 
-        $ drop 1
         $ map snd
         $ filter fst
         $ sample @System 
