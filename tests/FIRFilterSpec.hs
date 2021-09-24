@@ -32,7 +32,7 @@ spec = describe "FIR filters" $ do
         specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRTransposedBlockam
     describe "Polyphase" $ do
         specify "Decimate"               $ property $ prop_polyphaseDecim
-        --specify "Decimate multi stage"   $ property $ prop_polyphaseDecimMultiStage
+        specify "Decimate multi stage"   $ property $ prop_polyphaseDecimMultiStage
         specify "Decimate multi stage 2" $ property $ prop_polyphaseDecimMultiStage2
         specify "Decimate back pressure" $ property $ prop_polyphaseDecimMultiStage2_backPressure
 
@@ -258,18 +258,18 @@ prop_polyphaseDecimMultiStage :: Vec 2 (Vec 4 (Vec 2 (Signed 32))) -> [Signed 32
 prop_polyphaseDecimMultiStage coeffs input = expect === result
     where
     expect
-        = Prelude.take (Prelude.length input)
+        = take (length input)
         $ stride 1 
         $ sample @System 
-        $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input Prelude.++ Prelude.repeat 0)
+        $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
-        = Prelude.take (Prelude.length input) 
-        $ Prelude.map snd3
-        $ Prelude.drop 1
-        $ Prelude.filter fst3
+        = take (length input) 
+        $ map snd3
+        $ drop 1
+        $ filter fst3
         $ sample @System 
         $ bundle 
-        $ polyphaseDecim filters (pure True) (fromList $ 0 : input Prelude.++ Prelude.repeat 0) 
+        $ polyphaseDecim filters (pure True) (fromList $ 0 : input ++ repeat 0) 
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
