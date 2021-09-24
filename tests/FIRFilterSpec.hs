@@ -232,21 +232,21 @@ stride s = go
 fst3 (x, _, _) = x
 snd3 (_, y, _) = y
 
-prop_polyphaseDecim :: Vec 2 (Vec 2 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_polyphaseDecim :: Vec 2 (Vec 1 (Vec 2 (Signed 32))) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_polyphaseDecim coeffs input (InfiniteList ens _) = expect === result
     where
     expect
         = take (length input)
         $ stride 1 
         $ sample @System 
-        $ goldenFIR (Clash.concat $ Clash.transpose coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
+        $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
         $ system (polyphaseDecim filters) (input ++ repeat 0) ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
-    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) . singleton) $ Clash.reverse coeffs
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
 prop_polyphaseDecimMultiStage :: Vec 2 (Vec 4 (Vec 2 (Signed 32))) -> [Signed 32] -> Property
 prop_polyphaseDecimMultiStage coeffs input = expect === result
