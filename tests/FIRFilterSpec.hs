@@ -34,6 +34,7 @@ spec = describe "FIR filters" $ do
         specify "Decimate"               $ property $ prop_polyphaseDecim
         specify "Decimate multi stage"   $ property $ prop_polyphaseDecimMultiStage
         specify "Decimate multi stage 2" $ property $ prop_polyphaseDecimMultiStage2
+        specify "Decimate multi stage 3" $ property $ prop_polyphaseDecimMultiStage3
         specify "Decimate back pressure" $ property $ prop_polyphaseDecimMultiStage2_backPressure
 
 goldenFIR 
@@ -254,10 +255,30 @@ prop_polyphaseDecim coeffs input (InfiniteList ens _) = expect === result
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
 --2 phases
+--2 stages in semi parallel filter
+--2 coefficients in filter
+prop_polyphaseDecimMultiStage :: Vec 2 (Vec 2 (Vec 2 (Signed 32))) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_polyphaseDecimMultiStage coeffs input (InfiniteList ens _) = expect === result
+    where
+    expect
+        = take (length input)
+        $ drop 1
+        $ stride 1 
+        $ sample @System 
+        $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
+    result 
+        = take (length input) 
+        $ map snd . drop 1 . filter fst
+        $ sample @System 
+        $ system (polyphaseDecim filters) (input ++ repeat 0) ens
+    filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
+
+--2 phases
 --4 stages in semi parallel filter
 --2 coefficients in filter
-prop_polyphaseDecimMultiStage :: Vec 2 (Vec 4 (Vec 2 (Signed 32))) -> [Signed 32] -> InfiniteList Bool -> Property
-prop_polyphaseDecimMultiStage coeffs input (InfiniteList ens _) = expect === result
+prop_polyphaseDecimMultiStage2 :: Vec 2 (Vec 4 (Vec 2 (Signed 32))) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_polyphaseDecimMultiStage2 coeffs input (InfiniteList ens _) = expect === result
     where
     expect
         = take (length input)
@@ -276,8 +297,8 @@ prop_polyphaseDecimMultiStage coeffs input (InfiniteList ens _) = expect === res
 --4 phases
 --4 stages in semi parallel filter
 --4 coefficients in filter
-prop_polyphaseDecimMultiStage2 :: Vec 4 (Vec 4 (Vec 4 (Signed 32))) -> [Signed 32] -> InfiniteList Bool -> Property
-prop_polyphaseDecimMultiStage2 coeffs input (InfiniteList ens _) = expect === result
+prop_polyphaseDecimMultiStage3 :: Vec 4 (Vec 4 (Vec 4 (Signed 32))) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_polyphaseDecimMultiStage3 coeffs input (InfiniteList ens _) = expect === result
     where
     expect
         = take (length input)
