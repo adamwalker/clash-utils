@@ -234,9 +234,6 @@ stride s = go
     go (x:xs) = x : go (Prelude.drop s xs)
     go _      = []
 
-fst3 (x, _, _) = x
-snd3 (_, y, _) = y
-
 --2 phases
 --1 stage in semi parallel filter
 --2 coefficients in filter
