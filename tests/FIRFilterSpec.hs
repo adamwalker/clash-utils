@@ -35,6 +35,7 @@ spec = describe "FIR filters" $ do
         specify "Decimate multi stage"     $ property $ prop_polyphaseDecimMultiStage
         specify "Decimate multi stage 2"   $ property $ prop_polyphaseDecimMultiStage2
         specify "Decimate multi stage 3"   $ property $ prop_polyphaseDecimMultiStage3
+        specify "Decimate multi stage 4"   $ property $ prop_polyphaseDecimMultiStage4
         specify "Decimate back pressure"   $ property $ prop_polyphaseDecimMultiStage2_backPressure
         specify "Decimate back pressure 2" $ property $ prop_polyphaseDecimMultiStage3_backPressure
 
@@ -313,6 +314,26 @@ prop_polyphaseDecimMultiStage3 coeffs input (InfiniteList ens _) = expect === re
         $ sample @System 
         $ system (polyphaseDecim filters) (input ++ repeat 0) ens
     filters :: HiddenClockResetEnable dom => Vec 4 (Filter dom (Signed 32))
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
+
+--3 phases
+--2 stages in semi parallel filter
+--3 coefficients in filter
+prop_polyphaseDecimMultiStage4 :: Vec 3 (Vec 2 (Vec 3 (Signed 32))) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_polyphaseDecimMultiStage4 coeffs input (InfiniteList ens _) = expect === result
+    where
+    expect
+        = take (length input)
+        $ drop 2
+        $ stride 2 
+        $ sample @System 
+        $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
+    result 
+        = take (length input) 
+        $ map snd . drop 2 . filter fst
+        $ sample @System 
+        $ system (polyphaseDecim filters) (input ++ repeat 0) ens
+    filters :: HiddenClockResetEnable dom => Vec 3 (Filter dom (Signed 32))
     filters = Clash.map (semiParallelFIRSystolic (const macRealReal)) $ Clash.reverse coeffs
 
 --Phases contain long MAC groups so must assert backpressure
