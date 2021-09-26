@@ -18,12 +18,12 @@ scramblerStep
     -> Vec (n + 1) Bool 
     -> Bool 
     -> (Vec (n + 1) Bool, Bool)
-scramblerStep poly state input = (output +>> state, output)
+scramblerStep poly (head :> rest) input = (rest :< output, output)
     where
     output :: Bool
     output = foldl1 xor 
-        $  zipWith (.&.) (init state) (unpack poly) 
-        :< last state 
+        $  zipWith (.&.) rest (unpack poly) 
+        :< head
         :< input
 
 scramblerSteps 
@@ -56,12 +56,12 @@ descramblerStep
     -> Vec (n + 1) Bool 
     -> Bool 
     -> (Vec (n + 1) Bool, Bool)
-descramblerStep poly state input = (input +>> state, output)
+descramblerStep poly (head :> rest) input = (rest :< input, output)
     where 
     output :: Bool
     output = foldl1 xor 
-        $  zipWith (.&.) (init state) (unpack poly) 
-        :< (last state) 
+        $  zipWith (.&.) rest (unpack poly) 
+        :< head 
         :< input
 
 descramblerSteps 
