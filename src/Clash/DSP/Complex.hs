@@ -33,3 +33,13 @@ toComplex   (a :+ b)   = a C.:+ b
 
 conjugate :: Num a => Complex a -> Complex a
 conjugate (x :+ y) = x :+ (-y)
+
+cMul 
+    :: ExtendingNum a b 
+    => ExtendingNum (MResult a b) (MResult a b)
+    => Complex a
+    -> Complex b
+    -> Complex (AResult (MResult a b) (MResult a b))
+cMul (xr :+ xi) (yr :+ yi) 
+    =  ((xr `mul` yr) `sub` (xi `mul` yi)) 
+    :+ ((xr `mul` yi) `sub` (xi `mul` yr))
