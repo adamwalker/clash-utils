@@ -30,7 +30,11 @@ galoisLFSR poly (head :> rest) = zipWith selectIn (unpack poly) rest :< head
     where
     selectIn sel bit = bool bit (bit `xor` head) sel
 
-lfsr :: (HiddenClockResetEnable dom, KnownNat n) => (Vec (n + 1) Bit -> Vec (n + 1) Bit) -> BitVector (n + 1) -> Signal dom Bit
+lfsr 
+    :: (HiddenClockResetEnable dom, KnownNat n) 
+    => (Vec (n + 1) Bit -> Vec (n + 1) Bit) 
+    -> BitVector (n + 1) 
+    -> Signal dom Bit
 lfsr step seed = msb <$> reg
     where 
     reg = register (unpack seed) (step <$> reg)
