@@ -14,10 +14,10 @@ spec = describe "Bitonic sort" $ do
     specify "sorts"          $ property prop_BitonicSort
     specify "sorts any size" $ property prop_BitonicSortGeneric
 
-prop_BitonicSort :: Vec 16 (Signed 32) -> Bool
-prop_BitonicSort vec = Clash.toList (bitonicSorterExample vec) == reverse (sort (Clash.toList vec))
+prop_BitonicSort :: Vec 16 (Signed 32) -> Property
+prop_BitonicSort vec = Clash.toList (bitonicSorterExample vec) === reverse (sort (Clash.toList vec))
 
 --Length generic bitonic sorter
-prop_BitonicSortGeneric :: Vec 64 (Signed 32) -> Bool
-prop_BitonicSortGeneric vec = Clash.toList (bitonicSorter vec) == reverse (sort (Clash.toList vec))
+prop_BitonicSortGeneric :: Vec 64 (Signed 32) -> Property
+prop_BitonicSortGeneric vec = Clash.toList (bitonicSorter vec) === reverse (sort (Clash.toList vec))
 

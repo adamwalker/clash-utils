@@ -14,8 +14,8 @@ spec = describe "Xilinx carry chain" $ do
     specify "4:2 compressor" $ property prop_compressor
     specify "ternary adder"  $ property prop_ternaryAdder
 
-prop_compressor :: Bool -> Vec 4 (BitVector 8) -> Bool
-prop_compressor cIn xs = expect == result
+prop_compressor :: Bool -> Vec 4 (BitVector 8) -> Property
+prop_compressor cIn xs = expect === result
     where
 
     (sums, carrys) = compressor cIn $ Clash.map unpack xs
@@ -24,8 +24,8 @@ prop_compressor cIn xs = expect == result
     expect :: BitVector 10
     expect =  sum (Clash.map extend xs) + extend (pack cIn)
 
-prop_ternaryAdder :: Bool -> Bool -> Vec 3 (BitVector 8) -> Bool
-prop_ternaryAdder cIn cIn2 xs = expect == (result + shiftL (extend (pack cOut)) 8)
+prop_ternaryAdder :: Bool -> Bool -> Vec 3 (BitVector 8) -> Property
+prop_ternaryAdder cIn cIn2 xs = expect === (result + shiftL (extend (pack cOut)) 8)
     where
 
     (result, cOut) = ternaryAdder cIn cIn2 xs

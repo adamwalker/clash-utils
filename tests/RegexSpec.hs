@@ -53,7 +53,7 @@ prop_match = forAll (genString regex) $ \str ->
          $ fromList ([0] ++ map pack str ++ repeat 0)
 
 --Test strings that probably don't match
-prop_nomatch str = res == expect
+prop_nomatch str = res === expect
     where
     expect = BS.pack str =~ "\\`b*c(a|b)*[ac]h\\'"
     res = last 

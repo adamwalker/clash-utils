@@ -14,8 +14,8 @@ spec = describe "Prefix sums" $ do
     specify "Parallel prefix sum works for addition"       $ property prop_prefixSumParallel
     specify "Work efficient prefix sum works for addition" $ property prop_prefixSumWorkEfficient
 
-prop_prefixSumParallel :: (Vec 32 Int) -> Bool
-prop_prefixSumParallel vec@(x :> rest) = Clash.scanl (+) x rest == prefixSumParallel32 (+) vec
+prop_prefixSumParallel :: (Vec 32 Int) -> Property
+prop_prefixSumParallel vec@(x :> rest) = Clash.scanl (+) x rest === prefixSumParallel32 (+) vec
 
-prop_prefixSumWorkEfficient :: (Vec 32 Int) -> Bool
-prop_prefixSumWorkEfficient vec@(x :> rest) = Clash.scanl (+) x rest == prefixSumWorkEfficient32 (+) vec
+prop_prefixSumWorkEfficient :: (Vec 32 Int) -> Property
+prop_prefixSumWorkEfficient vec@(x :> rest) = Clash.scanl (+) x rest === prefixSumWorkEfficient32 (+) vec

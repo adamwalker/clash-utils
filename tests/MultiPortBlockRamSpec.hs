@@ -81,5 +81,5 @@ prop_multiPortBlockRam
             let 
                 expect = take 1000 $ drop 1 $ sample @System $ sequenceA $ goldenMultiPortBlockRam (sequenceA $ fromList reads) (sequenceA $ fromList writes)
                 result = take 1000 $ drop 1 $ sample @System $ sequenceA $ multiPortBlockRam       (sequenceA $ fromList reads) (sequenceA $ fromList writes)
-            in  result == expect
+            in  result === expect
 

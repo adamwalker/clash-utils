@@ -33,38 +33,38 @@ toBytes x = map (fromIntegral . pack) $ Clash.toList unpacked
     unpacked :: Vec n (Vec 8 Bit)
     unpacked = Clash.unconcatI (unpack x)
 
-prop_crc32 :: BitVector 128 -> Bool
-prop_crc32 x = result == expect
+prop_crc32 :: BitVector 128 -> Property
+prop_crc32 x = result === expect
     where
     expect = crc32 $ map reverseByte (toBytes x)
     result = fromIntegral $ pack $ Clash.map Clash.complement $ Clash.reverse $ crcSteps crc32Poly (Clash.repeat 1) x
 
-prop_crc32_2 :: BitVector 128 -> Bool
-prop_crc32_2 x = result == expect
+prop_crc32_2 :: BitVector 128 -> Property
+prop_crc32_2 x = result === expect
     where
     expect = crcSteps       crc32Poly (Clash.repeat 0) x
     result = crcVerifySteps crc32Poly (Clash.repeat 0) $ x ++# (0 :: BitVector 32)
 
-prop_crc32_verify :: BitVector 128 -> Bool
-prop_crc32_verify x = result == 0
+prop_crc32_verify :: BitVector 128 -> Property
+prop_crc32_verify x = result === 0
     where
     checksum = pack $ crcSteps       crc32Poly (Clash.repeat 0) x
     result   = pack $ crcVerifySteps crc32Poly (Clash.repeat 0) $ x ++# checksum
 
-prop_crc32_table :: BitVector 128 -> Bool
-prop_crc32_table x = result == expect
+prop_crc32_table :: BitVector 128 -> Property
+prop_crc32_table x = result === expect
     where
     expect = pack $ crcSteps crc32Poly (Clash.repeat 0) x
     result = crcTable (makeCRCTable (pack . crcSteps crc32Poly (Clash.repeat 0))) x
 
-prop_crc32_table_verify :: BitVector 128 -> Bool
-prop_crc32_table_verify x = result == expect
+prop_crc32_table_verify :: BitVector 128 -> Property
+prop_crc32_table_verify x = result === expect
     where
     expect = pack $ crcVerifySteps crc32Poly (Clash.repeat 0) x
     result = crcTable (makeCRCTable (pack . crcVerifySteps crc32Poly (Clash.repeat 0))) x
 
-prop_crc32_multistep :: BitVector 256 -> Bool
-prop_crc32_multistep x = unpack result == expect
+prop_crc32_multistep :: BitVector 256 -> Property
+prop_crc32_multistep x = unpack result === expect
     where
     expect = pack $ crcSteps crc32Poly (Clash.repeat 0) x
     step :: BitVector 32 ->  BitVector 32 -> BitVector 32
@@ -76,8 +76,8 @@ prop_crc32_multistep x = unpack result == expect
     result :: BitVector 32
     result = foldl step 0 words
 
-prop_crc32_multistep_2 :: BitVector 256 -> Bool
-prop_crc32_multistep_2 x = unpack result == expect
+prop_crc32_multistep_2 :: BitVector 256 -> Property
+prop_crc32_multistep_2 x = unpack result === expect
     where
     expect = crc32 $ Prelude.map reverseByte (toBytes x)
     step :: BitVector 32 ->  BitVector 32 -> BitVector 32
@@ -89,8 +89,8 @@ prop_crc32_multistep_2 x = unpack result == expect
     result :: BitVector 32
     result = fromIntegral $ pack $ Clash.map Clash.complement $ Clash.reverse $ (unpack $ foldl step 0xffffffff words :: Vec 32 Bit)
 
-prop_crc32_multistep_verify :: BitVector 256 -> Bool
-prop_crc32_multistep_verify x = unpack result == expect
+prop_crc32_multistep_verify :: BitVector 256 -> Property
+prop_crc32_multistep_verify x = unpack result === expect
     where
     expect = pack $ crcVerifySteps crc32Poly (Clash.repeat 0) x
     step :: BitVector 32 ->  BitVector 32 -> BitVector 32
@@ -102,8 +102,8 @@ prop_crc32_multistep_verify x = unpack result == expect
     result :: BitVector 32
     result = foldl step 0 words
 
-prop_crc32_table_th :: BitVector 128 -> Bool
-prop_crc32_table_th x = result == expect
+prop_crc32_table_th :: BitVector 128 -> Property
+prop_crc32_table_th x = result === expect
     where
     expect = pack $ crcSteps crc32Poly (Clash.repeat 0) x
     result = crcTable $(lift $ (makeCRCTable (pack . crcSteps crc32Poly (Clash.repeat 0)) :: Vec 128 (BitVector 32))) x

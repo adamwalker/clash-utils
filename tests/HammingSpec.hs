@@ -18,8 +18,8 @@ spec = describe "Hamming encoding/decoding" $ do
 hammingGen :: Vec 11 (BitVector 4)
 hammingGen = Clash.map pack $ Clash.unconcatI $ $(listToVecTH $ concat $ take 11 $ map (take 4) generator)
 
-prop_hamming :: Index 15 -> BitVector 11 -> Bool
-prop_hamming mutIdx dat = dat == corrected
+prop_hamming :: Index 15 -> BitVector 11 -> Property
+prop_hamming mutIdx dat = dat === corrected
     where
     --encode
     parityBits  = hammingParity hammingGen dat

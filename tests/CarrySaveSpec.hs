@@ -13,8 +13,8 @@ import Clash.Arithmetic.CarrySave
 spec = describe "Carry save" $ do
     specify "is correct" $ property prop_carrySave
 
-prop_carrySave :: Vec 4 (BitVector 8) -> Bool
-prop_carrySave xs = expect == result
+prop_carrySave :: Vec 4 (BitVector 8) -> Property
+prop_carrySave xs = expect === result
     where
     (carry :> Nil, (r1 :> r2 :> Nil)) = compressorN (Clash.repeat False) xs 
     expect :: BitVector 10 

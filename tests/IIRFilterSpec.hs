@@ -16,18 +16,18 @@ spec = describe "IIR filters" $ do
     specify "transposedI"  $ property prop_IIRTransposedI
     specify "transposedII" $ property prop_IIRTransposedII
 
-prop_IIRDirect :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_IIRDirect :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Property
 prop_IIRDirect coeffs1 coeffs2 input = 
-       take (length input) (simulate @System (iirDirectI coeffs1 coeffs2 (pure True)) input) 
-    == take (length input) (simulate @System (iirDirectII coeffs1 coeffs2 (pure True)) input)
+        take (length input) (simulate @System (iirDirectI coeffs1 coeffs2 (pure True)) input) 
+    === take (length input) (simulate @System (iirDirectII coeffs1 coeffs2 (pure True)) input)
 
-prop_IIRTransposedI :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_IIRTransposedI :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Property
 prop_IIRTransposedI coeffs1 coeffs2 input = 
-       take (length input) (simulate @System (iirDirectI     coeffs1 coeffs2 (pure True)) input) 
-    == take (length input) (simulate @System (iirTransposedI coeffs1 coeffs2 (pure True)) input)
+        take (length input) (simulate @System (iirDirectI     coeffs1 coeffs2 (pure True)) input) 
+    === take (length input) (simulate @System (iirTransposedI coeffs1 coeffs2 (pure True)) input)
 
-prop_IIRTransposedII :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Bool
+prop_IIRTransposedII :: Vec 65 (Signed 32) -> Vec 64 (Signed 32) -> [Signed 32] -> Property
 prop_IIRTransposedII coeffs1 coeffs2 input = 
-       take (length input) (simulate @System (iirDirectI     coeffs1 coeffs2 (pure True)) input) 
-    == take (length input) (simulate @System (iirTransposedII coeffs1 coeffs2 (pure True)) input)
+        take (length input) (simulate @System (iirDirectI     coeffs1 coeffs2 (pure True)) input) 
+    === take (length input) (simulate @System (iirTransposedII coeffs1 coeffs2 (pure True)) input)
 

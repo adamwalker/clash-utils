@@ -17,23 +17,23 @@ spec = describe "Pseudo LRU tree" $ do
     specify "update same index idempotent"     $ property prop_plruIdempotent
     specify "simple case with single bit"      $ property prop_plruSimpleCase
 
-prop_plru :: Vec 15 Bool -> Bool
-prop_plru tree = reordered == [0..15]
+prop_plru :: Vec 15 Bool -> Property
+prop_plru tree = reordered === [0..15]
     where
     trees     = Clash.iterate (SNat @ 16) func tree
         where
         func tree = updateWay (getOldestWay tree) tree
     reordered = sort $ Clash.toList $ Clash.map (fromIntegral . pack) $ Clash.map getOldestWay trees
 
-prop_plruSame :: Vec 15 Bool -> Bool
-prop_plruSame tree = updateOldestWay tree == (oldest, newTree)
+prop_plruSame :: Vec 15 Bool -> Property
+prop_plruSame tree = updateOldestWay tree === (oldest, newTree)
     where
     oldest  = getOldestWay tree
     newTree = updateWay oldest tree
 
-prop_plruIdempotent :: Vec 15 Bool -> Vec 4 Bool -> Bool
-prop_plruIdempotent tree idx = updateWay idx tree == updateWay idx (updateWay idx tree)
+prop_plruIdempotent :: Vec 15 Bool -> Vec 4 Bool -> Property
+prop_plruIdempotent tree idx = updateWay idx tree === updateWay idx (updateWay idx tree)
 
-prop_plruSimpleCase :: Vec 1 Bool -> Bool
-prop_plruSimpleCase tree = updateWay (getOldestWay tree) tree == Clash.map not tree
+prop_plruSimpleCase :: Vec 1 Bool -> Property
+prop_plruSimpleCase tree = updateWay (getOldestWay tree) tree === Clash.map not tree
 

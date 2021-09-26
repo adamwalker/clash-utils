@@ -23,7 +23,7 @@ spec =
         it "384" $ property prop_384
         it "512" $ property prop_512
 
-prop :: (((n + 1) + n0) ~ 25, KnownNat n0) => ([Word8] -> [Word8]) -> Int -> Vec n (BitVector 64) -> Bool
+prop :: (((n + 1) + n0) ~ 25, KnownNat n0) => ([Word8] -> [Word8]) -> Int -> Vec n (BitVector 64) -> Property
 prop hashFunc mdlen vec =
     let 
         starts = fromList $ False : True : repeat False
@@ -31,17 +31,17 @@ prop hashFunc mdlen vec =
         resStr = take mdlen $ concat $ map (reverse . toList . (unpack :: BitVector 64 -> Vec 8 (Word8))) $ toList $ Clash.concat $ fromJust res
         str    = concat $ map (reverse . toList . (unpack :: BitVector 64 -> Vec 8 (Word8))) $ toList vec
         expect = hashFunc str
-    in resStr == expect
+    in resStr === expect
 
-prop_224 :: Vec 17 (BitVector 64) -> Bool
+prop_224 :: Vec 17 (BitVector 64) -> Property
 prop_224 = prop (\x -> BA.unpack (hash (BS.pack x) :: Digest SHA3_224)) 28
 
-prop_256 :: Vec 16 (BitVector 64) -> Bool
+prop_256 :: Vec 16 (BitVector 64) -> Property
 prop_256 = prop (\x -> BA.unpack (hash (BS.pack x) :: Digest SHA3_256)) 32
 
-prop_384 :: Vec 12 (BitVector 64) -> Bool
+prop_384 :: Vec 12 (BitVector 64) -> Property
 prop_384 = prop (\x -> BA.unpack (hash (BS.pack x) :: Digest SHA3_384)) 48
 
-prop_512 :: Vec 8 (BitVector 64) -> Bool
+prop_512 :: Vec 8 (BitVector 64) -> Property
 prop_512 = prop (\x -> BA.unpack (hash (BS.pack x) :: Digest SHA3_512)) 64
 

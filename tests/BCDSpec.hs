@@ -16,11 +16,11 @@ spec = do
     describe "Binary to decimal conversion using the double dabble algorithm" $ 
         it "correctly converts binary numbers between 0 and 9999 to decimal" $ property $ 
             forAll (choose (0, 9999)) $ \(x :: Int) -> --Make sure that the input range is representable within the output type
-                dropWhile (==0) (Clash.toList (toDec (fromIntegral x :: BitVector 16) :: Vec 4 BCDDigit)) == map fromIntegral (digits 10 x)
+                dropWhile (==0) (Clash.toList (toDec (fromIntegral x :: BitVector 16) :: Vec 4 BCDDigit)) === map fromIntegral (digits 10 x)
     describe "ASCII <-> BCD conversion" $
         it "correctly converts between binary and ascii" $ property $
             forAll (choose (0, 9)) $ \(x :: Int) -> 
-                asciiToBCD (bcdToAscii (fromIntegral x)) == Just (fromIntegral x)
+                asciiToBCD (bcdToAscii (fromIntegral x)) === Just (fromIntegral x)
     describe "BCD subtraction" $
         it "subtracts correctly" $ property prop_subtraction
     describe "BCD addition" $
@@ -73,5 +73,5 @@ prop_addition =  forAll (choose (0, 9999)) $ \(x :: Int) ->
         --Run the clash
         res = Clash.dropWhile (== 0) (map fromIntegral (Clash.toList (snd (bcdAdd inpX inpY))))
 
-    in counterexample (show expect ++ " " ++ show res) $ expect == res
+    in counterexample (show expect ++ " " ++ show res) $ expect === res
 

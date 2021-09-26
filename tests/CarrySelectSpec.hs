@@ -12,5 +12,5 @@ import Clash.Arithmetic.CarrySelect
 spec = describe "Carry select" $ do
     specify "Adds" $ property prop_carrySelectAdder
 
-prop_carrySelectAdder :: BitVector 512 -> BitVector 512 -> Bool
-prop_carrySelectAdder x y = carrySelectAdderExample x y == x + y
+prop_carrySelectAdder :: BitVector 512 -> BitVector 512 -> Property
+prop_carrySelectAdder x y = carrySelectAdderExample x y === x + y

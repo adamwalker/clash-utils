@@ -16,14 +16,14 @@ spec = describe "Multiplier lookahead" $ do
     specify "serial carry save signed" $ property prop_serialMultiplyCarrySaveSigned
     specify "booth Multiplier"         $ property prop_booth
 
-prop_unsigned :: BitVector 8 -> BitVector 8 -> Bool
-prop_unsigned x y = multiply x y == (extend x * extend y)
+prop_unsigned :: BitVector 8 -> BitVector 8 -> Property
+prop_unsigned x y = multiply x y === (extend x * extend y)
 
-prop_signed :: BitVector 8 -> BitVector 8 -> Bool
-prop_signed x y = multiplySigned x y == pack ((extend (unpack x) :: Signed 16) * extend (unpack y))
+prop_signed :: BitVector 8 -> BitVector 8 -> Property
+prop_signed x y = multiplySigned x y === pack ((extend (unpack x) :: Signed 16) * extend (unpack y))
 
-prop_serialMultiplyCarrySave :: BitVector 8 -> BitVector 8 -> Bool
-prop_serialMultiplyCarrySave x y = result == expect
+prop_serialMultiplyCarrySave :: BitVector 8 -> BitVector 8 -> Property
+prop_serialMultiplyCarrySave x y = result === expect
     where
 
     expect = reverse $ toList (unpack ((extend x :: BitVector 16) * extend y) :: Vec 16 Bool)
@@ -37,8 +37,8 @@ prop_serialMultiplyCarrySave x y = result == expect
         $ serialMultiplyCarrySave (pure x) (pure True)
         $ fromList $ False : y' ++ repeat False 
 
-prop_serialMultiplyCarrySaveSigned :: BitVector 8 -> BitVector 8 -> Bool
-prop_serialMultiplyCarrySaveSigned x y = result == expect
+prop_serialMultiplyCarrySaveSigned :: BitVector 8 -> BitVector 8 -> Property
+prop_serialMultiplyCarrySaveSigned x y = result === expect
     where
 
     expect = reverse $ toList (bitCoerce ((extend (unpack x) :: Signed 16) * extend (unpack y)) :: Vec 16 Bool)
@@ -54,6 +54,6 @@ prop_serialMultiplyCarrySaveSigned x y = result == expect
         $ serialMultiplyCarrySaveSigned (pure x) (pure True) msb
         $ fromList $ False : y' ++ repeat False 
 
-prop_booth :: BitVector 7 -> BitVector 7 -> Bool
-prop_booth x y = boothMultiply x y == (extend x * extend y)
+prop_booth :: BitVector 7 -> BitVector 7 -> Property
+prop_booth x y = boothMultiply x y === (extend x * extend y)
 

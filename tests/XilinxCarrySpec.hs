@@ -13,6 +13,6 @@ import Clash.Xilinx.Carry
 spec = describe "Xilinx carry chain" $ do
     specify "adds" $ property prop_xilinxCarryChainAdder
 
-prop_xilinxCarryChainAdder :: Bool -> BitVector 32 -> BitVector 32 -> Bool
-prop_xilinxCarryChainAdder cIn x y = xilinxCarryAdder cIn x y == x + y + (if cIn then 1 else 0)
+prop_xilinxCarryChainAdder :: Bool -> BitVector 32 -> BitVector 32 -> Property
+prop_xilinxCarryChainAdder cIn x y = xilinxCarryAdder cIn x y === x + y + (if cIn then 1 else 0)
 

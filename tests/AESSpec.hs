@@ -21,8 +21,8 @@ spec = do
     describe "AES" $ 
         it "encrypts" $ property prop_AES
 
-prop_AES :: BitVector 128 -> BitVector 128 -> Bool
-prop_AES key block = fmap (fmap toBS) res == Just (True, expect)
+prop_AES :: BitVector 128 -> BitVector 128 -> Property
+prop_AES key block = fmap (fmap toBS) res === Just (True, expect)
     where
     toBS x  = BS.pack $ Prelude.map fromIntegral $ toList $ (unpack x :: Vec 16 (BitVector 8))
     keyBS   = toBS key
