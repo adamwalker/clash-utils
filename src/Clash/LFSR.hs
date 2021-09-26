@@ -13,12 +13,12 @@ import Data.Bool
 -- | Fibonacci LFSR
 fibonacciLFSR 
     :: KnownNat n
-    => BitVector (n + 1) -- ^ Polynomial 
+    => BitVector n       -- ^ Polynomial 
     -> Vec (n + 1) Bit   -- ^ Current state of shift register
     -> Vec (n + 1) Bit   -- ^ Next state of the shift register
-fibonacciLFSR poly state = fold xor feedback +>> state
+fibonacciLFSR poly (head :> rest) = rest :< fold xor (head :> feedback)
     where
-    feedback = zipWith (.&.) (unpack poly) state
+    feedback = zipWith (.&.) (unpack poly) rest
 
 -- | Galois LFSR. Will result in more efficient hardware than the Fibonacci LFSR.
 galoisLFSR 
