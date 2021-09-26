@@ -128,8 +128,8 @@ makeCRCTableMultiStep
     -> (Vec n (BitVector n), Vec m (BitVector n))  -- ^ Resulting CRC tables
 makeCRCTableMultiStep func = 
     (
-        map (flip func 0) $ reverse $ iterateI (`shiftL` 1) 1, 
-        map (func 0)      $ reverse $ iterateI (`shiftL` 1) 1
+        makeCRCTable (flip func 0),
+        makeCRCTable (func 0)
     )
 
 {-| Calculate the CRC using a table computed with `makeCRCTableMultiStep`. This is the same as `crcTable` except that it allows the calculation to be split up in to multiple steps (and thus clock cycles) where n bits are checksummed in each step. Each step takes the current CRC shift register state as well as the bits to be checksummed. -}
