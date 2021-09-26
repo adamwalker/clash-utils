@@ -32,6 +32,7 @@ module Clash.ErrorControl.CRC (
     ) where
 
 import Clash.Prelude
+import Clash.LFSR
 
 import Data.Bool
 
@@ -68,10 +69,9 @@ crcStep
     -> Vec (n + 1) Bit -- ^ Shift register state
     -> Bit             -- ^ Input bit
     -> Vec (n + 1) Bit -- ^ Next shift register state
-crcStep polynomial (head :> rest) inp = zipWith selectIn (unpack polynomial) rest :< rightmostBit
+crcStep polynomial (head :> rest) inp = galoisLFSR polynomial rightmostBit rest :< rightmostBit
     where
     rightmostBit = inp `xor` head
-    selectIn sel bit =  bool bit (bit `xor` rightmostBit) sel
 
 {-| Shift m bits into the CRC shift register. You probably want to use `crcTable` instead. -}
 crcSteps 
@@ -89,10 +89,9 @@ crcVerifyStep
     -> Vec (n + 1) Bit -- ^ Shift register state
     -> Bit             -- ^ Input bit
     -> Vec (n + 1) Bit -- ^ Next shift register state
-crcVerifyStep polynomial (head :> rest) inp = zipWith selectIn (unpack polynomial) rest :< rightmostBit
+crcVerifyStep polynomial (head :> rest) inp = galoisLFSR polynomial head rest :< rightmostBit
     where
     rightmostBit = inp `xor` head
-    selectIn sel bit =  bool bit (bit `xor` head) sel
 
 {-| A modification of `crcSteps` that does not xor each of the taps with the input bit. See `crcStep2`. You probably want to use `crcTable` instead. -}
 crcVerifySteps

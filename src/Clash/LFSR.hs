@@ -23,12 +23,13 @@ fibonacciLFSR poly (head :> rest) = rest :< fold xor (head :> feedback)
 -- | Galois LFSR. Will result in more efficient hardware than the Fibonacci LFSR.
 galoisLFSR 
     :: KnownNat n
-    => BitVector n     -- ^ Polynomial 
-    -> Vec (n + 1) Bit -- ^ Current state of shift register
-    -> Vec (n + 1) Bit -- ^ Next state of the shift register
-galoisLFSR poly (head :> rest) = zipWith selectIn (unpack poly) rest :< head
+    => BitVector n -- ^ Polynomial 
+    -> Bit
+    -> Vec n Bit   -- ^ Current state of shift register
+    -> Vec n Bit   -- ^ Next state of the shift register
+galoisLFSR poly feedIn state = zipWith selectIn (unpack poly) state
     where
-    selectIn sel bit = bool bit (bit `xor` head) sel
+    selectIn sel bit = bool bit (bit `xor` feedIn) sel
 
 lfsr 
     :: (HiddenClockResetEnable dom, KnownNat n) 
