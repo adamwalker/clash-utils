@@ -11,11 +11,11 @@ import Clash.Scrambler
 
 --Scrambler
 spec = describe "Scrambler" $ 
-    specify "descramber . scrambler == id" $ property prop_scrambler
+    specify "serial descramber . serial scrambler == id" $ property prop_scrambler
 
     where
     prop_scrambler :: BitVector 20 -> BitVector 19 -> [Bool] -> Bool
     prop_scrambler initial (poly :: BitVector 19) input = take (length input) (simulate @System combined input) == input
         where
         combined :: HiddenClockResetEnable dom => Signal dom Bool -> Signal dom Bool
-        combined s = descrambler initial poly $ scrambler initial poly s
+        combined s = serialScrambler initial poly $ serialDescrambler initial poly s

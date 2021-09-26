@@ -1,9 +1,9 @@
 {-| Multiplicative scrambler and descrambler: https://en.wikipedia.org/wiki/Scrambler. -}
 module Clash.Scrambler (
     scramblerStep,
-    scrambler,
+    serialScrambler,
     descramblerStep,
-    descrambler
+    serialDescrambler
     ) where
 
 import Clash.Prelude
@@ -22,13 +22,13 @@ scramblerStep poly state input = (output +>> state, output)
         :< last state 
         :< input
 
-scrambler 
+serialScrambler 
     :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
     => BitVector (n + 1) -- ^ Initial state
     -> BitVector n       -- ^ Polynomial
     -> Signal dom Bool   -- ^ Input bit
     -> Signal dom Bool   -- ^ Output bit
-scrambler initial poly input = mealy (scramblerStep poly) (unpack initial) input
+serialScrambler initial poly input = mealy (scramblerStep poly) (unpack initial) input
 
 descramblerStep 
     :: KnownNat n
@@ -44,11 +44,11 @@ descramblerStep poly state input = (input +>> state, output)
         :< (last state) 
         :< input
 
-descrambler 
+serialDescrambler 
     :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
     => BitVector (n + 1) -- ^ Initial state
     -> BitVector n       -- ^ Polynomial
     -> Signal dom Bool   -- ^ Input bit
     -> Signal dom Bool   -- ^ Output bit
-descrambler initial poly input = mealy (descramblerStep poly) (unpack initial) input
+serialDescrambler initial poly input = mealy (descramblerStep poly) (unpack initial) input
 
