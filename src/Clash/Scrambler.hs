@@ -18,7 +18,10 @@ scrambler initial poly input = mealy scramblerStep (unpack initial) input
     scramblerStep state input = (output +>> state, output)
         where
         output :: Bool
-        output = foldl1 xor $ zipWith (.&.) (init state) (unpack poly) ++ singleton (last state) ++ singleton input
+        output = foldl1 xor 
+            $  zipWith (.&.) (init state) (unpack poly) 
+            :< last state 
+            :< input
 
 descrambler 
     :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
@@ -29,5 +32,11 @@ descrambler
 descrambler initial poly input = mealy descramblerStep (unpack initial) input
     where
     descramblerStep :: Vec (n + 1) Bool -> Bool -> (Vec (n + 1) Bool, Bool)
-    descramblerStep state input = (input +>> state, foldl1 xor $ zipWith (.&.) (init state) (unpack poly) ++ singleton (last state) ++ singleton input)
+    descramblerStep state input = (input +>> state, output)
+        where 
+        output :: Bool
+        output = foldl1 xor 
+            $  zipWith (.&.) (init state) (unpack poly) 
+            :< (last state) 
+            :< input
 
