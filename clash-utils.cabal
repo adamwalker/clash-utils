@@ -139,7 +139,8 @@ Test-Suite test
         StreamMuxSpec,
         StreamResizeSpec,
         StreamTestSpec,
-        PriorityQueueSpec
+        PriorityQueueSpec,
+        ComplexSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.15, 
