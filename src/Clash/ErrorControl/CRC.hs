@@ -142,9 +142,6 @@ crcTableMultiStep
     -> BitVector (n + 1)               -- ^ CRC
 crcTableMultiStep shiftRegTable inputTable shiftReg input = (shiftRegComponent `xor` inputComponent)
     where
-    func   :: Bit -> BitVector (n + 1) -> BitVector (n + 1)
-    func x =  pack . map (.&. x) . unpack 
-
-    shiftRegComponent = fold xor $ zipWith func (unpack shiftReg) shiftRegTable
-    inputComponent    = fold xor $ zipWith func (unpack input)    inputTable
+    shiftRegComponent = crcTable shiftRegTable (unpack shiftReg)
+    inputComponent    = crcTable inputTable (unpack input)
 
