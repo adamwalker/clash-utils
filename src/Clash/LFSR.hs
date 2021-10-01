@@ -4,7 +4,8 @@
  -}
 module Clash.LFSR (
     fibonacciLFSR,
-    galoisLFSR
+    galoisLFSR,
+    galoisLFSRStep
     ) where
 
 import Clash.Prelude
@@ -31,12 +32,21 @@ galoisLFSR poly feedIn state = zipWith selectIn (unpack poly) state
     where
     selectIn sel bit = bool bit (bit `xor` feedIn) sel
 
-lfsr 
-    :: (HiddenClockResetEnable dom, KnownNat n) 
-    => (Vec (n + 1) Bit -> Vec (n + 1) Bit) 
-    -> BitVector (n + 1) 
+galoisLFSRStep
+    :: KnownNat n
+    => BitVector n
+    -> Vec (n + 1) Bit
+    -> (Bit, Vec (n + 1) Bit)
+galoisLFSRStep poly (head :> rest) = (head, galoisLFSR poly head rest :< head)
+
+serialGaloisLFSR
+    :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
+    => BitVector n
+    -> Vec (n + 1) Bit
     -> Signal dom Bit
-lfsr step seed = msb <$> reg
-    where 
-    reg = register (unpack seed) (step <$> reg)
+serialGaloisLFSR poly init = out
+    where
+    (out, shiftReg) 
+        = unbundle 
+        $ galoisLFSRStep poly <$> register init shiftReg
 
