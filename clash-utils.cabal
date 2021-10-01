@@ -140,7 +140,8 @@ Test-Suite test
         StreamResizeSpec,
         StreamTestSpec,
         PriorityQueueSpec,
-        ComplexSpec
+        ComplexSpec,
+        LFSRSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.15, 

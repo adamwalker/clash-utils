@@ -1,19 +1,20 @@
 {-| Linear feedback shift registers.
-
-    WARNING: this module has no tests so probably has bugs.
  -}
 module Clash.LFSR (
     serialLFSR,
     fibonacciLFSR,
     fibonacciLFSRStep,
+    fibonacciLFSRSteps,
     serialFibonacciLFSR,
     galoisLFSR,
     galoisLFSRStep,
+    galoisLFSRSteps,
     serialGaloisLFSR
     ) where
 
 import Clash.Prelude
 import Data.Bool
+import Data.Tuple (swap)
 
 serialLFSR
     :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
@@ -45,6 +46,15 @@ fibonacciLFSRStep poly (head :> rest) = (head, rest :< head `xor` feedback)
     where
     feedback = fibonacciLFSR poly rest
 
+fibonacciLFSRSteps
+    :: forall n m. (KnownNat n, KnownNat m)
+    => BitVector n
+    -> Vec (n + 1) Bit
+    -> (Vec m Bit, Vec (n + 1) Bit)
+fibonacciLFSRSteps poly state = swap $ mapAccumL func state (repeat ())
+    where
+    func state () = swap $ fibonacciLFSRStep poly state
+
 serialFibonacciLFSR
     :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
     => BitVector n
@@ -69,6 +79,15 @@ galoisLFSRStep
     -> Vec (n + 1) Bit
     -> (Bit, Vec (n + 1) Bit)
 galoisLFSRStep poly (head :> rest) = (head, galoisLFSR poly head rest :< head)
+
+galoisLFSRSteps
+    :: forall n m. (KnownNat n, KnownNat m)
+    => BitVector n
+    -> Vec (n + 1) Bit
+    -> (Vec m Bit, Vec (n + 1) Bit)
+galoisLFSRSteps poly state = swap $ mapAccumL func state (repeat ())
+    where
+    func state () = swap $ galoisLFSRStep poly state
 
 serialGaloisLFSR
     :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
