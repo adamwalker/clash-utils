@@ -3,23 +3,54 @@
     WARNING: this module has no tests so probably has bugs.
  -}
 module Clash.LFSR (
+    serialLFSR,
     fibonacciLFSR,
+    fibonacciLFSRStep,
+    serialFibonacciLFSR,
     galoisLFSR,
-    galoisLFSRStep
+    galoisLFSRStep,
+    serialGaloisLFSR
     ) where
 
 import Clash.Prelude
 import Data.Bool
 
+serialLFSR
+    :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
+    => (Vec n Bit -> (Bit, Vec n Bit))
+    -> Vec n Bit
+    -> Signal dom Bit
+serialLFSR step init = out
+    where
+    (out, shiftReg) 
+        = unbundle 
+        $ step <$> register init shiftReg
+
 -- | Fibonacci LFSR
 fibonacciLFSR 
     :: KnownNat n
-    => BitVector n       -- ^ Polynomial 
-    -> Vec (n + 1) Bit   -- ^ Current state of shift register
-    -> Vec (n + 1) Bit   -- ^ Next state of the shift register
-fibonacciLFSR poly (head :> rest) = rest :< fold xor (head :> feedback)
+    => BitVector n -- ^ Polynomial 
+    -> Vec n Bit   -- ^ Current state of shift register
+    -> Bit         -- ^ Next state of the shift register
+fibonacciLFSR poly state = foldl xor 0 feedback
     where
-    feedback = zipWith (.&.) (unpack poly) rest
+    feedback = zipWith (.&.) (unpack poly) state
+
+fibonacciLFSRStep
+    :: KnownNat n
+    => BitVector n
+    -> Vec (n + 1) Bit
+    -> (Bit, Vec (n + 1) Bit)
+fibonacciLFSRStep poly (head :> rest) = (head, rest :< head `xor` feedback)
+    where
+    feedback = fibonacciLFSR poly rest
+
+serialFibonacciLFSR
+    :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
+    => BitVector n
+    -> Vec (n + 1) Bit
+    -> Signal dom Bit
+serialFibonacciLFSR poly = serialLFSR (fibonacciLFSRStep poly)
 
 -- | Galois LFSR. Will result in more efficient hardware than the Fibonacci LFSR.
 galoisLFSR 
@@ -44,9 +75,5 @@ serialGaloisLFSR
     => BitVector n
     -> Vec (n + 1) Bit
     -> Signal dom Bit
-serialGaloisLFSR poly init = out
-    where
-    (out, shiftReg) 
-        = unbundle 
-        $ galoisLFSRStep poly <$> register init shiftReg
+serialGaloisLFSR poly = serialLFSR (galoisLFSRStep poly)
 
