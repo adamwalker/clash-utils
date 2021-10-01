@@ -264,6 +264,6 @@ exampleDesign lu modify delete val = cuckooPipelineInsert (SNat @ 0) hashFunctio
         :> (\x -> unpack (slice d29 d20 $ crc x))
         :> Nil
         where
-        table = $(lift $ (makeCRCTable (pack . crcSteps crc32Poly (repeat 0)) :: Vec 64 (BitVector 32))) 
+        table = $(lift $ (makeCRCTable (pack . crcSteps crc32Poly (repeat False)) :: Vec 64 (BitVector 32))) 
         crc   = crcTable table 
 

@@ -17,9 +17,9 @@ spec = describe "LFSRs" $ do
 prop_fibEqualsGalois :: BitVector 15 -> BitVector 16 -> Property
 prop_fibEqualsGalois poly state = fib === gal
     where
-    gal, fib :: Vec 64 Bit
+    gal, fib :: Vec 64 Bool
     gal = fst $ galoisLFSRSteps poly (unpack state) 
     fib = fst $ fibonacciLFSRSteps (revBV poly) galAdvanced
 
-    galAdvanced :: Vec 16 Bit
+    galAdvanced :: Vec 16 Bool
     galAdvanced = fst $ galoisLFSRSteps poly (unpack state)

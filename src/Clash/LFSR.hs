@@ -18,9 +18,9 @@ import Data.Tuple (swap)
 
 serialLFSR
     :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
-    => (Vec n Bit -> (Bit, Vec n Bit))
-    -> Vec n Bit
-    -> Signal dom Bit
+    => (Vec n Bool -> (Bool, Vec n Bool))
+    -> Vec n Bool
+    -> Signal dom Bool
 serialLFSR step init = out
     where
     (out, shiftReg) 
@@ -31,17 +31,17 @@ serialLFSR step init = out
 fibonacciLFSR 
     :: KnownNat n
     => BitVector n -- ^ Polynomial 
-    -> Vec n Bit   -- ^ Current state of shift register
-    -> Bit         -- ^ Next state of the shift register
-fibonacciLFSR poly state = foldl xor 0 feedback
+    -> Vec n Bool  -- ^ Current state of shift register
+    -> Bool        -- ^ Next state of the shift register
+fibonacciLFSR poly state = foldl xor False feedback
     where
     feedback = zipWith (.&.) (unpack poly) state
 
 fibonacciLFSRStep
     :: KnownNat n
     => BitVector n
-    -> Vec (n + 1) Bit
-    -> (Bit, Vec (n + 1) Bit)
+    -> Vec (n + 1) Bool
+    -> (Bool, Vec (n + 1) Bool)
 fibonacciLFSRStep poly (head :> rest) = (head, rest :< head `xor` feedback)
     where
     feedback = fibonacciLFSR poly rest
@@ -49,8 +49,8 @@ fibonacciLFSRStep poly (head :> rest) = (head, rest :< head `xor` feedback)
 fibonacciLFSRSteps
     :: forall n m. (KnownNat n, KnownNat m)
     => BitVector n
-    -> Vec (n + 1) Bit
-    -> (Vec m Bit, Vec (n + 1) Bit)
+    -> Vec (n + 1) Bool
+    -> (Vec m Bool, Vec (n + 1) Bool)
 fibonacciLFSRSteps poly state = swap $ mapAccumL func state (repeat ())
     where
     func state () = swap $ fibonacciLFSRStep poly state
@@ -58,17 +58,17 @@ fibonacciLFSRSteps poly state = swap $ mapAccumL func state (repeat ())
 serialFibonacciLFSR
     :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
     => BitVector n
-    -> Vec (n + 1) Bit
-    -> Signal dom Bit
+    -> Vec (n + 1) Bool
+    -> Signal dom Bool
 serialFibonacciLFSR poly = serialLFSR (fibonacciLFSRStep poly)
 
 -- | Galois LFSR. Will result in more efficient hardware than the Fibonacci LFSR.
 galoisLFSR 
     :: KnownNat n
     => BitVector n -- ^ Polynomial 
-    -> Bit
-    -> Vec n Bit   -- ^ Current state of shift register
-    -> Vec n Bit   -- ^ Next state of the shift register
+    -> Bool
+    -> Vec n Bool  -- ^ Current state of shift register
+    -> Vec n Bool  -- ^ Next state of the shift register
 galoisLFSR poly feedIn state = zipWith selectIn (unpack poly) state
     where
     selectIn sel bit = bool bit (bit `xor` feedIn) sel
@@ -76,15 +76,15 @@ galoisLFSR poly feedIn state = zipWith selectIn (unpack poly) state
 galoisLFSRStep
     :: KnownNat n
     => BitVector n
-    -> Vec (n + 1) Bit
-    -> (Bit, Vec (n + 1) Bit)
+    -> Vec (n + 1) Bool
+    -> (Bool, Vec (n + 1) Bool)
 galoisLFSRStep poly (head :> rest) = (head, galoisLFSR poly head rest :< head)
 
 galoisLFSRSteps
     :: forall n m. (KnownNat n, KnownNat m)
     => BitVector n
-    -> Vec (n + 1) Bit
-    -> (Vec m Bit, Vec (n + 1) Bit)
+    -> Vec (n + 1) Bool
+    -> (Vec m Bool, Vec (n + 1) Bool)
 galoisLFSRSteps poly state = swap $ mapAccumL func state (repeat ())
     where
     func state () = swap $ galoisLFSRStep poly state
@@ -92,7 +92,7 @@ galoisLFSRSteps poly state = swap $ mapAccumL func state (repeat ())
 serialGaloisLFSR
     :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
     => BitVector n
-    -> Vec (n + 1) Bit
-    -> Signal dom Bit
+    -> Vec (n + 1) Bool
+    -> Signal dom Bool
 serialGaloisLFSR poly = serialLFSR (galoisLFSRStep poly)
 

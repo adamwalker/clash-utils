@@ -43,9 +43,9 @@ crc32Poly = 0b10011000001000111011011011
 {-| Calculates CRC one bit / clock cycle -}
 serialCRC 
     :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
-    => BitVector (n + 1)          -- ^ Initial value of shift register
-    -> BitVector n                -- ^ The polynomial. The low order bit is assumed to be 1 so is not included.
-    -> Signal dom Bit                 -- ^ Input bit
+    => BitVector (n + 1)              -- ^ Initial value of shift register
+    -> BitVector n                    -- ^ The polynomial. The low order bit is assumed to be 1 so is not included.
+    -> Signal dom Bool                -- ^ Input bit
     -> Signal dom (BitVector (n + 1)) -- ^ CRC
 serialCRC init polynomial input = pack <$> mealy step' (unpack init) input
     where
@@ -54,8 +54,8 @@ serialCRC init polynomial input = pack <$> mealy step' (unpack init) input
 {-| Calculates CRC m bits / clock cycle -}
 parallelCRC 
     :: forall dom n m. (HiddenClockResetEnable dom, KnownNat n, KnownNat m)
-    => BitVector (n + 1)          -- ^ Initial value of shift register
-    -> BitVector n                -- ^ The polynomial. The low order bit is assumed to be 1 so is not included.
+    => BitVector (n + 1)              -- ^ Initial value of shift register
+    -> BitVector n                    -- ^ The polynomial. The low order bit is assumed to be 1 so is not included.
     -> Signal dom (BitVector m)       -- ^ Input bits
     -> Signal dom (BitVector (n + 1)) -- ^ CRC
 parallelCRC init polynomial input = pack <$> mealy step' (unpack init) input
@@ -65,10 +65,10 @@ parallelCRC init polynomial input = pack <$> mealy step' (unpack init) input
 {-| Shift one bit into the CRC shift register -}
 crcStep 
     :: KnownNat n
-    => BitVector n     -- ^ Polynomial. The low order bit is assumed to be 1 so is not included.
-    -> Vec (n + 1) Bit -- ^ Shift register state
-    -> Bit             -- ^ Input bit
-    -> Vec (n + 1) Bit -- ^ Next shift register state
+    => BitVector n      -- ^ Polynomial. The low order bit is assumed to be 1 so is not included.
+    -> Vec (n + 1) Bool -- ^ Shift register state
+    -> Bool             -- ^ Input bit
+    -> Vec (n + 1) Bool -- ^ Next shift register state
 crcStep polynomial (head :> rest) inp = galoisLFSR polynomial rightmostBit rest :< rightmostBit
     where
     rightmostBit = inp `xor` head
@@ -76,19 +76,19 @@ crcStep polynomial (head :> rest) inp = galoisLFSR polynomial rightmostBit rest 
 {-| Shift m bits into the CRC shift register. You probably want to use `crcTable` instead. -}
 crcSteps 
     :: forall n m. (KnownNat n, KnownNat m)
-    =>  BitVector n    -- ^ Polynomial. The low order bit is assumed to be 1 so is not included.
-    -> Vec (n + 1) Bit -- ^ Shift register state
-    -> BitVector m     -- ^ Input bits
-    -> Vec (n + 1) Bit -- ^ Next shift register state
-crcSteps polynomial state input = foldl (crcStep polynomial) state (unpack input :: Vec m Bit)
+    =>  BitVector n     -- ^ Polynomial. The low order bit is assumed to be 1 so is not included.
+    -> Vec (n + 1) Bool -- ^ Shift register state
+    -> BitVector m      -- ^ Input bits
+    -> Vec (n + 1) Bool -- ^ Next shift register state
+crcSteps polynomial state input = foldl (crcStep polynomial) state (unpack input :: Vec m Bool)
 
 {-| A modification of `crcStep` that does not xor each of the taps with the input bit. This means that, after the last bit of data has been shifted in, n + 1 0s must be shifted in to get the CRC. This is useful for verifying CRCs compute with `crcStep`. See the tests, specifically `prop_crc32_verify` for an example of this. -}
 crcVerifyStep
     :: KnownNat n
-    => BitVector n     -- ^ Polynomial. The low order bit is assumed to be 1 so is not included.
-    -> Vec (n + 1) Bit -- ^ Shift register state
-    -> Bit             -- ^ Input bit
-    -> Vec (n + 1) Bit -- ^ Next shift register state
+    => BitVector n      -- ^ Polynomial. The low order bit is assumed to be 1 so is not included.
+    -> Vec (n + 1) Bool -- ^ Shift register state
+    -> Bool             -- ^ Input bit
+    -> Vec (n + 1) Bool -- ^ Next shift register state
 crcVerifyStep polynomial (head :> rest) inp = galoisLFSR polynomial head rest :< rightmostBit
     where
     rightmostBit = inp `xor` head
@@ -96,11 +96,11 @@ crcVerifyStep polynomial (head :> rest) inp = galoisLFSR polynomial head rest :<
 {-| A modification of `crcSteps` that does not xor each of the taps with the input bit. See `crcStep2`. You probably want to use `crcTable` instead. -}
 crcVerifySteps
     :: forall n m. (KnownNat n, KnownNat m)
-    => BitVector n     -- ^ Polynomial. The low order bit is assumed to be 1 so is not included.
-    -> Vec (n + 1) Bit -- ^ Shift register state
-    -> BitVector m     -- ^ Input bits
-    -> Vec (n + 1) Bit -- ^ Next shift register state
-crcVerifySteps polynomial state input = foldl (crcVerifyStep polynomial) state (unpack input :: Vec m Bit)
+    => BitVector n      -- ^ Polynomial. The low order bit is assumed to be 1 so is not included.
+    -> Vec (n + 1) Bool -- ^ Shift register state
+    -> BitVector m      -- ^ Input bits
+    -> Vec (n + 1) Bool -- ^ Next shift register state
+crcVerifySteps polynomial state input = foldl (crcVerifyStep polynomial) state (unpack input :: Vec m Bool)
 
 {-| Generates a table for use with `crcTable`. You may want to use template haskell to force the table to be evaluated at compile time. -}
 makeCRCTable
@@ -117,7 +117,7 @@ crcTable
     -> BitVector n               -- ^ CRC
 crcTable table input = fold xor $ zipWith func (unpack input) table
     where
-    func     :: Bit -> BitVector n -> BitVector n
+    func     :: Bool -> BitVector n -> BitVector n
     func x   =  pack . map (.&. x) . unpack 
 
 {-| Generates the tables for use with `crcTableMultiStep`. You may want to use template haskell to force the tables to be evaluated at compile time. -}
