@@ -13,7 +13,7 @@ import Data.Function
 
 import Clash.Counter(count)
 import Clash.DSP.Complex
-import Clash.DSP.FFT.FFT(halveTwiddles)
+import Clash.DSP.FFT.Twiddle(halveTwiddles)
 
 fftBase 
     :: (HiddenClockResetEnable dom, Num a, NFDataX a) 

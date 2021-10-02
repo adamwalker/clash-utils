@@ -36,6 +36,7 @@ library
         Clash.DSP.CORDIC, 
         Clash.DSP.FFT.FFT, 
         Clash.DSP.FFT.FFTSerial,
+        Clash.DSP.FFT.Twiddle,
         Clash.DSP.FIR.FIRFilter, 
         Clash.DSP.FIR.SemiParallel, 
         Clash.DSP.FIR.Polyphase, 
