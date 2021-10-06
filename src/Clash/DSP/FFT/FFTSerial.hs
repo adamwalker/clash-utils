@@ -42,6 +42,20 @@ fftCounter en = ((stage, address), counter)
     address :: Signal dom (Unsigned n)
     address = unpack <$> address'
 
+{-
+ -                                 |\     _______
+ - Upper in -----------------------|0|   |       |
+ -                        \        | |---|  RAM  |--- Upper out
+ -                         \    ---|1|   |>______|
+ -                          \  /   |/
+ -                           \/
+ -                           /\
+ -                          /  \   |\
+ -              _______    /    ---|1|
+ -             |       |  /        | |--------------- Lower out
+ - Lower in ---|  RAM  |-----------|0|
+ -             |>______|           |/
+ -}
 fftReorder
     :: forall dom n a. (HiddenClockResetEnable dom, KnownNat n, Num a, NFDataX a)
     => Signal dom Bool
