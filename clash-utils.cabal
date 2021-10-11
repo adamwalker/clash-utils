@@ -42,7 +42,8 @@ library
         Clash.DSP.FIR.SemiParallel, 
         Clash.DSP.FIR.Polyphase, 
         Clash.DSP.IIRFilter, 
-        Clash.DSP.MAC
+        Clash.DSP.MAC,
+        Clash.DSP.SineTable,
         Clash.ErrorControl.CRC, 
         Clash.ErrorControl.Hamming, 
         Clash.GrayCode, 
@@ -144,7 +145,8 @@ Test-Suite test
         StreamTestSpec,
         PriorityQueueSpec,
         ComplexSpec,
-        LFSRSpec
+        LFSRSpec,
+        SineTableSpec
     build-depends:       
         base                       >=4.6   && <5, 
         QuickCheck                 >=2.11  && <2.15, 
