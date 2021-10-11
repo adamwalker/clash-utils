@@ -15,13 +15,13 @@ type Filter dom a
     -> (Signal dom Bool, Signal dom a, Signal dom Bool) -- ^ (Output valid, output data, ready)
 
 polyphaseDecim
-    :: forall numPhases a dom
-    .  (HiddenClockResetEnable dom, KnownNat numPhases, 1 <= numPhases, Num a, NFDataX a)
+    :: forall numPhases numPhases0 a dom
+    .  (HiddenClockResetEnable dom, KnownNat numPhases, 1 <= numPhases, numPhases ~ (numPhases0 + 1), Num a, NFDataX a)
     => Vec numPhases (Filter dom a)                     -- ^ Sub filtes for each phase
     -> Signal dom Bool                                  -- ^ Input valid
     -> Signal dom a                                     -- ^ Data In
     -> (Signal dom Bool, Signal dom a, Signal dom Bool) -- ^ (Output valid, output data, ready)
-polyphaseDecim filters valid sampleIn = (outputReady, summed, inputReady)
+polyphaseDecim filters valid sampleIn = (outputValid, summed, inputReady)
     where
 
     --Track which filter phase will be receiving the next input
@@ -45,9 +45,6 @@ polyphaseDecim filters valid sampleIn = (outputReady, summed, inputReady)
     activeOutputPhase = wrappingCounter 0 currentIsValid
 
     --Wait until the next phase is valid
-    currentValid :: Signal dom (Maybe (Index numPhases))
-    currentValid =  findIndex id <$> sequenceA valids
-
     currentIsValid :: Signal dom Bool
     currentIsValid =  liftA2 (!!) (sequenceA valids) activeOutputPhase
 
@@ -57,7 +54,5 @@ polyphaseDecim filters valid sampleIn = (outputReady, summed, inputReady)
         (activeOutputPhase .==. 0) 
         (liftA2 (!!) (sequenceA dats) activeOutputPhase)
 
-    outputReady = register False $ currentValid .==. pure (Just maxBound)
-    ----TODO
-    --outputReady = register False $ currentIsValid .&&. (activeOutputPhase .==. (pure maxBound))
+    outputValid = register False $ last valids .&&. (activeOutputPhase .==. (pure maxBound))
 
