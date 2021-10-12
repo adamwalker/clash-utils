@@ -21,11 +21,8 @@ bitReversalReorder SNat en dat = ramOut
     counter :: Signal dom (BitVector (n + 1))
     counter =  count 0 en
 
-    (stage' :: Signal dom (BitVector 1), address' :: Signal dom (BitVector n)) 
-        = unbundle $ split <$> counter
-
-    stage :: Signal dom Bool
-    stage = unpack <$> stage'
+    (stage :: Signal dom Bool, address' :: Signal dom (BitVector n)) 
+        = unbundle $ bitCoerce <$> counter
 
     address :: Signal dom (Unsigned n)
     address = unpack <$> address'
