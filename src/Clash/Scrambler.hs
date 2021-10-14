@@ -11,6 +11,7 @@ module Clash.Scrambler (
     ) where
 
 import Clash.Prelude
+import Clash.LFSR
 
 scramblerStep 
     :: KnownNat n
@@ -21,10 +22,10 @@ scramblerStep
 scramblerStep poly (head :> rest) input = (rest :< output, output)
     where
     output :: Bool
-    output = foldl1 xor 
-        $  zipWith (.&.) rest (unpack poly) 
-        :< head
-        :< input
+    output 
+        =     fibonacciLFSR poly rest
+        `xor` head
+        `xor` input
 
 scramblerSteps 
     :: forall n m. (KnownNat n, KnownNat m)
@@ -59,10 +60,10 @@ descramblerStep
 descramblerStep poly (head :> rest) input = (rest :< input, output)
     where 
     output :: Bool
-    output = foldl1 xor 
-        $  zipWith (.&.) rest (unpack poly) 
-        :< head 
-        :< input
+    output 
+        =     fibonacciLFSR poly rest
+        `xor` head 
+        `xor` input
 
 descramblerSteps 
     :: forall n m. (KnownNat n, KnownNat m)
