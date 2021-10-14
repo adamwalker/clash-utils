@@ -24,6 +24,7 @@ See [here](http://adamwalker.github.io/Building-FPGA-KVS/) and [here](http://ada
 * Regular expression matching
 * [Scrambler](https://en.wikipedia.org/wiki/Scrambler)
 * [SHA3](https://en.wikipedia.org/wiki/SHA-3) and [AES](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
+* Sine wave generation
 * Utilities for streaming data
 
 Each design has a [Hspec](https://hspec.github.io/) testsuite/specification in the [/tests](https://github.com/adamwalker/clash-utils/tree/master/tests) subdirectory. A handful of designs have [formal properties](https://symbiyosys.readthedocs.io/en/latest/) in the [/formal](https://github.com/adamwalker/clash-utils/tree/master/formal) directory.

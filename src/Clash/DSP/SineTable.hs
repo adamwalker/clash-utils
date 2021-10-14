@@ -1,3 +1,5 @@
+{-| https://zipcpu.com/dsp/2017/08/26/quarterwave.html
+ -}
 module Clash.DSP.SineTable (
         sines,
         sineTable
