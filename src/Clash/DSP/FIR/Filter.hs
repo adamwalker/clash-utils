@@ -4,7 +4,7 @@
 
     __FPGA proven__
 -}
-module Clash.DSP.FIR.FIRFilter (
+module Clash.DSP.FIR.Filter (
         fir,
         firTransposed,
         firSystolic,

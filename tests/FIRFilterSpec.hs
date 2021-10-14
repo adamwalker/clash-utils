@@ -9,7 +9,7 @@ import Test.Hspec
 import Test.QuickCheck hiding (sample)
 
 import qualified Data.List.Split as S
-import Clash.DSP.FIR.FIRFilter
+import Clash.DSP.FIR.Filter
 import Clash.DSP.FIR.SemiParallel
 import Clash.DSP.FIR.Polyphase
 

@@ -38,7 +38,7 @@ library
         Clash.DSP.FFT.Serial,
         Clash.DSP.FFT.Reorder,
         Clash.DSP.FFT.Twiddle,
-        Clash.DSP.FIR.FIRFilter, 
+        Clash.DSP.FIR.Filter, 
         Clash.DSP.FIR.SemiParallel, 
         Clash.DSP.FIR.Polyphase, 
         Clash.DSP.IIRFilter, 
