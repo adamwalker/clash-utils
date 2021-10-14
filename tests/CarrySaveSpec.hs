@@ -7,7 +7,7 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck
 
-import Clash.Arithmetic.CarrySave
+import Clash.Arithmetic.Adder.CarrySave
 
 --Misc
 spec = describe "Carry save" $ do

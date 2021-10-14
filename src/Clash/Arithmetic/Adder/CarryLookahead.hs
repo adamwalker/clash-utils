@@ -4,7 +4,7 @@
 
     __FPGA proven__
 -}
-module Clash.Arithmetic.CarryLookahead (
+module Clash.Arithmetic.Adder.CarryLookahead (
     PrefixSum,
     carryLookaheadAdder,
     koggeStone,

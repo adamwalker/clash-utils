@@ -4,7 +4,7 @@
 
     __FPGA proven__
 -}
-module Clash.Arithmetic.CarrySelect (
+module Clash.Arithmetic.Adder.CarrySelect (
     CarryN,
     carrySelectLeaf,
     carrySelectStage,

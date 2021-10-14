@@ -5,7 +5,7 @@ module Clash.Xilinx.Adder (
 
 import Clash.Prelude
 
-import Clash.Arithmetic.CarrySave hiding (compressor)
+import Clash.Arithmetic.Adder.CarrySave hiding (compressor)
 import Clash.Xilinx.Carry
 
 compressor

@@ -14,7 +14,7 @@ import Clash.Prelude
 
 import Data.Bool
 
-import Clash.Arithmetic.CarrySave (fullAdder)
+import Clash.Arithmetic.Adder.CarrySave (fullAdder)
 
 -- | Basic purely combinational unsigned*unsigned multiply
 multiply 

@@ -7,7 +7,7 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck
 
-import Clash.Arithmetic.CarryLookahead
+import Clash.Arithmetic.Adder.CarryLookahead
 
 spec = describe "Carry lookahead" $ do
     specify "Kogge-Stone adder" $ property prop_koggeStoneAdder

@@ -18,9 +18,9 @@ cabal-version:       >=1.10
 library
     exposed-modules:     
         Clash.Arithmetic.BCD, 
-        Clash.Arithmetic.CarryLookahead,
-        Clash.Arithmetic.CarrySelect,
-        Clash.Arithmetic.CarrySave,
+        Clash.Arithmetic.Adder.CarryLookahead,
+        Clash.Arithmetic.Adder.CarrySelect,
+        Clash.Arithmetic.Adder.CarrySave,
         Clash.Arithmetic.Divide, 
         Clash.Arithmetic.Multiplier, 
         Clash.Container.FIFO, 

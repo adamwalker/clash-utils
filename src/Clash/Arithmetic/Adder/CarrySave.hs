@@ -1,4 +1,4 @@
-module Clash.Arithmetic.CarrySave (
+module Clash.Arithmetic.Adder.CarrySave (
         fullAdder,
         compressor,
         compressorN
