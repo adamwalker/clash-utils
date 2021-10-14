@@ -10,7 +10,7 @@ import Test.QuickCheck
 import qualified Numeric.FFT as FFT
 import qualified Data.Complex as C
 import Clash.DSP.Complex (Complex, fromComplex, toComplex)
-import Clash.DSP.FFT.FFT
+import Clash.DSP.FFT.Parallel
 
 --FFT
 spec = describe "Parallel FFTs" $ do

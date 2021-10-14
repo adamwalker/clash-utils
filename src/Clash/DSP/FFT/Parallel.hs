@@ -3,7 +3,7 @@
 
     TODO: use the dependently typed fold to define FFTs of any length.
 -}
-module Clash.DSP.FFT.FFT (
+module Clash.DSP.FFT.Parallel (
     twiddleFactors,
     halveTwiddles,
     reorder,
