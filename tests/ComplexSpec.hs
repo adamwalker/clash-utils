@@ -28,7 +28,7 @@ prop_complexPipe cs = noShrinking $ expect === take (length cs) (drop 3 result)
     expect :: [Complex (Signed 33)]
     expect =  map (uncurry cMul) cs
     result :: [Complex (Signed 33)]
-    result =  sample @System $ cMulPipe (fromList $ 0 : map fst cs ++ repeat 0) (fromList $ 0 : map snd cs ++ repeat 0)
+    result =  sample @System $ cMulPipe (pure True) (fromList $ 0 : map fst cs ++ repeat 0) (fromList $ 0 : map snd cs ++ repeat 0)
 
 prop_complexPipe3Mul :: [(Complex (Signed 16), Complex (Signed 16))] -> Property
 prop_complexPipe3Mul cs = noShrinking $ expect === map (fmap Clash.truncateB) (take (length cs) (drop 4 result))
@@ -36,5 +36,5 @@ prop_complexPipe3Mul cs = noShrinking $ expect === map (fmap Clash.truncateB) (t
     expect :: [Complex (Signed 33)]
     expect =  map (uncurry cMul) cs
     result :: [Complex (Signed 34)]
-    result =  sample @System $ cMul3Pipe (fromList $ 0 : map fst cs ++ repeat 0) (fromList $ 0 : map snd cs ++ repeat 0)
+    result =  sample @System $ cMul3Pipe (pure True) (fromList $ 0 : map fst cs ++ repeat 0) (fromList $ 0 : map snd cs ++ repeat 0)
 
