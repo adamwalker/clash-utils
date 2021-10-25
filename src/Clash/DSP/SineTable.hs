@@ -16,14 +16,14 @@ sines size
     $ [0..size-1]
 
 sineTable
-    :: forall dom n a
+    :: forall dom n m a
     .  HiddenClockResetEnable dom
-    => (Num a, NFDataX a)
     => KnownNat n
-    => Vec (2 ^ n) a
+    => KnownNat m
+    => Vec (2 ^ n) (UFixed 0 m)
     -> Signal dom (Unsigned (n + 2))
-    -> Signal dom a
-sineTable table addr = mux negD (negate <$> tableRes) tableRes
+    -> Signal dom (SFixed 1 m)
+sineTable table addr = mux negD (negate <$> signed) signed
     where
 
     --Split up the address
@@ -36,3 +36,6 @@ sineTable table addr = mux negD (negate <$> tableRes) tableRes
     --The table ram
     tableRes = blockRam table (mux flip (complement <$> addr') addr') (pure Nothing)
 
+    --Make it signed
+    signed :: Signal dom (SFixed 1 m)
+    signed =  bitCoerce . (False,) <$> tableRes
