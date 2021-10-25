@@ -1,4 +1,5 @@
 module Clash.Counter (
+    countAmt,
     count,
     upDownCounter,
     wrappingCounter
@@ -6,15 +7,23 @@ module Clash.Counter (
 
 import Clash.Prelude
 
+countAmt
+    :: (HiddenClockResetEnable dom, Num a, NFDataX a) 
+    => a               -- ^ Reset value
+    -> Signal dom Bool -- ^ Increment count
+    -> Signal dom a    -- ^ Amount to add
+    -> Signal dom a    -- ^ Count output
+countAmt init inc amt = res
+    where
+    res = regEn init inc $ res + amt
+
 -- | Counts cycles where the input signal is high
 count 
     :: (HiddenClockResetEnable dom, Num a, NFDataX a) 
     => a               -- ^ Reset value
     -> Signal dom Bool -- ^ Increment count
     -> Signal dom a    -- ^ Count output
-count init inc = res
-    where
-    res = regEn init inc $ res + 1
+count init inc = countAmt init inc 1
 
 -- | Counts up and down
 upDownCounter 
