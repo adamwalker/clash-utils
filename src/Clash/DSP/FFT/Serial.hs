@@ -24,24 +24,6 @@ fftBase en = regEn (0, 0) en . fmap func
     where
     func (x, y) = (x + y, x - y)
 
-fftCounter
-    :: forall n dom. (HiddenClockResetEnable dom, KnownNat n)
-    => Signal dom Bool
-    -> ((Signal dom Bool, Signal dom (Unsigned n)), Signal dom (BitVector (n + 1)))
-fftCounter en = ((stage, address), counter)
-    where
-
-    counter :: Signal dom (BitVector (n + 1))
-    counter = count 0 en
-
-    (stage' :: Signal dom (BitVector 1), address' :: Signal dom (BitVector n)) = unbundle $ split <$> counter
-
-    stage :: Signal dom Bool
-    stage = unpack <$> stage'
-
-    address :: Signal dom (Unsigned n)
-    address = unpack <$> address'
-
 {-
  -                                 |\     _______
  - Upper in -----------------------|0|   |       |
@@ -59,11 +41,12 @@ fftCounter en = ((stage, address), counter)
 fftReorder
     :: forall dom n a. (HiddenClockResetEnable dom, KnownNat n, Num a, NFDataX a)
     => Signal dom Bool
-    -> (Signal dom Bool, Signal dom (Unsigned n))
+    -> Signal dom Bool
+    -> Signal dom (Unsigned n)
     -> Signal dom a
     -> Signal dom a
     -> (Signal dom a, Signal dom a)
-fftReorder en (stage, address) upper lower = (upperRamReadResult, lowerData)
+fftReorder en stage address upper lower = (upperRamReadResult, lowerData)
     where
 
     --Swap
@@ -89,10 +72,14 @@ fftSerialDITStep twiddles en input = bundle (butterflyHighOutput, butterflyLowOu
     where
 
     --The state
-    (address, counter) = fftCounter @n en
+    counter :: Signal dom (BitVector (n + 1))
+    counter =  count 0 en
+
+    (stage :: Signal dom Bool, address :: Signal dom (Unsigned n)) 
+        = unbundle $ bitCoerce <$> counter
 
     --The FIFOs
-    (upperRamReadResult, lowerData) = fftReorder en address (fst <$> input) (snd <$> input)
+    (upperRamReadResult, lowerData) = fftReorder en stage address (fst <$> input) (snd <$> input)
 
     --The butterfly
     butterflyHighInput = upperRamReadResult
@@ -118,7 +105,11 @@ fftSerialDIFStep twiddles en input = bundle (upperRamReadResult, regEn 0 en lowe
     where
 
     --The state
-    (address, counter) = fftCounter @n en
+    counter :: Signal dom (BitVector (n + 1))
+    counter =  count 0 en
+
+    (stage :: Signal dom Bool, address :: Signal dom (Unsigned n)) 
+        = unbundle $ bitCoerce <$> counter
 
     --The butterfly
     butterflyHighOutput          = fmap fst input + fmap snd input
@@ -128,7 +119,7 @@ fftSerialDIFStep twiddles en input = bundle (upperRamReadResult, regEn 0 en lowe
     butterflyLowOutput = butterflyLowOutputPreTwiddle * twiddle
 
     --The FIFOs
-    (upperRamReadResult, lowerData) = fftReorder en address butterflyHighOutput butterflyLowOutput
+    (upperRamReadResult, lowerData) = fftReorder en stage address butterflyHighOutput butterflyLowOutput
 
 -- | Example serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
 fftSerialDIT
