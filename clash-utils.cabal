@@ -34,6 +34,7 @@ library
         Clash.DSP.CICFilter,
         Clash.DSP.Complex, 
         Clash.DSP.CORDIC, 
+        Clash.DSP.FFT.Example, 
         Clash.DSP.FFT.Parallel, 
         Clash.DSP.FFT.Serial,
         Clash.DSP.FFT.Reorder,

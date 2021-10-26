@@ -11,6 +11,7 @@ import qualified Numeric.FFT as FFT
 import qualified Data.Complex as C
 import Clash.DSP.Complex (Complex, fromComplex, toComplex)
 import Clash.DSP.FFT.Serial
+import Clash.DSP.FFT.Example
 import Clash.DSP.FFT.Twiddle (twiddleFactors)
 
 --serial FFT
