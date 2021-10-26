@@ -11,6 +11,7 @@ import Clash.Prelude
 
 import Clash.Counter(count)
 import Clash.DSP.Complex
+import Clash.DSP.FFT.Butterfly
 
 fftBase 
     :: (HiddenClockResetEnable dom, Num a, NFDataX a) 
@@ -79,15 +80,11 @@ fftSerialDITStep twiddles en input = bundle (butterflyHighOutput, butterflyLowOu
     (upperRamReadResult, lowerData) = fftReorder en stage address (fst <$> input) (snd <$> input)
 
     --The butterfly
-    butterflyHighInput = upperRamReadResult
-    butterflyLowInput  = regEn 0 en lowerData
-
     twiddlesRot = rotateLeftS twiddles (SNat @ (2 ^ n))
     twiddle     = (twiddlesRot !!) <$> (regEn 0 en $ regEn 0 en counter)
-    twiddled    = butterflyLowInput * twiddle
 
-    butterflyHighOutput = butterflyHighInput + twiddled
-    butterflyLowOutput  = butterflyHighInput - twiddled 
+    (butterflyHighOutput, butterflyLowOutput) 
+        = ditButterfly twiddle upperRamReadResult (regEn 0 en lowerData)
 
 --Decimation in frequency
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
@@ -109,11 +106,10 @@ fftSerialDIFStep twiddles en input = bundle (upperRamReadResult, regEn 0 en lowe
         = unbundle $ bitCoerce <$> counter
 
     --The butterfly
-    butterflyHighOutput          = fmap fst input + fmap snd input
-    butterflyLowOutputPreTwiddle = fmap fst input - fmap snd input
+    twiddle = (twiddles !!) <$> counter
 
-    twiddle            = (twiddles !!) <$> counter
-    butterflyLowOutput = butterflyLowOutputPreTwiddle * twiddle
+    (butterflyHighOutput, butterflyLowOutput) 
+        = difButterfly twiddle (fmap fst input) (fmap snd input)
 
     --The FIFOs
     (upperRamReadResult, lowerData) = fftReorder en stage address butterflyHighOutput butterflyLowOutput
