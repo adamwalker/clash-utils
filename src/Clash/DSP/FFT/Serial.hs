@@ -47,9 +47,11 @@ fftReorder
 fftReorder en stage address upper lower = (upperRamReadResult, lowerData)
     where
 
+    upperD = regEn 0 en upper
+
     --Swap
-    upperData = mux (not <$> regEn False en stage) (regEn 0 en upper) lowerRamReadResult
-    lowerData = mux (not <$> regEn False en stage) lowerRamReadResult (regEn 0 en upper)
+    upperData = mux (not <$> regEn False en stage) upperD             lowerRamReadResult
+    lowerData = mux (not <$> regEn False en stage) lowerRamReadResult upperD
 
     --Buffer
     lowerRamReadResult = blockRamPow2 (repeat 0 :: Vec (2 ^ n) a) address 
