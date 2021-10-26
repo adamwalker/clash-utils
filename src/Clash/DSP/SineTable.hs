@@ -1,4 +1,6 @@
 {-| https://zipcpu.com/dsp/2017/08/26/quarterwave.html
+
+    __FPGA proven__
  -}
 module Clash.DSP.SineTable (
         sines,
