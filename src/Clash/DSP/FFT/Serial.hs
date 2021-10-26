@@ -63,12 +63,13 @@ fftReorder en stage address upper lower = (upperRamReadResult, lowerData)
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
 -- | A step in the serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. 
 fftSerialDITStep
-    :: forall dom n a. (HiddenClockResetEnable dom, KnownNat n, Num a, NFDataX a)
-    => Vec (2 ^ (n + 1)) (Complex a)     -- ^ Precomputed twiddle factors
-    -> Signal dom Bool                   -- ^ Input enable signal
-    -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
-    -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
-fftSerialDITStep twiddles en input = bundle (butterflyHighOutput, butterflyLowOutput)
+    :: forall dom n twiddle input output. (HiddenClockResetEnable dom, KnownNat n, Num input, NFDataX input)
+    => Butterfly dom twiddle input output
+    -> Vec (2 ^ (n + 1)) twiddle          -- ^ Precomputed twiddle factors
+    -> Signal dom Bool                    -- ^ Input enable signal
+    -> Signal dom (input,  input)         -- ^ Pair of input samples
+    -> Signal dom (output, output)        -- ^ Pair of output samples
+fftSerialDITStep butterfly twiddles en input = bundle (butterflyHighOutput, butterflyLowOutput)
     where
 
     --The state
@@ -86,18 +87,19 @@ fftSerialDITStep twiddles en input = bundle (butterflyHighOutput, butterflyLowOu
     twiddle     = (twiddlesRot !!) <$> (regEn 0 en $ regEn 0 en counter)
 
     (butterflyHighOutput, butterflyLowOutput) 
-        = ditButterfly twiddle upperRamReadResult (regEn 0 en lowerData)
+        = butterfly twiddle upperRamReadResult (regEn 0 en lowerData)
 
 --Decimation in frequency
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
 -- | A step in the serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. 
 fftSerialDIFStep
-    :: forall dom n a. (HiddenClockResetEnable dom, KnownNat n, Num a, NFDataX a)
-    => Vec (2 ^ (n + 1)) (Complex a) -- ^ Precomputed twiddle factors
-    -> Signal dom Bool                   -- ^ Input enable signal
-    -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
-    -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
-fftSerialDIFStep twiddles en input = bundle (upperRamReadResult, regEn 0 en lowerData)
+    :: forall dom n twiddle input output. (HiddenClockResetEnable dom, KnownNat n, Num output, NFDataX output)
+    => Butterfly dom twiddle input output
+    -> Vec (2 ^ (n + 1)) twiddle          -- ^ Precomputed twiddle factors
+    -> Signal dom Bool                    -- ^ Input enable signal
+    -> Signal dom (input, input)          -- ^ Pair of input samples
+    -> Signal dom (output, output)        -- ^ Pair of output samples
+fftSerialDIFStep butterfly twiddles en input = bundle (upperRamReadResult, regEn 0 en lowerData)
     where
 
     --The state
@@ -111,7 +113,7 @@ fftSerialDIFStep twiddles en input = bundle (upperRamReadResult, regEn 0 en lowe
     twiddle = (twiddles !!) <$> counter
 
     (butterflyHighOutput, butterflyLowOutput) 
-        = difButterfly twiddle (fmap fst input) (fmap snd input)
+        = butterfly twiddle (fmap fst input) (fmap snd input)
 
     --The FIFOs
     (upperRamReadResult, lowerData) = fftReorder en stage address butterflyHighOutput butterflyLowOutput

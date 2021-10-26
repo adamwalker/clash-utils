@@ -8,6 +8,7 @@ import Data.Function
 import Clash.DSP.Complex
 import Clash.DSP.FFT.Serial
 import Clash.DSP.FFT.Twiddle(halveTwiddles)
+import Clash.DSP.FFT.Butterfly
 
 -- | Example serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
 fftSerialDIT
@@ -18,8 +19,8 @@ fftSerialDIT
     -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
 fftSerialDIT twiddles en input  
     = fftBase en input
-    & fftSerialDITStep cexp2    stage2En
-    & fftSerialDITStep twiddles stage3En
+    & fftSerialDITStep ditButterfly cexp2    stage2En
+    & fftSerialDITStep ditButterfly twiddles stage3En
 
     where
 
@@ -37,9 +38,9 @@ fftSerialDIF
     -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
     -> Signal dom (Complex a, Complex a) -- ^ Pair of output samples
 fftSerialDIF twiddles en input 
-    = fftSerialDIFStep twiddles en input
-    & fftSerialDIFStep cexp2    stage2En 
-    & fftBase                   stage3En 
+    = fftSerialDIFStep difButterfly twiddles en input
+    & fftSerialDIFStep difButterfly cexp2    stage2En 
+    & fftBase                                stage3En 
 
     where
 
