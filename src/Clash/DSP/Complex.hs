@@ -27,6 +27,10 @@ instance Arbitrary a => Arbitrary (Complex a)
     where
     arbitrary = liftA2 (:+) arbitrary arbitrary
 
+instance Default a => Default (Complex a)
+    where
+    def = def :+ def
+
 realPart :: Complex a -> a
 realPart (x :+ _) = x
 

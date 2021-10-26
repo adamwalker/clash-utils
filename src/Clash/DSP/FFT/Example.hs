@@ -12,7 +12,7 @@ import Clash.DSP.FFT.Butterfly
 
 -- | Example serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
 fftSerialDIT
-    :: forall dom a. (HiddenClockResetEnable dom, Num a, NFDataX a)
+    :: forall dom a. (HiddenClockResetEnable dom, Num a, NFDataX a, Default a)
     => Vec 4 (Complex a)                 -- ^ Precomputed twiddle factors
     -> Signal dom Bool                   -- ^ Input enable signal
     -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
@@ -32,7 +32,7 @@ fftSerialDIT twiddles en input
 
 -- | Example serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. Note that both the input and output samples must be supplied in a weird order. See the tests.
 fftSerialDIF
-    :: forall dom a. (HiddenClockResetEnable dom, Num a, NFDataX a)
+    :: forall dom a. (HiddenClockResetEnable dom, Num a, NFDataX a, Default a)
     => Vec 4 (Complex a)                 -- ^ Precomputed twiddle factors
     -> Signal dom Bool                   -- ^ Input enable signal
     -> Signal dom (Complex a, Complex a) -- ^ Pair of input samples
