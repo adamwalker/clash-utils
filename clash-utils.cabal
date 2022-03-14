@@ -93,7 +93,7 @@ library
     build-depends:       
         base          >=4.8 && <5, 
         clash-prelude >=1.2 && <1.5, 
-        singletons    >=2.3   && <2.8,
+        singletons    >=3   && <4,
         ghc-typelits-natnormalise,
         ghc-typelits-knownnat,
         cereal        >=0.5 && <0.6,
