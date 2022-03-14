@@ -14,7 +14,7 @@ module Clash.Misc (
 
 import Clash.Prelude
 
-import Data.Bool
+import Data.Bool (bool)
 
 -- | Update a slice in a vector
 replaceSlice

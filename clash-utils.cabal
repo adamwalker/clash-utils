@@ -92,7 +92,7 @@ library
         default-extensions: NoStarIsType
     build-depends:       
         base          >=4.8 && <5, 
-        clash-prelude >=1.2 && <1.5, 
+        clash-prelude >=1.6 && <1.7, 
         singletons    >=3   && <4,
         ghc-typelits-natnormalise,
         ghc-typelits-knownnat,
@@ -156,7 +156,7 @@ Test-Suite test
         digest                     >=0.0.1 && <0.0.2,
         containers                 >=0.5   && <0.7,
         pure-fft                   >=0.2.0,
-        clash-prelude              >=1.2  && <1.5,
+        clash-prelude              >=1.6  && <1.7,
         split                      >=0.2,
         cereal                     >=0.5 && <0.6,
         hspec                      >=2.4 && < 3,

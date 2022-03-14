@@ -13,7 +13,7 @@ module Clash.Arithmetic.Adder.CarrySelect (
     ) where
 
 import Clash.Prelude
-import Data.Bool
+import Data.Bool (bool)
 
 -- | Type of functions that behave the same as a Xilinx carry chain
 type CarryN n

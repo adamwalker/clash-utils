@@ -12,7 +12,7 @@ module Clash.Arithmetic.Multiplier (
 
 import Clash.Prelude
 
-import Data.Bool
+import Data.Bool (bool)
 
 import Clash.Arithmetic.Adder.CarrySave (fullAdder)
 
