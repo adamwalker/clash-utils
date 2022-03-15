@@ -17,27 +17,27 @@ import Clash.DSP.FIR.Polyphase
 --Check that both optimised filters return the same results as the unoptimised one
 spec = describe "FIR filters" $ do
     describe "Parallel" $ do
-        specify "transposed"          $ property $ prop_FilterTransposed
-        specify "systolic"            $ property $ prop_FilterSystolic
-        specify "systolic symmetric"  $ property $ prop_FilterSystolicSymmetric
-        specify "symmetric"           $ property $ prop_FilterSymmetric
-        specify "systolic symmetric"  $ property $ prop_systolicSymmetric
-        specify "systolic half band"  $ property $ prop_systolicHalfBand
+        specify "transposed"          $ property prop_FilterTransposed
+        specify "systolic"            $ property prop_FilterSystolic
+        specify "systolic symmetric"  $ property prop_FilterSystolicSymmetric
+        specify "symmetric"           $ property prop_FilterSymmetric
+        specify "systolic symmetric"  $ property prop_systolicSymmetric
+        specify "systolic half band"  $ property prop_systolicHalfBand
     describe "Semi-parallel systolic" $ do
-        specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRSystolic
-        specify "Semi-parallel 2"     $ property $ prop_semiParallelFIRSystolicMultiStage
+        specify "Semi-parallel 1"     $ property prop_semiParallelFIRSystolic
+        specify "Semi-parallel 2"     $ property prop_semiParallelFIRSystolicMultiStage
     describe "Semi-parallel transposed" $ do
-        specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRTransposed
+        specify "Semi-parallel 1"     $ property prop_semiParallelFIRTransposed
     describe "Semi-parallel transposed block ram" $ do
-        specify "Semi-parallel 1"     $ property $ prop_semiParallelFIRTransposedBlockam
+        specify "Semi-parallel 1"     $ property prop_semiParallelFIRTransposedBlockam
     describe "Polyphase" $ do
-        specify "Decimate"                 $ property $ prop_polyphaseDecim
-        specify "Decimate multi stage"     $ property $ prop_polyphaseDecimMultiStage
-        specify "Decimate multi stage 2"   $ property $ prop_polyphaseDecimMultiStage2
-        specify "Decimate multi stage 3"   $ property $ prop_polyphaseDecimMultiStage3
-        specify "Decimate multi stage 4"   $ property $ prop_polyphaseDecimMultiStage4
-        specify "Decimate back pressure"   $ property $ prop_polyphaseDecimMultiStage2_backPressure
-        specify "Decimate back pressure 2" $ property $ prop_polyphaseDecimMultiStage3_backPressure
+        specify "Decimate"                 $ property prop_polyphaseDecim
+        specify "Decimate multi stage"     $ property prop_polyphaseDecimMultiStage
+        specify "Decimate multi stage 2"   $ property prop_polyphaseDecimMultiStage2
+        specify "Decimate multi stage 3"   $ property prop_polyphaseDecimMultiStage3
+        specify "Decimate multi stage 4"   $ property prop_polyphaseDecimMultiStage4
+        specify "Decimate back pressure"   $ property prop_polyphaseDecimMultiStage2_backPressure
+        specify "Decimate back pressure 2" $ property prop_polyphaseDecimMultiStage3_backPressure
 
 goldenFIR 
     :: (HiddenClockResetEnable dom, Num a, KnownNat n, NFDataX a)
