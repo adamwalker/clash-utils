@@ -33,7 +33,7 @@ prop_CORDICVectorMode =
     where
 
     doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
-    doIt = cordicSteps (\(CordicState (_ :+ y) _) -> y < 0) (0 :: Index 100) consts
+    doIt = cordicSteps dirMagPhase (0 :: Index 100) consts
 
 --Test CORDIC rotation mode by calculating the real and imaginary part of a complex number given in polar form
 prop_CORDICRotationMode = 
@@ -45,7 +45,7 @@ prop_CORDICRotationMode =
     where
 
     doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
-    doIt = cordicSteps (\(CordicState _ a) -> a > 0) (0 :: Index 100) consts
+    doIt = cordicSteps dirRealImag (0 :: Index 100) consts
 
 --Test CORDIC vector mode by calculating the magnitude and phase of a complex number
 prop_CORDICPipelined = 
@@ -62,6 +62,6 @@ prop_CORDICPipelined =
         = last
         $ take 12
         $ sample @System 
-        $ cordicPipeline (\(CordicState (_ :+ y) _) -> y < 0) (0 :: Index 100) (Clash.unconcat (SNat @ 10) consts) (pure True)
+        $ cordicPipeline dirMagPhase (0 :: Index 100) (Clash.unconcat (SNat @ 10) consts) (pure True)
         $ pure input
 
