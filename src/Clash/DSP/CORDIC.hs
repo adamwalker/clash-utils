@@ -10,6 +10,7 @@ module Clash.DSP.CORDIC (
     realPart,
     imagPart,
     CordicState(..),
+    DirFunc(..),
     dirMagPhase,
     dirRealImag,
     cordicStep,
@@ -41,17 +42,22 @@ data CordicState a b = CordicState {
     arg  :: b
 } deriving (Show, Generic, ShowX, NFDataX)
 
+type DirFunc a b = CordicState a b -> Bool
+
+dirMagPhase :: (Ord a, Num a) => DirFunc a b
 dirMagPhase (CordicState (_ :+ y) _) = y < 0
+
+dirRealImag :: (Ord b, Num b) => DirFunc a b
 dirRealImag (CordicState _ a)        = a > 0
 
 {-| Perform one step of the CORDIC algorithm. Can be used to calculate sine and cosine as well as calculate the magnitude and phase of a complex number. See the tests to see how this is done. This pure function can be used iteratively by feeding the output back into the input, pipelined by instantiating it several times with registers in between, or combinationally. `cordicSteps` may be useful for this. -}
 cordicStep 
     :: (Num a, Bits a, Num b, KnownNat n) 
-    => (CordicState a b -> Bool) -- ^ Function that determines the direction of rotation. See the tests for an example.
-    -> Index n                   -- ^ Iteration index of this step
-    -> b                         -- ^ Arctan for this index
-    -> CordicState a b           -- ^ Input state
-    -> CordicState a b           -- ^ Output state
+    => DirFunc a b     -- ^ Function that determines the direction of rotation. See the tests for an example.
+    -> Index n         -- ^ Iteration index of this step
+    -> b               -- ^ Arctan for this index
+    -> CordicState a b -- ^ Input state
+    -> CordicState a b -- ^ Output state
 cordicStep dir idx a state@(CordicState (x :+ y) arg) = CordicState (nextX :+ nextY) nextArg
     where
     addSub sel x y 
@@ -67,11 +73,11 @@ cordicStep dir idx a state@(CordicState (x :+ y) arg) = CordicState (nextX :+ ne
 {-| Perform n iterations of the CORDIC algorithm -}
 cordicSteps
     :: (Num a, Bits a, Num b, KnownNat n, KnownNat m) 
-    => (CordicState a b -> Bool) -- ^ Function that determines the direction of rotation
-    -> Index m                   -- ^ Iteration index of these steps
-    -> Vec n b                   -- ^ Vector of arctan values
-    -> CordicState a b           -- ^ Input state
-    -> CordicState a b           -- ^ Output state
+    => DirFunc a b     -- ^ Function that determines the direction of rotation
+    -> Index m         -- ^ Iteration index of these steps
+    -> Vec n b         -- ^ Vector of arctan values
+    -> CordicState a b -- ^ Input state
+    -> CordicState a b -- ^ Output state
 cordicSteps dir start = flip (ifoldl cordicStep') 
     where 
     cordicStep' accum index con = cordicStep dir (start + resize index) con accum
@@ -84,7 +90,7 @@ cordicPipeline
     => (NFDataX b, Num b)
     => KnownNat numPerStage
     => KnownNat m
-    => (CordicState a b -> Bool)
+    => DirFunc a b
     -> Index m
     -> Vec numStages (Vec numPerStage b)
     -> Signal dom Bool
