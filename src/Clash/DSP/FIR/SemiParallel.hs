@@ -14,7 +14,8 @@ import Clash.Counter
 
 --Integrate and dump. If the dump input is high, the accumulator input to the addition is zeroed on the current cycle.
 integrateAndDump
-    :: (HiddenClockResetEnable dom, Num a, NFDataX a)
+    :: (HiddenClockResetEnable dom)
+    => (Num a, NFDataX a)
     => Signal dom Bool -- ^ Input valid
     -> Signal dom Bool -- ^ Reset accumulator to 0.
     -> Signal dom a    -- ^ Data in
@@ -24,7 +25,9 @@ integrateAndDump step reset sampleIn = sum
     sum = regEn 0 step $ mux reset 0 sum + sampleIn
 
 shiftReg 
-    :: (HiddenClockResetEnable dom, NFDataX a, KnownNat n, Num a)
+    :: (HiddenClockResetEnable dom)
+    => (NFDataX a, Num a)
+    => KnownNat n
     => Signal dom Bool
     -> Signal dom a
     -> Signal dom (Vec n a)
@@ -38,7 +41,11 @@ shiftReg shift dat = res
 --Registers after reading the shift register and coefficient rom
 macUnit
     :: forall n dom coeffType inputType outputType
-    .  (HiddenClockResetEnable dom, KnownNat n, NFDataX inputType, Num inputType, NFDataX outputType, Num outputType, Num coeffType, NFDataX coeffType)
+    .  (HiddenClockResetEnable dom)
+    => KnownNat n
+    => (NFDataX inputType, Num inputType)
+    => (NFDataX outputType, Num outputType) 
+    => (Num coeffType, NFDataX coeffType)
     => MAC dom coeffType inputType outputType
     -> Vec n coeffType                               -- ^ Filter coefficients
     -> Signal dom (Index n)                          -- ^ Index to multiply
@@ -59,7 +66,11 @@ macUnit mac coeffs idx shiftSamples step cascadeIn sampleIn = (macD, sampleToMul
 
 semiParallelFIRSystolic
     :: forall numStages coeffsPerStage coeffType inputType outputType dom
-    .  (HiddenClockResetEnable dom, KnownNat coeffsPerStage, KnownNat numStages, NFDataX inputType, NFDataX outputType, Num inputType, Num outputType, Num coeffType, NFDataX coeffType)
+    .  HiddenClockResetEnable dom
+    => (KnownNat coeffsPerStage, KnownNat numStages)
+    => (NFDataX inputType, Num inputType) 
+    => (NFDataX outputType, Num outputType)
+    => (NFDataX coeffType, Num coeffType)
     => MAC dom coeffType inputType outputType
     -> Vec (numStages + 1) (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
     -> Signal dom Bool                                           -- ^ Input valid
@@ -101,7 +112,11 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
 
 semiParallelFIRTransposed
     :: forall dom numStages coeffsPerStage coeffType inputType outputType
-    .  (HiddenClockResetEnable dom, KnownNat numStages, KnownNat coeffsPerStage, 1 <= coeffsPerStage, NFDataX inputType, Num inputType, NFDataX outputType, Num outputType, Num coeffType, NFDataX coeffType)
+    .  HiddenClockResetEnable dom
+    => (KnownNat numStages, KnownNat coeffsPerStage, 1 <= coeffsPerStage)
+    => (NFDataX inputType, Num inputType)
+    => (NFDataX outputType, Num outputType)
+    => (NFDataX coeffType, Num coeffType)
     => MAC dom coeffType inputType outputType
     -> Vec numStages (Vec coeffsPerStage coeffType)
     -> Signal dom Bool
@@ -146,7 +161,11 @@ semiParallelFIRTransposed mac coeffs valid sampleIn = (validOut, dataOut, ready)
 
 semiParallelFIRTransposedBlockRam
     :: forall dom numStages coeffsPerStage coeffType inputType outputType
-    .  (HiddenClockResetEnable dom, KnownNat numStages, KnownNat coeffsPerStage, 1 <= coeffsPerStage, NFDataX inputType, Num inputType, NFDataX outputType, Num outputType, NFDataX coeffType)
+    .  HiddenClockResetEnable dom
+    => (KnownNat numStages, KnownNat coeffsPerStage, 1 <= coeffsPerStage)
+    => (NFDataX inputType, Num inputType)
+    => (NFDataX outputType, Num outputType)
+    => NFDataX coeffType
     => MAC dom coeffType inputType outputType
     -> Vec numStages (Vec coeffsPerStage coeffType)
     -> Signal dom Bool
