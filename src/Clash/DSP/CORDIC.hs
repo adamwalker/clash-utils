@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 {-| 
     Compute trigonometric functions using <https://en.wikipedia.org/wiki/CORDIC CODRIC>. See also the Wikibook: <https://en.wikibooks.org/wiki/Digital_Circuits/CORDIC>. 
 
