@@ -2,6 +2,8 @@ module Clash.DSP.FIR.SemiParallel (
         macUnit,
         integrateAndDump,
         semiParallelFIRSystolic,
+        macUnitSymmetric,
+        semiParallelFIRSystolicSymmetric,
         semiParallelFIRTransposed,
         semiParallelFIRTransposedBlockRam,
     ) where
@@ -109,6 +111,102 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
 
     dataOut :: Signal dom outputType
     dataOut =  integrateAndDump globalStep validOut $ fst sampleOut
+
+--Multiply and accumulate unit
+--Keeps a shift register of samples, and a coefficient ROM
+--Registers after reading the shift register and coefficient rom
+macUnitSymmetric
+    :: forall n dom coeffType inputType outputType
+    .  (HiddenClockResetEnable dom)
+    => KnownNat n
+    => (NFDataX inputType, Num inputType)
+    => (NFDataX outputType, Num outputType) 
+    => (Num coeffType, NFDataX coeffType)
+    => MACPreAdd dom coeffType inputType outputType
+    -> Vec n coeffType                               -- ^ Filter coefficients
+    -> Signal dom (Index n)                          -- ^ Index to multiply
+    -> Signal dom Bool                               -- ^ Shift
+    -> Signal dom Bool                               -- ^ Step
+    -> Signal dom outputType                         -- ^ Sample
+    -> Signal dom inputType                          -- ^ MAC cascade in
+    -> Signal dom inputType
+    -> (Signal dom outputType, (Signal dom inputType, Signal dom inputType)) -- ^ (MAC'd sample out, delayed input sample out)
+macUnitSymmetric mac coeffs idx shiftSamples step cascadeIn forwardSampleIn reverseSampleIn = (macD, (forwardSampleToMul, reverseSampleSaved))
+    where
+
+    --Keep the shift registers in the forward and reverse directions
+    forwardShiftReg :: Signal dom (Vec n inputType)
+    forwardShiftReg =  shiftReg (step .&&. shiftSamples) forwardSampleIn
+
+    reverseShiftReg :: Signal dom (Vec n inputType)
+    reverseShiftReg =  shiftReg (step .&&. shiftSamples) reverseSampleIn
+
+    --Extract the samples to add and multiply
+    forwardSampleToMul = regEn 0 step $ (!!) <$> forwardShiftReg               <*> idx
+    reverseSampleToMul = regEn 0 step $ (!!) <$> (reverse <$> reverseShiftReg) <*> idx
+
+    --Save the reverse direction sample
+    shiftSamplesD = regEn False step $ regEn False step shiftSamples
+    reverseSampleSaved = regEn 0 shiftSamplesD reverseSampleToMul
+
+    coeffToMul  = regEn 0 step $ (coeffs !!) <$> idx
+    macD        = regEn 0 step $ mac step coeffToMul forwardSampleToMul reverseSampleToMul cascadeIn
+
+semiParallelFIRSystolicSymmetric
+    :: forall numStages coeffsPerStage coeffType inputType outputType dom
+    .  HiddenClockResetEnable dom
+    => (KnownNat coeffsPerStage, KnownNat numStages)
+    => (NFDataX inputType, Num inputType) 
+    => (NFDataX outputType, Num outputType)
+    => (NFDataX coeffType, Num coeffType)
+    => MACPreAdd dom coeffType inputType outputType
+    -> Vec (numStages + 1) (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
+    -> Signal dom Bool                                           -- ^ Input valid
+    -> Signal dom inputType                                      -- ^ Sample
+    -> (Signal dom Bool, Signal dom outputType, Signal dom Bool) -- ^ (Output valid, output data, ready)
+semiParallelFIRSystolicSymmetric mac coeffs valid sampleIn = (validOut, dataOut, ready)
+    where
+
+    finalShift = regEn False globalStep (last shifts)
+
+    baseCase 
+        :: Signal dom inputType
+        -> Signal dom outputType
+        -> (Signal dom inputType, Signal dom outputType)
+    baseCase forwardSample cascadeIn = (regEn 0 finalShift forwardSample, cascadeIn)
+
+    (_, sampleOut) = foldr step baseCase (zip3 coeffs indices shifts) sampleIn 0
+        where
+        step (coeffs, index, shift) accum forwardSample cascadeIn = (reverseSample', sampleOut')
+            where
+            (reverseSample, sampleOut') 
+                = accum forwardSample' sampleOut
+            (sampleOut, (forwardSample', reverseSample')) 
+                = macUnitSymmetric mac coeffs index shift globalStep cascadeIn forwardSample reverseSample
+
+    address :: Signal dom (Index coeffsPerStage)
+    address = wrappingCounter maxBound globalStep
+
+    ready :: Signal dom Bool
+    ready =  address .==. pure maxBound
+
+    globalStep :: Signal dom Bool
+    globalStep =  not <$> ready .||. valid
+
+    shifts :: Vec (numStages + 1) (Signal dom Bool)
+    shifts =  iterateI (regEn False globalStep) ready
+
+    indices :: Vec (numStages + 1) (Signal dom (Index coeffsPerStage))
+    indices =  iterateI (regEn 0 globalStep) address
+
+    validOut :: Signal dom Bool
+    validOut 
+        --TODO: globalStep here is not good for timing
+        =    globalStep 
+        .&&. last (generate (SNat @ 3) (regEn False globalStep) (last indices .==. pure maxBound))
+
+    dataOut :: Signal dom outputType
+    dataOut =  integrateAndDump globalStep validOut sampleOut
 
 semiParallelFIRTransposed
     :: forall dom numStages coeffsPerStage coeffType inputType outputType

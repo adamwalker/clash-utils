@@ -26,6 +26,9 @@ spec = describe "FIR filters" $ do
     describe "Semi-parallel systolic" $ do
         specify "Semi-parallel 1"     $ property prop_semiParallelFIRSystolic
         specify "Semi-parallel 2"     $ property prop_semiParallelFIRSystolicMultiStage
+    describe "Semi-parallel systolic symmetric" $ do
+        specify "Semi-parallel systolic 1" $ property prop_semiParallelFIRSystolicSymmetric
+        specify "Semi-parallel systolic 2" $ property prop_semiParallelFIRSystolicSymmetricMultiStage
     describe "Semi-parallel transposed" $ do
         specify "Semi-parallel 1"     $ property prop_semiParallelFIRTransposed
     describe "Semi-parallel transposed block ram" $ do
@@ -199,6 +202,28 @@ prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expec
         $ map snd . filter fst
         $ sample @System 
         $ system (semiParallelFIRSystolic (const macRealReal) coeffs) input ens
+
+prop_semiParallelFIRSystolicSymmetric :: Vec 4 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_semiParallelFIRSystolicSymmetric coeffs input (InfiniteList ens _) = expect === result 
+    where
+    expect
+        = goldenExpect (coeffs Clash.++ Clash.singleton 0 Clash.++ Clash.reverse coeffs) input
+    result
+        = take (length input) 
+        $ map snd . filter fst
+        $ sample @System 
+        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (singleton coeffs)) input ens
+
+prop_semiParallelFIRSystolicSymmetricMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_semiParallelFIRSystolicSymmetricMultiStage coeffs input (InfiniteList ens _) = expect === result 
+    where
+    expect
+        = goldenExpect (Clash.concat coeffs Clash.++ Clash.singleton 0 Clash.++ Clash.reverse (Clash.concat coeffs)) input
+    result
+        = take (length input) 
+        $ map snd . filter fst
+        $ sample @System 
+        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) coeffs) input ens
 
 prop_semiParallelFIRTransposed :: Vec 4 (Vec 3 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRTransposed coeffs input (InfiniteList ens _) = expect === result
