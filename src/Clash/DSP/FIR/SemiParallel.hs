@@ -67,18 +67,19 @@ macUnit mac coeffs idx shiftSamples step cascadeIn sampleIn = (macD, sampleToMul
     macD        = regEn 0 step $ mac step coeffToMul sampleToMul cascadeIn
 
 semiParallelFIRSystolic
-    :: forall numStages coeffsPerStage coeffType inputType outputType dom
+    :: forall numStages macDelay coeffsPerStage coeffType inputType outputType dom
     .  HiddenClockResetEnable dom
     => (KnownNat coeffsPerStage, KnownNat numStages)
     => (NFDataX inputType, Num inputType) 
     => (NFDataX outputType, Num outputType)
     => (NFDataX coeffType, Num coeffType)
     => MAC dom coeffType inputType outputType
+    -> SNat macDelay
     -> Vec (numStages + 1) (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
     -> Signal dom Bool                                           -- ^ Input valid
     -> Signal dom inputType                                      -- ^ Sample
     -> (Signal dom Bool, Signal dom outputType, Signal dom Bool) -- ^ (Output valid, output data, ready)
-semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
+semiParallelFIRSystolic mac macDelay coeffs valid sampleIn = (validOut, dataOut, ready)
     where
     sampleOut = foldl func (0, sampleIn) (zip3 coeffs indices shifts)
         where
@@ -107,7 +108,7 @@ semiParallelFIRSystolic mac coeffs valid sampleIn = (validOut, dataOut, ready)
     validOut 
         --TODO: globalStep here is not good for timing
         =    globalStep 
-        .&&. last (generate (SNat @ 3) (regEn False globalStep) (last indices .==. pure maxBound))
+        .&&. last (generate (macDelay `addSNat` (SNat @ 3)) (regEn False globalStep) (last indices .==. pure maxBound))
 
     dataOut :: Signal dom outputType
     dataOut =  integrateAndDump globalStep validOut $ fst sampleOut
