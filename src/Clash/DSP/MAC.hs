@@ -2,11 +2,12 @@ module Clash.DSP.MAC (
         MAC(..),
         MACPreAdd(..),
         macRealReal,
+        macPreAddRealReal,
         macRealRealPipelined,
         macPreAddRealRealPipelined,
         macRealComplex,
-        macRealComplexPipelined,
         macPreAddRealComplex,
+        macRealComplexPipelined,
         macPreAddRealComplexPipelined
     )  where
 
@@ -39,6 +40,16 @@ macRealReal
     -> Signed (a + b + c) -- ^ Real accumulator out
 macRealReal x a b = extend (x `mul` a) + b
 
+-- | Real * Real multiply and accumulate with pre-add
+macPreAddRealReal
+    :: (KnownNat a, KnownNat b, KnownNat c) 
+    => Signed a               -- ^ Real coefficient
+    -> Signed b               -- ^ Real input
+    -> Signed b               -- ^ Real input 2
+    -> Signed (a + b + c + 1) -- ^ Real accumulator in
+    -> Signed (a + b + c + 1) -- ^ Real accumulator out
+macPreAddRealReal c i1 i2 b = extend (c `mul` (i1 `add` i2)) + b
+
 -- | Real * Real multiply and accumulate. Designed to use the intermediate pipeline registers in Xilinx DSP48s.
 macRealRealPipelined
     :: (HiddenClockResetEnable dom, KnownNat a, KnownNat b, KnownNat c) 
@@ -68,15 +79,7 @@ macRealComplex
     -> Complex (Signed b)           -- ^ Complex input
     -> Complex (Signed (a + b + c)) -- ^ Complex accumulator in
     -> Complex (Signed (a + b + c)) -- ^ Complex accumulator out
-macRealComplex x (a1 :+ a2) (b1 :+ b2) = (extend (x `mul` a1) + b1) :+ (extend (x `mul` a2) + b2)
-
--- | Real * Complex multiply and accumulate. Designed to use the intermediate pipeline registers in Xilinx DSP48s.
-macRealComplexPipelined 
-    :: (HiddenClockResetEnable dom, KnownNat a, KnownNat b, KnownNat c) 
-    => MAC dom (Signed a) (Complex (Signed b)) (Complex (Signed (a + b + c)))
-macRealComplexPipelined en c i1 accum 
-    = sequenceA 
-    $ liftA2 (macRealRealPipelined en c) (sequenceA i1) (sequenceA accum)
+macRealComplex x = liftA2 (macRealReal x) 
 
 -- | Real * Complex multiply and accumulate with pre-add
 macPreAddRealComplex 
@@ -86,10 +89,15 @@ macPreAddRealComplex
     -> Complex (Signed b)               -- ^ Complex input 2
     -> Complex (Signed (a + b + c + 1)) -- ^ Complex accumulator in
     -> Complex (Signed (a + b + c + 1)) -- ^ Complex accumulator out
-macPreAddRealComplex c (i11 :+ i12) (i21 :+ i22) (b1 :+ b2) = (extend (c `mul` a1) + b1) :+ (extend (c `mul` a2) + b2)
-    where
-    a1 = i11 `add` i21
-    a2 = i12 `add` i22
+macPreAddRealComplex c = liftA3 (macPreAddRealReal c) 
+
+-- | Real * Complex multiply and accumulate. Designed to use the intermediate pipeline registers in Xilinx DSP48s.
+macRealComplexPipelined 
+    :: (HiddenClockResetEnable dom, KnownNat a, KnownNat b, KnownNat c) 
+    => MAC dom (Signed a) (Complex (Signed b)) (Complex (Signed (a + b + c)))
+macRealComplexPipelined en c i1 accum 
+    = sequenceA 
+    $ liftA2 (macRealRealPipelined en c) (sequenceA i1) (sequenceA accum)
 
 -- | Real * Complex multiply and accumulate with pre add. Designed to use the intermediate pipeline registers in Xilinx DSP48s.
 macPreAddRealComplexPipelined
