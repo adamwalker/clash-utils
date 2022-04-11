@@ -1,6 +1,7 @@
 module Clash.DSP.MAC (
         MAC(..),
         MACPreAdd(..),
+        macRealReal,
         macRealComplex,
         macRealComplexPipelined,
         macPreAddRealComplex,
@@ -26,6 +27,15 @@ type MACPreAdd dom coeffType inputType outputType
     -> Signal dom inputType 
     -> Signal dom outputType 
     -> Signal dom outputType
+
+-- | Real * Real multiply and accumulate
+macRealReal 
+    :: (KnownNat a, KnownNat b, KnownNat c) 
+    => Signed a           -- ^ Real coefficient
+    -> Signed b           -- ^ Real input
+    -> Signed (a + b + c) -- ^ Real accumulator in
+    -> Signed (a + b + c) -- ^ Real accumulator out
+macRealReal x a b = extend (x `mul` a) + b
 
 -- | Real * Complex multiply and accumulate
 macRealComplex 
