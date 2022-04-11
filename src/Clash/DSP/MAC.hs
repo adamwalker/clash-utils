@@ -2,6 +2,7 @@ module Clash.DSP.MAC (
         MAC(..),
         MACPreAdd(..),
         macRealReal,
+        macRealRealPipelined,
         macRealComplex,
         macRealComplexPipelined,
         macPreAddRealComplex,
@@ -36,6 +37,20 @@ macRealReal
     -> Signed (a + b + c) -- ^ Real accumulator in
     -> Signed (a + b + c) -- ^ Real accumulator out
 macRealReal x a b = extend (x `mul` a) + b
+
+-- | Real * Real multiply and accumulate. Designed to use the intermediate pipeline registers in Xilinx DSP48s.
+macRealRealPipelined
+    :: (HiddenClockResetEnable dom, KnownNat a, KnownNat b, KnownNat c) 
+    => Signal dom Bool                 -- ^ Enable
+    -> Signal dom (Signed a)           -- ^ Real coefficient
+    -> Signal dom (Signed b)           -- ^ Real input
+    -> Signal dom (Signed (a + b + c)) -- ^ Real accumulator in
+    -> Signal dom (Signed (a + b + c)) -- ^ Real accumulator out
+macRealRealPipelined en c i a 
+    = liftA2 (+) a
+    $ fmap extend 
+    $ regEn 0 en
+    $ liftA2 mul c i
 
 -- | Real * Complex multiply and accumulate
 macRealComplex 
