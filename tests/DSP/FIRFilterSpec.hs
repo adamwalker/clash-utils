@@ -28,8 +28,9 @@ spec = describe "FIR filters" $ do
         specify "Semi-parallel multi stage" $ property prop_semiParallelFIRSystolicMultiStage
         specify "Semi-parallel mac delay"   $ property prop_semiParallelFIRSystolicMultiStageMacDelay
     describe "Semi-parallel systolic symmetric" $ do
-        specify "Semi-parallel systolic 1" $ property prop_semiParallelFIRSystolicSymmetric
-        specify "Semi-parallel systolic 2" $ property prop_semiParallelFIRSystolicSymmetricMultiStage
+        specify "Semi-parallel systolic"             $ property prop_semiParallelFIRSystolicSymmetric
+        specify "Semi-parallel systolic multi stage" $ property prop_semiParallelFIRSystolicSymmetricMultiStage
+        specify "Semi-parallel systolic mac delay"   $ property prop_semiParallelFIRSystolicSymmetricMacDelay
     describe "Semi-parallel transposed" $ do
         specify "Semi-parallel 1"     $ property prop_semiParallelFIRTransposed
     describe "Semi-parallel transposed block ram" $ do
@@ -63,6 +64,8 @@ macRealReal c i a = c * i + a
 macPreAddRealReal c x y a = c * (x + y) + a
 
 macRealRealPipelined en c i a = regEn 0 en (c * i) + a
+
+macPreAddRealRealPipelined en c x y a = regEn 0 en (regEn 0 en c * regEn 0 en (x + y)) + a
 
 liftA4 f w x y z = f <$> w <*> x <*> y <*> z
 
@@ -228,7 +231,7 @@ prop_semiParallelFIRSystolicSymmetric coeffs input (InfiniteList ens _) = expect
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (singleton coeffs)) input ens
+        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (SNat @ 0) (singleton coeffs)) input ens
 
 prop_semiParallelFIRSystolicSymmetricMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRSystolicSymmetricMultiStage coeffs input (InfiniteList ens _) = expect === result 
@@ -239,7 +242,18 @@ prop_semiParallelFIRSystolicSymmetricMultiStage coeffs input (InfiniteList ens _
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) coeffs) input ens
+        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (SNat @ 0) coeffs) input ens
+
+prop_semiParallelFIRSystolicSymmetricMacDelay :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_semiParallelFIRSystolicSymmetricMacDelay coeffs input (InfiniteList ens _) = expect === result 
+    where
+    expect
+        = goldenExpect (Clash.concat coeffs Clash.++ Clash.singleton 0 Clash.++ Clash.reverse (Clash.concat coeffs)) input
+    result
+        = take (length input) 
+        $ map snd . filter fst
+        $ sample @System 
+        $ system (semiParallelFIRSystolicSymmetric macPreAddRealRealPipelined (SNat @ 2) coeffs) input ens
 
 prop_semiParallelFIRTransposed :: Vec 4 (Vec 3 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRTransposed coeffs input (InfiniteList ens _) = expect === result
