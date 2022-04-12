@@ -108,7 +108,7 @@ semiParallelFIRSystolic mac macDelay coeffs valid sampleIn = (validOut, dataOut,
     validOut 
         --TODO: globalStep here is not good for timing
         =    globalStep 
-        .&&. last (generate (macDelay `addSNat` (SNat @ 3)) (regEn False globalStep) (last indices .==. pure maxBound))
+        .&&. last (generate (macDelay `addSNat` (SNat @3)) (regEn False globalStep) (last indices .==. pure maxBound))
 
     dataOut :: Signal dom outputType
     dataOut =  integrateAndDump globalStep validOut $ fst sampleOut
@@ -205,7 +205,7 @@ semiParallelFIRSystolicSymmetric mac macDelay coeffs valid sampleIn = (validOut,
     validOut 
         --TODO: globalStep here is not good for timing
         =    globalStep 
-        .&&. last (generate (macDelay `addSNat` (SNat @ 3)) (regEn False globalStep) (last indices .==. pure maxBound))
+        .&&. last (generate (macDelay `addSNat` (SNat @3)) (regEn False globalStep) (last indices .==. pure maxBound))
 
     dataOut :: Signal dom outputType
     dataOut =  integrateAndDump globalStep validOut sampleOut
@@ -226,7 +226,7 @@ semiParallelFIRTransposed mac coeffs valid sampleIn = (validOut, dataOut, ready)
     where
 
     delayStage :: Signal dom inputType -> Signal dom inputType
-    delayStage x = last $ iterate (SNat @ (numStages + 1)) (regEn 0 ready) x
+    delayStage x = last $ iterate (SNat @(numStages + 1)) (regEn 0 ready) x
 
     delayLine :: Vec coeffsPerStage (Signal dom inputType)
     delayLine =  iterateI delayStage sampleIn
@@ -289,10 +289,10 @@ semiParallelFIRTransposedBlockRam mac coeffs valid sampleIn = (validOut, dataOut
         where
         step _   True  writePtr = writePtr
         step ptr _     _
-            | ptr < snatToNum (SNat @ numStages)
-                = ptr + snatToNum (SNat @ ((coeffsPerStage - 1) * numStages))
+            | ptr < snatToNum (SNat @numStages)
+                = ptr + snatToNum (SNat @((coeffsPerStage - 1) * numStages))
             | otherwise 
-                = ptr - snatToNum (SNat @ numStages)
+                = ptr - snatToNum (SNat @numStages)
 
     --Clash's BlockRam doesn't support a read enable!
     --So fake it with an async ram followed by a register
@@ -300,7 +300,7 @@ semiParallelFIRTransposedBlockRam mac coeffs valid sampleIn = (validOut, dataOut
     sampleRamOut :: Signal dom inputType
     sampleRamOut 
         = regEn 0 globalStep $ asyncRam 
-            (SNat @ (numStages * coeffsPerStage)) 
+            (SNat @(numStages * coeffsPerStage)) 
             readPtr 
             (mux (ready .&&. valid) (Just <$> bundle (writePtr, sampleIn)) (pure Nothing))
 

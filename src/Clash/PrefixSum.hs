@@ -40,11 +40,11 @@ prefixSumParallel32
     -> Vec 32 a      -- ^ Input vector
     -> Vec 32 a      -- ^ Output prefix sum
 prefixSumParallel32 op vec 
-    = prefixSumParallelStep (SNat @ 16) (SNat @ 16) op
-    $ prefixSumParallelStep (SNat @ 24) (SNat @ 8)  op
-    $ prefixSumParallelStep (SNat @ 28) (SNat @ 4)  op
-    $ prefixSumParallelStep (SNat @ 30) (SNat @ 2)  op
-    $ prefixSumParallelStep (SNat @ 31) (SNat @ 1)  op
+    = prefixSumParallelStep (SNat @16) (SNat @16) op
+    $ prefixSumParallelStep (SNat @24) (SNat @8)  op
+    $ prefixSumParallelStep (SNat @28) (SNat @4)  op
+    $ prefixSumParallelStep (SNat @30) (SNat @2)  op
+    $ prefixSumParallelStep (SNat @31) (SNat @1)  op
     $ vec
 
 {-| One step of a less parallel but more work efficient prefix sum calculation (Algorithm 2 on the wikipedia page) referenced above -}
@@ -109,14 +109,14 @@ prefixSumWorkEfficient32
     -> Vec 32 a      -- ^ Input vector
     -> Vec 32 a      -- ^ Output prefix sum
 prefixSumWorkEfficient32 op vec 
-    = prefixSumWorkEfficientStepB (SNat @ 1) op
-    $ prefixSumWorkEfficientStepB (SNat @ 2) op
-    $ prefixSumWorkEfficientStepB (SNat @ 4) op
-    $ prefixSumWorkEfficientStepB (SNat @ 8) op
-    $ prefixSumWorkEfficientStepA (SNat @ 4) op
-    $ prefixSumWorkEfficientStepA (SNat @ 3) op
-    $ prefixSumWorkEfficientStepA (SNat @ 2) op
-    $ prefixSumWorkEfficientStepA (SNat @ 1) op
-    $ prefixSumWorkEfficientStepA (SNat @ 0) op
+    = prefixSumWorkEfficientStepB (SNat @1) op
+    $ prefixSumWorkEfficientStepB (SNat @2) op
+    $ prefixSumWorkEfficientStepB (SNat @4) op
+    $ prefixSumWorkEfficientStepB (SNat @8) op
+    $ prefixSumWorkEfficientStepA (SNat @4) op
+    $ prefixSumWorkEfficientStepA (SNat @3) op
+    $ prefixSumWorkEfficientStepA (SNat @2) op
+    $ prefixSumWorkEfficientStepA (SNat @1) op
+    $ prefixSumWorkEfficientStepA (SNat @0) op
     $ vec
 

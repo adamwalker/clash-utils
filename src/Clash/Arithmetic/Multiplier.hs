@@ -39,8 +39,8 @@ multiplySigned
     -> BitVector (n + 1) -- ^ y
     -> BitVector (m + n + 2) -- ^ x * y
 multiplySigned x y = sum $ 
-           (1 `shiftL` snatToNum (SNat @ (m + n + 1))) 
-        :> (1 `shiftL` snatToNum (SNat @ (m + 1))) 
+           (1 `shiftL` snatToNum (SNat @(m + n + 1))) 
+        :> (1 `shiftL` snatToNum (SNat @(m + 1))) 
         :> toSum
     where
 
@@ -140,11 +140,11 @@ boothWindows
     .  KnownNat n
     => Vec (2 * (n + 1)) Bool   -- ^ Input bit vector
     -> Vec (n + 1) (Vec 3 Bool) -- ^ 3 bit windows
-boothWindows xs = map (take (SNat @ 3)) $ map (:< False) shifts
+boothWindows xs = map (take (SNat @3)) $ map (:< False) shifts
     where
 
     shiftL :: Vec (2 * (n + 1)) Bool -> Vec (2 * (n + 1)) Bool
-    shiftL ys = drop (SNat @ 2) ys :< False :< False
+    shiftL ys = drop (SNat @2) ys :< False :< False
 
     shifts :: Vec (n + 1) (Vec (2 * (n + 1)) Bool)
     shifts = iterateI shiftL xs

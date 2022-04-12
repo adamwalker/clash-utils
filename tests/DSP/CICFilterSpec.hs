@@ -32,7 +32,7 @@ prop_cicSums (InfiniteList x _) = expect === result
         $ filter fst 
         $ sample @System
         $ bundle 
-        $ cicDecimate (SNat @ 4) (SNat @ 2) (SNat @ 1) (pure True) (fromList (0 : extended))
+        $ cicDecimate (SNat @4) (SNat @2) (SNat @1) (pure True) (fromList (0 : extended))
 
 prop_cicSecondOrder :: InfiniteList (BitVector 8) -> Property
 prop_cicSecondOrder (InfiniteList x _) = expect === result
@@ -52,4 +52,4 @@ prop_cicSecondOrder (InfiniteList x _) = expect === result
         $ filter fst 
         $ sample @System
         $ bundle 
-        $ cicDecimate (SNat @ 4) (SNat @ 2) (SNat @ 2) (pure True) (fromList (0 : extended))
+        $ cicDecimate (SNat @4) (SNat @2) (SNat @2) (pure True) (fromList (0 : extended))

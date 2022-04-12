@@ -27,7 +27,7 @@ goldenBitReversalReorder SNat inp = map ((inp !!) . fromIntegral) indices
 prop_fftBitReversalReorder :: Property
 prop_fftBitReversalReorder 
     = forAll (listOf (vectorOf 64 arbitrary)) $ \(vec :: [[Int]]) -> 
-        let result = sample @System $ bitReversalReorder (SNat @ 6) (pure True) $ fromList (0 : concat vec ++ repeat 0)
-            expect = concatMap (goldenBitReversalReorder (SNat @ 6)) vec
+        let result = sample @System $ bitReversalReorder (SNat @6) (pure True) $ fromList (0 : concat vec ++ repeat 0)
+            expect = concatMap (goldenBitReversalReorder (SNat @6)) vec
         in take (64 * length vec) (drop 66 result) === expect
 

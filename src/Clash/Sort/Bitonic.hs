@@ -83,7 +83,7 @@ bitonicSorter
     :: forall k a . (Ord a, KnownNat k) 
     => Vec (2 ^ k) a -- ^ Input vector
     -> Vec (2 ^ k) a -- ^ Sorted output vector
-bitonicSorter = fst $ dfold (Proxy @ (SplitHalf a)) step base (replicate (SNat @ k) ())
+bitonicSorter = fst $ dfold (Proxy @(SplitHalf a)) step base (replicate (SNat @k) ())
     where
     step :: SNat l -> () -> SplitHalf a @@ l -> SplitHalf a @@ (l + 1)
     step SNat _ (sort, merge) = (bitonicSort sort merge, bitonicMerge merge)

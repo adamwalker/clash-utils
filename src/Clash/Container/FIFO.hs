@@ -30,7 +30,7 @@ blockRamFIFO SNat rReq wData wReq = (ramOut, empty, full, nElements)
     --Write command
     writeCommand = mux wEn (Just <$> bundle (wAddr, wData)) (pure Nothing)
     --The backing ram
-    ramOut = blockRam1 NoClearOnReset (SNat @ (2 ^ sizeBits)) (errorX "initial FIFO block ram contents") rAddr' writeCommand
+    ramOut = blockRam1 NoClearOnReset (SNat @(2 ^ sizeBits)) (errorX "initial FIFO block ram contents") rAddr' writeCommand
     --The status signals
     empty  = (register 0 wAddr) .==. rAddr
     full   = rAddr .==. (wAddr + 1)
@@ -65,7 +65,7 @@ blockRamFIFOMaybe SNat rReq write = (mux empty (pure Nothing) (Just <$> ramOut),
         func _     Nothing    _     = Nothing
         func _     (Just dat) wAddr = Just (wAddr, dat)
     --The backing ram
-    ramOut = blockRam1 NoClearOnReset (SNat @ (2 ^ sizeBits)) (errorX "initial FIFO block ram contents") rAddr' writeCommand
+    ramOut = blockRam1 NoClearOnReset (SNat @(2 ^ sizeBits)) (errorX "initial FIFO block ram contents") rAddr' writeCommand
     --The status signals
     empty  = (register 0 wAddr) .==. rAddr
     full   = rAddr .==. (wAddr + 1)

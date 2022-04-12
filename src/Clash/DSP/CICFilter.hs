@@ -62,7 +62,7 @@ cicDecimate
     -> (Signal dom Bool, Signal dom a) -- ^ (Output valid, output)
 cicDecimate r m SNat valid x = (validN, result)
     where
-    integrated = last $ iterate (SNat @ (n + 1)) (integrate valid) x
+    integrated = last $ iterate (SNat @(n + 1)) (integrate valid) x
     validN     = nth r valid
-    result     = last $ iterate (SNat @ (n + 1)) (regEn 0 validN . comb m validN) integrated
+    result     = last $ iterate (SNat @(n + 1)) (regEn 0 validN . comb m validN) integrated
 

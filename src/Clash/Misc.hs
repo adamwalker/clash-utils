@@ -27,7 +27,7 @@ replaceSlice startIdx dat vec = imap func vec
     where
     func :: Index n -> a -> a
     func idx val
-        | idx >= startIdx && resize idx <= (resize startIdx :: Index (m + n)) + snatToNum (SNat @ m)
+        | idx >= startIdx && resize idx <= (resize startIdx :: Index (m + n)) + snatToNum (SNat @m)
             = dat !! (idx - startIdx)
         | otherwise 
             = val
@@ -130,4 +130,4 @@ prioSelectCarryChain x = reverse $ unpack $ (complement packed + 1) .&. packed
     packed = pack $ reverse x
 
 swapNibbles :: KnownNat n => Vec (2 * n) a -> Vec (2 * n) a
-swapNibbles = concat . map reverse . unconcat (SNat @ 2)
+swapNibbles = concat . map reverse . unconcat (SNat @2)

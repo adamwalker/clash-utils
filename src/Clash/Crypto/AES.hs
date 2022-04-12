@@ -60,7 +60,7 @@ keyScheduleStep :: BitVector 8 -> Vec 4 (BitVector 32) -> Vec 4 (BitVector 32)
 keyScheduleStep rcon state = postscanl xor nextKS state
     where
     nextKS :: BitVector 32
-    nextKS = pack $ zipWith xor (rcon :> repeat 0) $ map sBox (rotateLeftS (unpack $ last state) (SNat @ 1)) 
+    nextKS = pack $ zipWith xor (rcon :> repeat 0) $ map sBox (rotateLeftS (unpack $ last state) (SNat @1)) 
 
 -- | The AES state is a 4x4 matrix of bytes
 type AESState = Vec 4 (Vec 4 (BitVector 8))

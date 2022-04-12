@@ -25,7 +25,7 @@ fftSerialDIT twiddles en input
     where
 
     stage2En = register False en
-    stage3En = last $ generate (SNat @ 3) (register False) stage2En
+    stage3En = last $ generate (SNat @3) (register False) stage2En
 
     cexp2 :: Vec 2 (Complex a)
     cexp2 = halveTwiddles twiddles
@@ -44,8 +44,8 @@ fftSerialDIF twiddles en input
 
     where
 
-    stage2En = last $ generate (SNat @ 4) (register False) en
-    stage3En = last $ generate (SNat @ 3) (register False) stage2En
+    stage2En = last $ generate (SNat @4) (register False) en
+    stage3En = last $ generate (SNat @3) (register False) stage2En
 
     cexp2 :: Vec 2 (Complex a)
     cexp2 = halveTwiddles twiddles

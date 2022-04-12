@@ -83,7 +83,7 @@ fftSerialDITStep butterfly twiddles en input = bundle (butterflyHighOutput, butt
     (upperRamReadResult, lowerData) = fftReorder en stage address (fst <$> input) (snd <$> input)
 
     --The butterfly
-    twiddlesRot = rotateLeftS twiddles (SNat @ (2 ^ n))
+    twiddlesRot = rotateLeftS twiddles (SNat @(2 ^ n))
     twiddle     = (twiddlesRot !!) <$> (regEn 0 en $ regEn 0 en counter)
 
     (butterflyHighOutput, butterflyLowOutput) 

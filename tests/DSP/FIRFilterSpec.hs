@@ -198,7 +198,7 @@ prop_semiParallelFIRSystolic coeffs input (InfiniteList ens _) = expect === resu
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolic (const macRealReal) (SNat @ 0) (singleton coeffs)) input ens
+        $ system (semiParallelFIRSystolic (const macRealReal) (SNat @0) (singleton coeffs)) input ens
 
 prop_semiParallelFIRSystolicMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expect === result 
@@ -209,7 +209,7 @@ prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expec
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolic (const macRealReal) (SNat @ 0) coeffs) input ens
+        $ system (semiParallelFIRSystolic (const macRealReal) (SNat @0) coeffs) input ens
 
 prop_semiParallelFIRSystolicMultiStageMacDelay :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRSystolicMultiStageMacDelay coeffs input (InfiniteList ens _) = expect === result 
@@ -220,7 +220,7 @@ prop_semiParallelFIRSystolicMultiStageMacDelay coeffs input (InfiniteList ens _)
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolic macRealRealPipelined (SNat @ 1) coeffs) input ens
+        $ system (semiParallelFIRSystolic macRealRealPipelined (SNat @1) coeffs) input ens
 
 prop_semiParallelFIRSystolicSymmetric :: Vec 4 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRSystolicSymmetric coeffs input (InfiniteList ens _) = expect === result 
@@ -231,7 +231,7 @@ prop_semiParallelFIRSystolicSymmetric coeffs input (InfiniteList ens _) = expect
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (SNat @ 0) (singleton coeffs)) input ens
+        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (SNat @0) (singleton coeffs)) input ens
 
 prop_semiParallelFIRSystolicSymmetricMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRSystolicSymmetricMultiStage coeffs input (InfiniteList ens _) = expect === result 
@@ -242,7 +242,7 @@ prop_semiParallelFIRSystolicSymmetricMultiStage coeffs input (InfiniteList ens _
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (SNat @ 0) coeffs) input ens
+        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (SNat @0) coeffs) input ens
 
 prop_semiParallelFIRSystolicSymmetricMacDelay :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRSystolicSymmetricMacDelay coeffs input (InfiniteList ens _) = expect === result 
@@ -253,7 +253,7 @@ prop_semiParallelFIRSystolicSymmetricMacDelay coeffs input (InfiniteList ens _) 
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolicSymmetric macPreAddRealRealPipelined (SNat @ 2) coeffs) input ens
+        $ system (semiParallelFIRSystolicSymmetric macPreAddRealRealPipelined (SNat @2) coeffs) input ens
 
 prop_semiParallelFIRTransposed :: Vec 4 (Vec 3 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRTransposed coeffs input (InfiniteList ens _) = expect === result
@@ -306,7 +306,7 @@ prop_polyphaseDecim coeffs input (InfiniteList ens _) = expect === result
         $ sample @System 
         $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
-    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @ 0)) $ Clash.reverse coeffs
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @0)) $ Clash.reverse coeffs
 
 --2 phases
 --2 stages in semi parallel filter
@@ -325,7 +325,7 @@ prop_polyphaseDecimMultiStage coeffs input (InfiniteList ens _) = expect === res
         $ sample @System 
         $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
-    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @ 0)) $ Clash.reverse coeffs
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @0)) $ Clash.reverse coeffs
 
 --2 phases
 --4 stages in semi parallel filter
@@ -344,7 +344,7 @@ prop_polyphaseDecimMultiStage2 coeffs input (InfiniteList ens _) = expect === re
         $ sample @System 
         $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
-    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @ 0)) $ Clash.reverse coeffs
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @0)) $ Clash.reverse coeffs
 
 --4 phases
 --4 stages in semi parallel filter
@@ -363,7 +363,7 @@ prop_polyphaseDecimMultiStage3 coeffs input (InfiniteList ens _) = expect === re
         $ sample @System 
         $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 4 (Filter dom (Signed 32))
-    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @ 0)) $ Clash.reverse coeffs
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @0)) $ Clash.reverse coeffs
 
 --3 phases
 --2 stages in semi parallel filter
@@ -382,7 +382,7 @@ prop_polyphaseDecimMultiStage4 coeffs input (InfiniteList ens _) = expect === re
         $ sample @System 
         $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 3 (Filter dom (Signed 32))
-    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @ 0)) $ Clash.reverse coeffs
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @0)) $ Clash.reverse coeffs
 
 --Phases contain long MAC groups so must assert backpressure
 --4 phases
@@ -402,7 +402,7 @@ prop_polyphaseDecimMultiStage2_backPressure coeffs input (InfiniteList ens _) = 
         $ sample @System 
         $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 4 (Filter dom (Signed 32))
-    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @ 0)) $ Clash.reverse coeffs
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @0)) $ Clash.reverse coeffs
 
 --Phases contain long MAC groups so must assert backpressure
 --2 phases
@@ -422,5 +422,5 @@ prop_polyphaseDecimMultiStage3_backPressure coeffs input (InfiniteList ens _) = 
         $ sample @System 
         $ system (polyphaseDecim filters) input ens
     filters :: HiddenClockResetEnable dom => Vec 2 (Filter dom (Signed 32))
-    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @ 0)) $ Clash.reverse coeffs
+    filters = Clash.map (semiParallelFIRSystolic (const macRealReal) (SNat @0)) $ Clash.reverse coeffs
 

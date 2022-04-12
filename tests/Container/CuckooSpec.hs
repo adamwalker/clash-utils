@@ -196,14 +196,14 @@ insertTestHarness cuckoo vals = bundle (bundle (register True (register True ins
     --            slice (SNat @ 7)  (SNat @ 0)  x
     --        ]
 
-    hashFuncs x = unpack (slice (SNat @ 9) (SNat @ 0) crc) :> unpack (slice (SNat @ 19) (SNat @ 10) crc) :> unpack (slice (SNat @ 29) (SNat @ 20) crc) :> Nil
+    hashFuncs x = unpack (slice (SNat @9) (SNat @0) crc) :> unpack (slice (SNat @19) (SNat @10) crc) :> unpack (slice (SNat @29) (SNat @20) crc) :> Nil
         where
         crc :: Unsigned 32
         crc = fromIntegral $ crc32 $ BS.pack $ Prelude.map fromIntegral [
-                slice (SNat @ 31) (SNat @ 24) x, 
-                slice (SNat @ 23) (SNat @ 16) x, 
-                slice (SNat @ 15) (SNat @ 8)  x, 
-                slice (SNat @ 7)  (SNat @ 0)  x
+                slice (SNat @31) (SNat @24) x, 
+                slice (SNat @23) (SNat @16) x, 
+                slice (SNat @15) (SNat @8)  x, 
+                slice (SNat @7)  (SNat @0)  x
             ]
 
     (insertKey', insertValue, insert') = unbundle $ mealy step vals inserting

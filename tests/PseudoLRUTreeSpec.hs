@@ -20,7 +20,7 @@ spec = describe "Pseudo LRU tree" $ do
 prop_plru :: Vec 15 Bool -> Property
 prop_plru tree = reordered === [0..15]
     where
-    trees     = Clash.iterate (SNat @ 16) func tree
+    trees = Clash.iterate (SNat @16) func tree
         where
         func tree = updateWay (getOldestWay tree) tree
     reordered = sort $ Clash.toList $ Clash.map (fromIntegral . pack) $ Clash.map getOldestWay trees

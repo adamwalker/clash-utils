@@ -73,13 +73,13 @@ cuckooStage SNat hashFunc toLookup keyD insertVal modificationD incomingEviction
 
     --The block ram that stores this pipeline's table
     fromMem :: Signal dom (Maybe (TableEntry k v))
-    fromMem =  last $ iterate (SNat @ (numRamPipes + 1)) (register Nothing) 
+    fromMem =  last $ iterate (SNat @(numRamPipes + 1)) (register Nothing) 
         $ blockRamPow2 (repeat Nothing) hash (liftA2 (<|>) writeCmd finalMod)
 
     --Keep track of whether we are evicting
     --If so, on the next cycle, we need to pass the evicted entry onwards
     evictingD :: Vec (numRamPipes + 1) (Signal dom Bool)
-    evictingD = generate (SNat @ (numRamPipes + 1)) (register False) 
+    evictingD = generate (SNat @(numRamPipes + 1)) (register False) 
         $ isJust <$> muxedIncoming
 
     --
@@ -102,7 +102,7 @@ cuckooStage SNat hashFunc toLookup keyD insertVal modificationD incomingEviction
     --Save the hash for the next cycle when we write back the modified value
     --to avoid recomputing it
     hashD :: Signal dom (Unsigned n)
-    hashD =  last $ generate (SNat @ (numRamPipes + 1)) (register (errorX "Cuckoo: initial hashD")) hash
+    hashD =  last $ generate (SNat @(numRamPipes + 1)) (register (errorX "Cuckoo: initial hashD")) hash
 
     --Calculate the block ram write back if we're doing a modification
     finalMod      :: Signal dom (Maybe (Unsigned n, Maybe (TableEntry k v)))
@@ -130,7 +130,7 @@ cuckooPipeline numRamPipes@SNat hashFuncs toLookup modificationsD inserts = (loo
 
     --Save the lookup key for comparison with the table entry key in the next cycle
     keyD :: Signal dom k
-    keyD =  last $ generate (SNat @ (numRamPipes + 1)) (register (errorX "Cuckoo: initial keyD")) toLookup
+    keyD =  last $ generate (SNat @(numRamPipes + 1)) (register (errorX "Cuckoo: initial keyD")) toLookup
 
     --Construct the pipeline
     (accum, res) = mapAccumL func accum $ zip3 hashFuncs inserts modificationsD
@@ -163,7 +163,7 @@ cuckooPipelineInsert' numRamPipes@SNat hashFuncs toLookup modificationD = (luRes
         $  insertD
         :> repeat (pure Nothing)
 
-    toLookupD = last $ generate (SNat @ (numRamPipes + 1)) (register (errorX "Cuckoo: toLookup")) toLookup
+    toLookupD = last $ generate (SNat @(numRamPipes + 1)) (register (errorX "Cuckoo: toLookup")) toLookup
     luRes     = fold (liftA2 (<|>)) lookupResults
 
     --Form an insert from our modification in case the key is not found in any tables
@@ -191,7 +191,7 @@ cuckooPipelineInsert numRamPipes@SNat hashFuncs toLookup modification = (luRes, 
     where
     (luRes, busy') = cuckooPipelineInsert' numRamPipes hashFuncs toLookup (last modificationD)
     busy           = (or . map isJust <$> sequenceA modificationD) .||. busy'
-    modificationD  = generate (SNat @ (numRamPipes + 1)) (register Nothing) $ mux busy (pure Nothing) modification
+    modificationD  = generate (SNat @(numRamPipes + 1)) (register Nothing) $ mux busy (pure Nothing) modification
 
 {-| Convenience wrapper for cuckooPipeline.
   | Implements a multimap with a bounded number of values
@@ -218,9 +218,9 @@ cuckooPipelineMultiMap numRamPipes@SNat hashFuncs toLookup modification = (looku
     --We are busy the cycle after a modification, or if an insert is in progress
     busy           = (or . map isJust <$> sequenceA modificationD) .||. (or <$> sequenceA busys)
     --Save the modification for writeback on the next cycle
-    modificationD  = generate (SNat @ (numRamPipes + 1)) (register Nothing) $ mux busy (pure Nothing) modification
+    modificationD  = generate (SNat @(numRamPipes + 1)) (register Nothing) $ mux busy (pure Nothing) modification
     --Save the lookup key for comparison on the next cycle
-    toLookupD      = last $ generate (SNat @ (numRamPipes + 1)) (register (errorX "toLookupD")) toLookup
+    toLookupD      = last $ generate (SNat @(numRamPipes + 1)) (register (errorX "toLookupD")) toLookup
 
     --Calculate the modification/delete writebacks for each table
     modificationsD :: Vec (m + 1) (Signal dom (Maybe (Maybe (i, v))))
@@ -252,7 +252,7 @@ exampleDesign
         Signal dom (Maybe (BitVector 32)),
         Signal dom Bool
         )                        -- ^ (Lookup result, busy)
-exampleDesign lu modify delete val = cuckooPipelineInsert (SNat @ 0) hashFunctions lu (cmd <$> modify <*> delete <*> val)
+exampleDesign lu modify delete val = cuckooPipelineInsert (SNat @0) hashFunctions lu (cmd <$> modify <*> delete <*> val)
     where
     cmd modify delete val
         | modify && delete = Just Nothing

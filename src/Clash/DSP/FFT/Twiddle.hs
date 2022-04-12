@@ -19,5 +19,5 @@ halveTwiddles
     :: KnownNat n 
     => Vec (2 * n) a -- ^ Twiddle factors
     -> Vec n a       -- ^ Halved output twiddle factors
-halveTwiddles vec = transpose (unconcat (SNat  @ 2) vec) !! 0
+halveTwiddles vec = transpose (unconcat (SNat @2) vec) !! 0
 

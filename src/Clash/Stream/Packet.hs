@@ -48,7 +48,7 @@ packetize pktSize streamIn downstreamReady = bundle (vldOut, eofOut, fifoDat)
 
     (vldIn, datIn) = unbundle streamIn
 
-    (fifoDat, _, _, nElements) = blockRamFIFO (SNat @ n) readReq datIn vldIn
+    (fifoDat, _, _, nElements) = blockRamFIFO (SNat @n) readReq datIn vldIn
 
     vldOut  = isJust <$> packetCnt
     eofOut  = packetCnt .==. (Just <$> pktSize)

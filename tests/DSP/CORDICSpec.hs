@@ -62,6 +62,6 @@ prop_CORDICPipelined =
         = last
         $ take 12
         $ sample @System 
-        $ cordicPipeline dirMagPhase (0 :: Index 100) (Clash.unconcat (SNat @ 10) consts) (pure True)
+        $ cordicPipeline dirMagPhase (0 :: Index 100) (Clash.unconcat (SNat @10) consts) (pure True)
         $ pure input
 

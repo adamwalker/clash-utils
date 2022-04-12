@@ -70,7 +70,7 @@ prioQueue SNat ident insert delete val deleteVal readCascadeIn = (result, cascad
     readRes 
         = blockRam1 
             NoClearOnReset 
-            (SNat @ ((2 ^ identBits) * iters))
+            (SNat @((2 ^ identBits) * iters))
             (repeat maxBound :: Vec (n + 1) a) 
             (ident' ++## (pack <$> progressCntr)) 
             writeCommand

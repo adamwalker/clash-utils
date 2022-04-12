@@ -54,7 +54,7 @@ goldenMultiPortBlockRam reads writes = Clash.map (register 0) readResults
             func state (Just (addr, dat)) = IntMap.insert (fromIntegral addr) dat state
 
 genDistinctWrites :: forall n. KnownNat n => Gen (Vec n (Maybe (Unsigned 6, BitVector 32)))
-genDistinctWrites = genDistinct' Set.empty (toUNat (SNat @ n))
+genDistinctWrites = genDistinct' Set.empty (toUNat (SNat @n))
     where
     genDistinct' :: forall n. Set (Unsigned 6) -> UNat n -> Gen (Vec n (Maybe (Unsigned 6, BitVector 32)))
     genDistinct' _    UZero      = pure Nil
@@ -76,7 +76,7 @@ genDistinctWrites = genDistinct' Set.empty (toUNat (SNat @ n))
         return $ res :> rest
 
 prop_multiPortBlockRam 
-    = forAll (infiniteListOf (genDistinctWrites @ 4)) $ \writes -> 
+    = forAll (infiniteListOf (genDistinctWrites @4)) $ \writes -> 
         forAll (infiniteListOf arbitrary) $ \(reads :: [Vec 4 (Unsigned 6)]) -> 
             let 
                 expect = take 1000 $ drop 1 $ sample @System $ sequenceA $ goldenMultiPortBlockRam (sequenceA $ fromList reads) (sequenceA $ fromList writes)

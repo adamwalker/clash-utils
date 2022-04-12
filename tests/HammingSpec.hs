@@ -27,5 +27,5 @@ prop_hamming mutIdx dat = dat === corrected
     --flip a single bit
     mutated     = Clash.complementBit encoded (fromIntegral mutIdx)
     --decode
-    corrected   = correctError hammingGen (Clash.slice (SNat @ 3) (SNat @ 0) mutated) (Clash.slice (SNat @ 14) (SNat @ 4) mutated)
+    corrected   = correctError hammingGen (Clash.slice (SNat @3) (SNat @0) mutated) (Clash.slice (SNat @14) (SNat @4) mutated)
 

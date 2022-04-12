@@ -29,7 +29,7 @@ grayToBinaryLogDepth
 grayToBinaryLogDepth x = foldl func x powers
     where 
     powers :: Vec n Int
-    powers = iterate (SNat @ n) (* 2) 1
+    powers = iterate (SNat @n) (* 2) 1
     func :: BitVector (2 ^ n) -> Int -> BitVector (2 ^ n)
     func accum power = accum `xor` (accum `shiftR` power)
 

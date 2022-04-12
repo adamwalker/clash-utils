@@ -66,7 +66,7 @@ prop_FIFOs signals = and $ zipWith compareOutputs expect result
     hackedFIFO = bundle . func . unbundle 
         where
         func (x, y, z) = 
-            let (dat, empty, full, num) = blockRamFIFO (SNat @ 3) x y z
+            let (dat, empty, full, num) = blockRamFIFO (SNat @3) x y z
             in  (dat, empty, full, fromIntegral <$> num)
 
 prop_FIFOMaybe :: [(Bool, BitVector 32, Bool)] -> Bool
@@ -78,5 +78,5 @@ prop_FIFOMaybe signals = Prelude.and $ Prelude.zipWith compareOutputs expect res
     hackedFIFO inputs = bundle $ (fromJust <$> readDataM, (not . isJust) <$> readDataM, full, fromIntegral <$> nItems)
         where
         (readReq, writeData, writeReq) = unbundle inputs
-        (readDataM, full, nItems)      = blockRamFIFOMaybe (SNat @ 3) readReq $ mux writeReq (Just <$> writeData) (pure Nothing)
+        (readDataM, full, nItems)      = blockRamFIFOMaybe (SNat @3) readReq $ mux writeReq (Just <$> writeData) (pure Nothing)
 

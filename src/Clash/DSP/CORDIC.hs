@@ -97,7 +97,7 @@ cordicPipeline
     -> Signal dom (CordicState a b)
     -> Signal dom (CordicState a b)
 cordicPipeline dir start consts en input 
-    = foldl (flip step) input (zip (iterateI (+ (snatToNum (SNat @ numPerStage))) start) consts)
+    = foldl (flip step) input (zip (iterateI (+ (snatToNum (SNat @numPerStage))) start) consts)
     where 
 
     step (idx, coeff) 
