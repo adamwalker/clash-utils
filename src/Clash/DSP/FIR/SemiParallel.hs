@@ -4,6 +4,7 @@ module Clash.DSP.FIR.SemiParallel (
         semiParallelFIRSystolic,
         macUnitSymmetric,
         oddSymmAccum,
+        evenSymmAccum,
         semiParallelFIRSystolicSymmetric,
         semiParallelFIRTransposed,
         semiParallelFIRTransposedBlockRam,
@@ -174,6 +175,19 @@ oddSymmAccum convert step shift reset forwardSample cascadeIn = (dataSaved, data
     dataSaved = regEn 0 (shift .&&. step) forwardSample
     --TOOD: use of dataSaved is incorrect when the MAC delay is long, we need to buffer more samples
     dataOut =  integrateAndDump step reset (convert <$> dataSaved) cascadeIn
+
+evenSymmAccum 
+    :: HiddenClockResetEnable dom
+    => (Num inputType, NFDataX inputType)
+    => (Num outputType, NFDataX outputType)
+    => (inputType -> inputType -> outputType)
+    -> SymmAccum dom inputType outputType
+evenSymmAccum add step shift reset forwardSample cascadeIn = (data1, dataOut)
+    where
+    data0 = regEn 0 (shift .&&. step) forwardSample
+    data1 = regEn 0 (shift .&&. step) data0
+    --TOOD: use of dataSaved is incorrect when the MAC delay is long, we need to buffer more samples
+    dataOut =  integrateAndDump step reset (add <$> data0 <*> data1) cascadeIn
 
 semiParallelFIRSystolicSymmetric
     :: forall numStages macDelay coeffsPerStage coeffType inputType outputType dom
