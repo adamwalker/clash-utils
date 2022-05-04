@@ -175,7 +175,7 @@ semiParallelFIRSystolicSymmetric mac macDelay coeffs valid sampleIn = (validOut,
         -> (Signal dom inputType, Signal dom outputType)
     baseCase forwardSample cascadeIn = (regEn 0 (last shifts) forwardSample, cascadeIn)
 
-    (_, sampleOut) = foldr step baseCase (zip3 coeffs indices (init shifts)) sampleIn 0
+    (_loopedBackSample, sampleOut) = foldr step baseCase (zip3 coeffs indices (init shifts)) sampleIn 0
         where
         step (coeffs, index, shift) accum forwardSample cascadeIn = (reverseSample', sampleOut')
             where
