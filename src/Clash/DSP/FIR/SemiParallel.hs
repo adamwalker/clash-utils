@@ -173,9 +173,11 @@ semiParallelFIRSystolicSymmetric mac macDelay coeffs valid sampleIn = (validOut,
         :: Signal dom inputType
         -> Signal dom outputType
         -> (Signal dom inputType, Signal dom outputType)
-    baseCase forwardSample cascadeIn = (regEn 0 (last shifts) forwardSample, cascadeIn)
+    baseCase forwardSample cascadeIn = (regEn 0 (last shifts) forwardSample, dataOut)
+        where
+        dataOut =  integrateAndDump globalStep validOut cascadeIn
 
-    (_loopedBackSample, sampleOut) = foldr step baseCase (zip3 coeffs indices (init shifts)) sampleIn 0
+    (_loopedBackSample, dataOut) = foldr step baseCase (zip3 coeffs indices (init shifts)) sampleIn 0
         where
         step (coeffs, index, shift) accum forwardSample cascadeIn = (reverseSample', sampleOut')
             where
@@ -219,9 +221,6 @@ semiParallelFIRSystolicSymmetric mac macDelay coeffs valid sampleIn = (validOut,
         --TODO: globalStep here is not good for timing
         =    globalStep 
         .&&. last (generate (macDelay `addSNat` (SNat @2)) (regEn False globalStep) (last shifts))
-
-    dataOut :: Signal dom outputType
-    dataOut =  integrateAndDump globalStep validOut sampleOut
 
 semiParallelFIRTransposed
     :: forall dom numStages coeffsPerStage coeffType inputType outputType
