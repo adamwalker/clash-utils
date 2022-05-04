@@ -8,7 +8,11 @@ module Clash.DSP.MAC (
         macRealComplex,
         macPreAddRealComplex,
         macRealComplexPipelined,
-        macPreAddRealComplexPipelined
+        macPreAddRealComplexPipelined,
+        macRealBool,
+        macPreAddRealBool,
+        macRealComplexBool,
+        macPreAddRealComplexBool
     )  where
 
 import Clash.DSP.Complex
@@ -106,3 +110,51 @@ macPreAddRealComplexPipelined
 macPreAddRealComplexPipelined en c i1 i2 accum 
     = sequenceA 
     $ liftA3 (macPreAddRealRealPipelined en c) (sequenceA i1) (sequenceA i2) (sequenceA accum)
+
+-- | MAC for 'multiplying' by a bool. Intended for digital modulation.
+macRealBool 
+    :: (KnownNat a, KnownNat c) 
+    => Signed a       -- ^ Real coefficient
+    -> Bool           -- ^ Real input
+    -> Signed (a + c) -- ^ Real accumulator in
+    -> Signed (a + c) -- ^ Real accumulator out
+macRealBool x a b = b + toAdd
+    where
+    toAdd
+        | a         = extend x
+        | otherwise = negate $ extend x
+
+-- | MAC for 'multiplying' by a bool. Intended for digital modulation. Pre-add version.
+macPreAddRealBool
+    :: (KnownNat a, KnownNat c) 
+    => Signed a       -- ^ Real coefficient
+    -> Bool           -- ^ Real input
+    -> Bool           -- ^ Real input 2
+    -> Signed (a + c) -- ^ Real accumulator in
+    -> Signed (a + c) -- ^ Real accumulator out
+macPreAddRealBool c i1 i2 b = b + toAdd
+    where
+    toAdd
+        |     i1 &&     i2 = extend c
+        | not i1 && not i2 = negate $ extend c
+        | otherwise        = 0
+
+-- | MAC for 'multiplying' by a complex bool. Intended for digital modulation.
+macRealComplexBool
+    :: (KnownNat a, KnownNat c) 
+    => Signed a                 -- ^ Real coefficient
+    -> Complex Bool             -- ^ Complex input
+    -> Complex (Signed (a + c)) -- ^ Complex accumulator in
+    -> Complex (Signed (a + c)) -- ^ Complex accumulator out
+macRealComplexBool x = liftA2 (macRealBool x) 
+
+-- | MAC for 'multiplying' by a complex bool. Intended for digital modulation. Pre-add version.
+macPreAddRealComplexBool
+    :: (KnownNat a, KnownNat c) 
+    => Signed a                 -- ^ Real coefficient
+    -> Complex Bool             -- ^ Complex input
+    -> Complex Bool             -- ^ Complex input 2
+    -> Complex (Signed (a + c)) -- ^ Complex accumulator in
+    -> Complex (Signed (a + c)) -- ^ Complex accumulator out
+macPreAddRealComplexBool c = liftA3 (macPreAddRealBool c) 
+
