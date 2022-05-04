@@ -162,21 +162,23 @@ semiParallelFIRSystolicSymmetric
     => (NFDataX outputType, Num outputType)
     => (NFDataX coeffType, Num coeffType)
     => MACPreAdd dom coeffType inputType outputType
+    -> (inputType -> outputType)
     -> SNat macDelay
     -> Vec (numStages + 1) (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
     -> Signal dom Bool                                           -- ^ Input valid
     -> Signal dom inputType                                      -- ^ Sample
     -> (Signal dom Bool, Signal dom outputType, Signal dom Bool) -- ^ (Output valid, output data, ready)
-semiParallelFIRSystolicSymmetric mac macDelay coeffs valid sampleIn = (validOut, dataOut, ready)
+semiParallelFIRSystolicSymmetric mac convert macDelay coeffs valid sampleIn = (validOut, dataOut, ready)
     where
 
     baseCase 
         :: Signal dom inputType
         -> Signal dom outputType
         -> (Signal dom inputType, Signal dom outputType)
-    baseCase forwardSample cascadeIn = (regEn 0 (last shifts) forwardSample, dataOut)
+    baseCase forwardSample cascadeIn = (dataSaved, dataOut)
         where
-        dataOut =  integrateAndDump globalStep validOut 0 cascadeIn
+        dataSaved = regEn 0 (last shifts .&&. globalStep) forwardSample
+        dataOut =  integrateAndDump globalStep validOut (convert <$> dataSaved) cascadeIn
 
     (_loopedBackSample, dataOut) = foldr step baseCase (zip3 coeffs indices (init shifts)) sampleIn 0
         where

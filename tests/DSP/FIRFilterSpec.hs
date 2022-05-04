@@ -226,34 +226,34 @@ prop_semiParallelFIRSystolicSymmetric :: Vec 4 (Signed 32) -> [Signed 32] -> Inf
 prop_semiParallelFIRSystolicSymmetric coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = goldenExpect (coeffs Clash.++ Clash.singleton 0 Clash.++ Clash.reverse coeffs) input
+        = goldenExpect (coeffs Clash.++ Clash.singleton 1 Clash.++ Clash.reverse coeffs) input
     result
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (SNat @0) (singleton coeffs)) input ens
+        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) id (SNat @0) (singleton coeffs)) input ens
 
 prop_semiParallelFIRSystolicSymmetricMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRSystolicSymmetricMultiStage coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = goldenExpect (Clash.concat coeffs Clash.++ Clash.singleton 0 Clash.++ Clash.reverse (Clash.concat coeffs)) input
+        = goldenExpect (Clash.concat coeffs Clash.++ Clash.singleton 1 Clash.++ Clash.reverse (Clash.concat coeffs)) input
     result
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (SNat @0) coeffs) input ens
+        $ system (semiParallelFIRSystolicSymmetric (const macPreAddRealReal) id (SNat @0) coeffs) input ens
 
 prop_semiParallelFIRSystolicSymmetricMacDelay :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRSystolicSymmetricMacDelay coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = goldenExpect (Clash.concat coeffs Clash.++ Clash.singleton 0 Clash.++ Clash.reverse (Clash.concat coeffs)) input
+        = goldenExpect (Clash.concat coeffs Clash.++ Clash.singleton 1 Clash.++ Clash.reverse (Clash.concat coeffs)) input
     result
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolicSymmetric macPreAddRealRealPipelined (SNat @2) coeffs) input ens
+        $ system (semiParallelFIRSystolicSymmetric macPreAddRealRealPipelined id (SNat @2) coeffs) input ens
 
 prop_semiParallelFIRTransposed :: Vec 4 (Vec 3 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRTransposed coeffs input (InfiniteList ens _) = expect === result
