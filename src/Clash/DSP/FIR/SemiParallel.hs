@@ -186,15 +186,25 @@ semiParallelFIRSystolicSymmetric mac macDelay coeffs valid sampleIn = (validOut,
             (sampleOut, (forwardSample', reverseSample')) 
                 = macUnitSymmetric mac coeffs index shift globalStep cascadeIn forwardSample reverseSample
 
+    --Calculate the address in the coefficient bank we are up to
+    --This is progressively shifted down the systolic array each time we loop around the coefficient bank
+    --An alternative design would be to calculate the current index locally at each stage
     address :: Signal dom (Index coeffsPerStage)
     address = wrappingCounter maxBound globalStep
 
+    --We are ready to accept input when the first stage is on its last coefficient
     ready :: Signal dom Bool
     ready =  address .==. pure maxBound
 
+    --The whole thing operates in lockstep
+    --We can step when:
+    --  * We are not ready (and therefore are still looping through the buffer of samples in the first stage)
+    --  * We have valid data incoming, which we will accept if we are processing the last coefficient
     globalStep :: Signal dom Bool
     globalStep =  not <$> ready .||. valid
 
+    --`shifts`, `indices` are the shift register chains of shift signals for the sample buffers, and coefficient indices
+    --Alternatively, `shift` could be derived from the current sample index
     shifts :: Vec (numStages + 1) (Signal dom Bool)
     shifts =  iterateI (regEn False globalStep) ready
 
