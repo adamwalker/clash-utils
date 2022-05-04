@@ -3,6 +3,7 @@ module Clash.DSP.FIR.SemiParallel (
         integrateAndDump,
         semiParallelFIRSystolic,
         macUnitSymmetric,
+        oddSymmAccum,
         semiParallelFIRSystolicSymmetric,
         semiParallelFIRTransposed,
         semiParallelFIRTransposedBlockRam,
@@ -154,6 +155,26 @@ macUnitSymmetric mac coeffs idx shiftSamples step cascadeIn forwardSampleIn reve
     coeffToMul  = regEn 0 step $ (coeffs !!) <$> idx
     macD        = regEn 0 step $ mac step coeffToMul forwardSampleToMul reverseSampleToMul cascadeIn
 
+type SymmAccum dom inputType outputType
+    =  Signal dom Bool
+    -> Signal dom Bool
+    -> Signal dom Bool
+    -> Signal dom inputType
+    -> Signal dom outputType
+    -> (Signal dom inputType, Signal dom outputType)
+
+oddSymmAccum 
+    :: HiddenClockResetEnable dom
+    => (Num inputType, NFDataX inputType)
+    => (Num outputType, NFDataX outputType)
+    => (inputType -> outputType)
+    -> SymmAccum dom inputType outputType
+oddSymmAccum convert step shift reset forwardSample cascadeIn = (dataSaved, dataOut)
+    where
+    dataSaved = regEn 0 (shift .&&. step) forwardSample
+    --TOOD: use of dataSaved is incorrect when the MAC delay is long, we need to buffer more samples
+    dataOut =  integrateAndDump step reset (convert <$> dataSaved) cascadeIn
+
 semiParallelFIRSystolicSymmetric
     :: forall numStages macDelay coeffsPerStage coeffType inputType outputType dom
     .  HiddenClockResetEnable dom
@@ -162,26 +183,16 @@ semiParallelFIRSystolicSymmetric
     => (NFDataX outputType, Num outputType)
     => (NFDataX coeffType, Num coeffType)
     => MACPreAdd dom coeffType inputType outputType
-    -> (inputType -> outputType)
+    -> SymmAccum dom inputType outputType
     -> SNat macDelay
     -> Vec (numStages + 1) (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
     -> Signal dom Bool                                           -- ^ Input valid
     -> Signal dom inputType                                      -- ^ Sample
     -> (Signal dom Bool, Signal dom outputType, Signal dom Bool) -- ^ (Output valid, output data, ready)
-semiParallelFIRSystolicSymmetric mac convert macDelay coeffs valid sampleIn = (validOut, dataOut, ready)
+semiParallelFIRSystolicSymmetric mac symmAccum macDelay coeffs valid sampleIn = (validOut, dataOut, ready)
     where
 
-    baseCase 
-        :: Signal dom inputType
-        -> Signal dom outputType
-        -> (Signal dom inputType, Signal dom outputType)
-    baseCase forwardSample cascadeIn = (dataSaved, dataOut)
-        where
-        dataSaved = regEn 0 (last shifts .&&. globalStep) forwardSample
-        --TOOD: use of dataSaved is incorrect when the MAC delay is long, we need to buffer more samples
-        dataOut =  integrateAndDump globalStep validOut (convert <$> dataSaved) cascadeIn
-
-    (_loopedBackSample, dataOut) = foldr step baseCase (zip3 coeffs indices (init shifts)) sampleIn 0
+    (_loopedBackSample, dataOut) = foldr step (symmAccum globalStep (last shifts) validOut) (zip3 coeffs indices (init shifts)) sampleIn 0
         where
         step (coeffs, index, shift) accum forwardSample cascadeIn = (reverseSample', sampleOut')
             where
