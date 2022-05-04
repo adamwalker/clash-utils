@@ -209,6 +209,11 @@ semiParallelFIRSystolicSymmetric mac macDelay coeffs valid sampleIn = (validOut,
     indices :: Vec (numStages + 1) (Signal dom (Index coeffsPerStage))
     indices =  iterateI (regEn 0 globalStep) address
 
+    --The output is valid if:
+    --  * The final stage (the integrator) would be shifting a new sample in
+    --  * plus, the MAC unit delay
+    --  * plus, 1 cycle for the mac unit stage
+    --  * plus, 1 cycle for the integrator
     validOut :: Signal dom Bool
     validOut 
         --TODO: globalStep here is not good for timing
