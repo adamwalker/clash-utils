@@ -213,7 +213,7 @@ semiParallelFIRSystolicSymmetric mac macDelay coeffs valid sampleIn = (validOut,
     validOut 
         --TODO: globalStep here is not good for timing
         =    globalStep 
-        .&&. last (generate (macDelay `addSNat` (SNat @3)) (regEn False globalStep) (last indices .==. pure maxBound))
+        .&&. last (generate (macDelay `addSNat` (SNat @2)) (regEn False globalStep) (last shifts))
 
     dataOut :: Signal dom outputType
     dataOut =  integrateAndDump globalStep validOut sampleOut
