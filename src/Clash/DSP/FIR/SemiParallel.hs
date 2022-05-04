@@ -92,21 +92,36 @@ semiParallelFIRSystolic mac macDelay coeffs valid sampleIn = (validOut, dataOut,
             -> (Signal dom outputType, Signal dom inputType)
         func (cascadeIn, sampleIn) (coeffs, idx, shift) = macUnit mac coeffs idx shift globalStep cascadeIn sampleIn
 
+    --Calculate the address in the coefficient bank we are up to
+    --This is progressively shifted down the systolic array each time we loop around the coefficient bank
+    --An alternative design would be to calculate the current index locally at each stage
     address :: Signal dom (Index coeffsPerStage)
     address = wrappingCounter maxBound globalStep
 
+    --We are ready to accept input when the first stage is on its last coefficient
     ready :: Signal dom Bool
     ready =  address .==. pure maxBound
 
+    --The whole thing operates in lockstep
+    --We can step when:
+    --  * We are not ready (and therefore are still looping through the buffer of samples in the first stage)
+    --  * We have valid data incoming, which we will accept if we are processing the last coefficient
     globalStep :: Signal dom Bool
     globalStep =  not <$> ready .||. valid
 
+    --`shifts`, `indices` are the shift register chains of shift signals for the sample buffers, and coefficient indices
+    --Alternatively, `shift` could be derived from the current sample index
     shifts :: Vec (numStages + 1) (Signal dom Bool)
     shifts =  iterateI (regEn False globalStep) ready
 
     indices :: Vec (numStages + 1) (Signal dom (Index coeffsPerStage))
     indices =  iterateI (regEn 0 globalStep) address
 
+    --The output is valid if:
+    --  * The final stage (the integrator) would be shifting a new sample in
+    --  * plus, the MAC unit delay
+    --  * plus, 1 cycle for the mac unit stage
+    --  * plus, 1 cycle for the integrator
     validOut :: Signal dom Bool
     validOut 
         --TODO: globalStep here is not good for timing
