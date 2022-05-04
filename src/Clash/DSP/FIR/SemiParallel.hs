@@ -169,15 +169,13 @@ semiParallelFIRSystolicSymmetric
 semiParallelFIRSystolicSymmetric mac macDelay coeffs valid sampleIn = (validOut, dataOut, ready)
     where
 
-    finalShift = regEn False globalStep (last shifts)
-
     baseCase 
         :: Signal dom inputType
         -> Signal dom outputType
         -> (Signal dom inputType, Signal dom outputType)
-    baseCase forwardSample cascadeIn = (regEn 0 finalShift forwardSample, cascadeIn)
+    baseCase forwardSample cascadeIn = (regEn 0 (last shifts) forwardSample, cascadeIn)
 
-    (_, sampleOut) = foldr step baseCase (zip3 coeffs indices shifts) sampleIn 0
+    (_, sampleOut) = foldr step baseCase (zip3 coeffs indices (init shifts)) sampleIn 0
         where
         step (coeffs, index, shift) accum forwardSample cascadeIn = (reverseSample', sampleOut')
             where
@@ -205,7 +203,7 @@ semiParallelFIRSystolicSymmetric mac macDelay coeffs valid sampleIn = (validOut,
 
     --`shifts`, `indices` are the shift register chains of shift signals for the sample buffers, and coefficient indices
     --Alternatively, `shift` could be derived from the current sample index
-    shifts :: Vec (numStages + 1) (Signal dom Bool)
+    shifts :: Vec (numStages + 2) (Signal dom Bool)
     shifts =  iterateI (regEn False globalStep) ready
 
     indices :: Vec (numStages + 1) (Signal dom (Index coeffsPerStage))
