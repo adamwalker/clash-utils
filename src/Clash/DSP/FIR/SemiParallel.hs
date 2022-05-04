@@ -178,6 +178,7 @@ semiParallelFIRSystolicSymmetric mac convert macDelay coeffs valid sampleIn = (v
     baseCase forwardSample cascadeIn = (dataSaved, dataOut)
         where
         dataSaved = regEn 0 (last shifts .&&. globalStep) forwardSample
+        --TOOD: use of dataSaved is incorrect when the MAC delay is long, we need to buffer more samples
         dataOut =  integrateAndDump globalStep validOut (convert <$> dataSaved) cascadeIn
 
     (_loopedBackSample, dataOut) = foldr step baseCase (zip3 coeffs indices (init shifts)) sampleIn 0
