@@ -1,12 +1,10 @@
 {-| Linear feedback shift registers.
  -}
-module Clash.LFSR (
+module Clash.LFSR.RNG (
     serialLFSR,
-    fibonacciLFSR,
     fibonacciLFSRStep,
     fibonacciLFSRSteps,
     serialFibonacciLFSR,
-    galoisLFSR,
     galoisLFSRStep,
     galoisLFSRSteps,
     serialGaloisLFSR
@@ -15,6 +13,8 @@ module Clash.LFSR (
 import Clash.Prelude
 import Data.Bool
 import Data.Tuple (swap)
+
+import Clash.LFSR.Feedback
 
 serialLFSR
     :: forall dom n. (HiddenClockResetEnable dom, KnownNat n)
@@ -28,15 +28,6 @@ serialLFSR step init = out
         $ step <$> register init shiftReg
 
 -- | Fibonacci LFSR
-fibonacciLFSR 
-    :: KnownNat n
-    => BitVector n -- ^ Polynomial 
-    -> Vec n Bool  -- ^ Current state of shift register
-    -> Bool        -- ^ Next state of the shift register
-fibonacciLFSR poly state = foldl xor False feedback
-    where
-    feedback = zipWith (.&.) (unpack poly) state
-
 fibonacciLFSRStep
     :: KnownNat n
     => BitVector n
@@ -44,7 +35,7 @@ fibonacciLFSRStep
     -> (Bool, Vec (n + 1) Bool)
 fibonacciLFSRStep poly (head :> rest) = (head, rest :< head `xor` feedback)
     where
-    feedback = fibonacciLFSR poly rest
+    feedback = fibonacciFeedback poly rest
 
 fibonacciLFSRSteps
     :: forall n m. (KnownNat n, KnownNat m)
@@ -63,22 +54,12 @@ serialFibonacciLFSR
 serialFibonacciLFSR poly = serialLFSR (fibonacciLFSRStep poly)
 
 -- | Galois LFSR. Will result in more efficient hardware than the Fibonacci LFSR.
-galoisLFSR 
-    :: KnownNat n
-    => BitVector n -- ^ Polynomial 
-    -> Bool
-    -> Vec n Bool  -- ^ Current state of shift register
-    -> Vec n Bool  -- ^ Next state of the shift register
-galoisLFSR poly feedIn state = zipWith selectIn (unpack poly) state
-    where
-    selectIn sel bit = bool bit (bit `xor` feedIn) sel
-
 galoisLFSRStep
     :: KnownNat n
     => BitVector n
     -> Vec (n + 1) Bool
     -> (Bool, Vec (n + 1) Bool)
-galoisLFSRStep poly (head :> rest) = (head, galoisLFSR poly head rest :< head)
+galoisLFSRStep poly (head :> rest) = (head, galoisFeedback poly head rest :< head)
 
 galoisLFSRSteps
     :: forall n m. (KnownNat n, KnownNat m)

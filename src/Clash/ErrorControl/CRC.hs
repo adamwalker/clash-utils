@@ -32,7 +32,7 @@ module Clash.ErrorControl.CRC (
     ) where
 
 import Clash.Prelude
-import Clash.LFSR
+import Clash.LFSR.Feedback
 
 import Data.Bool
 
@@ -69,7 +69,7 @@ crcStep
     -> Vec (n + 1) Bool -- ^ Shift register state
     -> Bool             -- ^ Input bit
     -> Vec (n + 1) Bool -- ^ Next shift register state
-crcStep polynomial (head :> rest) inp = galoisLFSR polynomial rightmostBit rest :< rightmostBit
+crcStep polynomial (head :> rest) inp = galoisFeedback polynomial rightmostBit rest :< rightmostBit
     where
     rightmostBit = inp `xor` head
 
@@ -89,7 +89,7 @@ crcVerifyStep
     -> Vec (n + 1) Bool -- ^ Shift register state
     -> Bool             -- ^ Input bit
     -> Vec (n + 1) Bool -- ^ Next shift register state
-crcVerifyStep polynomial (head :> rest) inp = galoisLFSR polynomial head rest :< rightmostBit
+crcVerifyStep polynomial (head :> rest) inp = galoisFeedback polynomial head rest :< rightmostBit
     where
     rightmostBit = inp `xor` head
 

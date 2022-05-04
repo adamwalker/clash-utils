@@ -11,7 +11,7 @@ module Clash.Scrambler (
     ) where
 
 import Clash.Prelude
-import Clash.LFSR
+import Clash.LFSR.Feedback
 
 scramblerStep 
     :: KnownNat n
@@ -23,7 +23,7 @@ scramblerStep poly (head :> rest) input = (rest :< output, output)
     where
     output :: Bool
     output 
-        =     fibonacciLFSR poly rest
+        =     fibonacciFeedback poly rest
         `xor` head
         `xor` input
 
@@ -61,7 +61,7 @@ descramblerStep poly (head :> rest) input = (rest :< input, output)
     where 
     output :: Bool
     output 
-        =     fibonacciLFSR poly rest
+        =     fibonacciFeedback poly rest
         `xor` head 
         `xor` input
 

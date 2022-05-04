@@ -7,7 +7,7 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck
 
-import Clash.LFSR
+import Clash.LFSR.RNG
 import Clash.Misc
 
 --serial FFT
