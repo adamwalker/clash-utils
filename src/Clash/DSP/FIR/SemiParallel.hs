@@ -84,7 +84,7 @@ semiParallelFIRSystolic
     -> (Signal dom Bool, Signal dom outputType, Signal dom Bool) -- ^ (Output valid, output data, ready)
 semiParallelFIRSystolic mac macDelay coeffs valid sampleIn = (validOut, dataOut, ready)
     where
-    sampleOut = foldl func (0, sampleIn) (zip3 coeffs indices shifts)
+    sampleOut = foldl func (0, sampleIn) (zip3 coeffs indices (init shifts))
         where
         func 
             :: (Signal dom outputType, Signal dom inputType)
@@ -111,7 +111,7 @@ semiParallelFIRSystolic mac macDelay coeffs valid sampleIn = (validOut, dataOut,
 
     --`shifts`, `indices` are the shift register chains of shift signals for the sample buffers, and coefficient indices
     --Alternatively, `shift` could be derived from the current sample index
-    shifts :: Vec (numStages + 1) (Signal dom Bool)
+    shifts :: Vec (numStages + 2) (Signal dom Bool)
     shifts =  iterateI (regEn False globalStep) ready
 
     indices :: Vec (numStages + 1) (Signal dom (Index coeffsPerStage))
@@ -126,7 +126,7 @@ semiParallelFIRSystolic mac macDelay coeffs valid sampleIn = (validOut, dataOut,
     validOut 
         --TODO: globalStep here is not good for timing
         =    globalStep 
-        .&&. last (generate (macDelay `addSNat` (SNat @3)) (regEn False globalStep) (last indices .==. pure maxBound))
+        .&&. last (generate (macDelay `addSNat` (SNat @2)) (regEn False globalStep) (last shifts))
 
     dataOut :: Signal dom outputType
     dataOut =  integrateAndDump globalStep validOut 0 $ fst sampleOut
