@@ -52,6 +52,7 @@ polyphaseDecim filters valid sampleIn = (outputValid, summed, inputReady)
     summed = integrateAndDump 
         currentIsValid 
         (activeOutputPhase .==. 0) 
+        0
         (liftA2 (!!) (sequenceA dats) activeOutputPhase)
 
     outputValid = register False $ last valids .&&. (activeOutputPhase .==. (pure maxBound))

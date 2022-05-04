@@ -20,11 +20,12 @@ integrateAndDump
     => (Num a, NFDataX a)
     => Signal dom Bool -- ^ Input valid
     -> Signal dom Bool -- ^ Reset accumulator to 0.
+    -> Signal dom a    -- ^ Reset value
     -> Signal dom a    -- ^ Data in
     -> Signal dom a    -- ^ Integrated data out
-integrateAndDump step reset sampleIn = sum
+integrateAndDump step reset resetVal sampleIn = sum
     where
-    sum = regEn 0 step $ mux reset 0 sum + sampleIn
+    sum = regEn 0 step $ mux reset resetVal sum + sampleIn
 
 shiftReg 
     :: (HiddenClockResetEnable dom)
@@ -111,7 +112,7 @@ semiParallelFIRSystolic mac macDelay coeffs valid sampleIn = (validOut, dataOut,
         .&&. last (generate (macDelay `addSNat` (SNat @3)) (regEn False globalStep) (last indices .==. pure maxBound))
 
     dataOut :: Signal dom outputType
-    dataOut =  integrateAndDump globalStep validOut $ fst sampleOut
+    dataOut =  integrateAndDump globalStep validOut 0 $ fst sampleOut
 
 --Multiply and accumulate unit
 --Keeps a shift register of samples, and a coefficient ROM
@@ -175,7 +176,7 @@ semiParallelFIRSystolicSymmetric mac macDelay coeffs valid sampleIn = (validOut,
         -> (Signal dom inputType, Signal dom outputType)
     baseCase forwardSample cascadeIn = (regEn 0 (last shifts) forwardSample, dataOut)
         where
-        dataOut =  integrateAndDump globalStep validOut cascadeIn
+        dataOut =  integrateAndDump globalStep validOut 0 cascadeIn
 
     (_loopedBackSample, dataOut) = foldr step baseCase (zip3 coeffs indices (init shifts)) sampleIn 0
         where
