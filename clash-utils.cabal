@@ -126,7 +126,10 @@ Test-Suite test
         DSP.FFTReorderSpec,
         DSP.FFTSpec,
         DSP.FFTSerialSpec,
-        DSP.FIRFilterSpec, 
+        DSP.FIR.Common,
+        DSP.FIR.ParallelSpec,
+        DSP.FIR.PolyphaseSpec,
+        DSP.FIR.SemiParallelSpec,
         DSP.IIRFilterSpec, 
         DSP.SineTableSpec
         Sort.BitonicSortSpec, 
