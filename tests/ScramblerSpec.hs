@@ -7,7 +7,7 @@ import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixe
 import Test.Hspec
 import Test.QuickCheck
 
-import Clash.Scrambler
+import Clash.LFSR.Scrambler
 
 --Scrambler
 spec = describe "Scrambler" $ do

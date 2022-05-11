@@ -1,5 +1,5 @@
 {-| Multiplicative scrambler and descrambler: https://en.wikipedia.org/wiki/Scrambler. -}
-module Clash.Scrambler (
+module Clash.LFSR.Scrambler (
     scramblerStep,
     scramblerSteps,
     serialScrambler,
