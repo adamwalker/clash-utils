@@ -51,7 +51,8 @@ library
         Clash.GrayCode, 
         Clash.LFSR.Feedback,
         Clash.LFSR.RNG,
-        Clash.LFSR.Scrambler
+        Clash.LFSR.Scrambler,
+        Clash.LFSR.Table,
         Clash.Misc, 
         Clash.Network.Types,
         Clash.PrefixSum,
