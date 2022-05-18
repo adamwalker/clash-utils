@@ -1,4 +1,4 @@
-module DSP.FFTReorderSpec where
+module DSP.FFT.ReorderSpec where
 
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),

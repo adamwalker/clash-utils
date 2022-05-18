@@ -1,4 +1,4 @@
-module DSP.FFTSerialSpec where
+module DSP.FFT.SerialSpec where
 
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),

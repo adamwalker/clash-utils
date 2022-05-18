@@ -1,4 +1,4 @@
-module DSP.FFTBurstSpec where
+module DSP.FFT.BurstSpec where
 
 import qualified Clash.Prelude as Clash
 import Clash.Prelude (Signal, Vec(..), BitVector, Index, Signed, Unsigned, SFixed, Bit, SNat(..),
