@@ -55,5 +55,5 @@ polyphaseDecim filters valid sampleIn = (outputValid, summed, inputReady)
         0
         (liftA2 (!!) (sequenceA dats) activeOutputPhase)
 
-    outputValid = register False $ last valids .&&. (activeOutputPhase .==. (pure maxBound))
+    outputValid = register False $ last valids .&&. (activeOutputPhase .==. pure maxBound)
 
