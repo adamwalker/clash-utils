@@ -221,13 +221,18 @@ semiParallelFIRSystolicSymmetric
     -> SymmAccum dom inputType outputType
     -> SNat macDelay
     -> Vec (numStages + 1) (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
+    -> Signal dom outputType
     -> Signal dom Bool                                           -- ^ Input valid
     -> Signal dom inputType                                      -- ^ Sample
     -> (Signal dom Bool, Signal dom outputType, Signal dom Bool) -- ^ (Output valid, output data, ready)
-semiParallelFIRSystolicSymmetric mac symmAccum macDelay coeffs valid sampleIn = (validOut, dataOut, ready)
+semiParallelFIRSystolicSymmetric mac symmAccum macDelay coeffs cascadeIn valid sampleIn = (validOut, dataOut, ready)
     where
 
-    (_loopedBackSample, dataOut) = foldr step (symmAccum globalStep (last shifts) validOut) (zip3 coeffs indices (init shifts)) sampleIn 0
+    --Delay the cascade
+    cascadeDelayed = last $ generate (macDelay `addSNat` (SNat @2)) (regEn 0 globalStep) cascadeIn
+
+    --The chain of shift registers and MAC units
+    (_loopedBackSample, dataOut) = foldr step (symmAccum globalStep (last shifts) validOut) (zip3 coeffs indices (init shifts)) sampleIn cascadeDelayed
         where
         step (coeffs, index, shift) accum forwardSample cascadeIn = (reverseSample', sampleOut')
             where
