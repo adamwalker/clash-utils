@@ -79,12 +79,18 @@ semiParallelFIRSystolic
     => MAC dom coeffType inputType outputType
     -> SNat macDelay
     -> Vec (numStages + 1) (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
+    -> Signal dom outputType                                     -- ^ Cascade
     -> Signal dom Bool                                           -- ^ Input valid
     -> Signal dom inputType                                      -- ^ Sample
     -> (Signal dom Bool, Signal dom outputType, Signal dom Bool) -- ^ (Output valid, output data, ready)
-semiParallelFIRSystolic mac macDelay coeffs valid sampleIn = (validOut, dataOut, ready)
+semiParallelFIRSystolic mac macDelay coeffs cascadeIn valid sampleIn = (validOut, dataOut, ready)
     where
-    sampleOut = foldl func (0, sampleIn) (zip3 coeffs indices (init shifts))
+
+    --Delay the cascade
+    cascadeDelayed = last $ generate (macDelay `addSNat` (SNat @2)) (regEn 0 globalStep) cascadeIn
+
+    --The chain of shift registers and MAC units
+    sampleOut = foldl func (cascadeDelayed, sampleIn) (zip3 coeffs indices (init shifts))
         where
         func 
             :: (Signal dom outputType, Signal dom inputType)

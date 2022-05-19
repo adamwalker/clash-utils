@@ -39,7 +39,7 @@ prop_semiParallelFIRSystolic coeffs input (InfiniteList ens _) = expect === resu
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolic (const macRealReal) (SNat @0) (singleton coeffs)) input ens
+        $ system (semiParallelFIRSystolic (const macRealReal) (SNat @0) (singleton coeffs) (pure 0)) input ens
 
 prop_semiParallelFIRSystolicMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expect === result 
@@ -50,7 +50,7 @@ prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expec
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolic (const macRealReal) (SNat @0) coeffs) input ens
+        $ system (semiParallelFIRSystolic (const macRealReal) (SNat @0) coeffs (pure 0)) input ens
 
 prop_semiParallelFIRSystolicMultiStageMacDelay :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRSystolicMultiStageMacDelay coeffs input (InfiniteList ens _) = expect === result 
@@ -61,7 +61,7 @@ prop_semiParallelFIRSystolicMultiStageMacDelay coeffs input (InfiniteList ens _)
         = take (length input) 
         $ map snd . filter fst
         $ sample @System 
-        $ system (semiParallelFIRSystolic macRealRealPipelined (SNat @1) coeffs) input ens
+        $ system (semiParallelFIRSystolic macRealRealPipelined (SNat @1) coeffs (pure 0)) input ens
 
 prop_semiParallelFIRSystolicSymmetric :: Vec 4 (Signed 32) -> [Signed 32] -> InfiniteList Bool -> Property
 prop_semiParallelFIRSystolicSymmetric coeffs input (InfiniteList ens _) = expect === result 
