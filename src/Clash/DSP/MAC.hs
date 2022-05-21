@@ -61,7 +61,7 @@ macRealRealPipelined
 macRealRealPipelined en c i a 
     = liftA2 (+) a
     $ fmap extend 
-    $ regEn 0 en
+    $ regEn (errorX "macRealRealPipelined post multiply register") en
     $ liftA2 mul c i
 
 -- | Real * Real multiply and accumulate with pre-add. Designed to use the intermediate pipeline registers in Xilinx DSP48s.
@@ -71,9 +71,9 @@ macPreAddRealRealPipelined
 macPreAddRealRealPipelined en c i1 i2 a 
     = liftA2 (+) a
     $ fmap extend 
-    $ regEn 0 en
+    $ regEn (errorX "macPreAddRealRealPipelined post multiply register") en
     $ liftA2 mul c
-    $ regEn 0 en 
+    $ regEn (errorX "macPreAddRealRealPipelined post pre-add register") en 
     $ liftA2 add i1 i2 
 
 -- | Real * Complex multiply and accumulate
