@@ -27,7 +27,7 @@ integrateAndDump
     -> Signal dom a    -- ^ Integrated data out
 integrateAndDump step reset resetVal sampleIn = sum
     where
-    sum = regEn 0 step $ mux reset resetVal sum + sampleIn
+    sum = regEn (errorX "initial sum") step $ mux reset resetVal sum + sampleIn
 
 shiftReg 
     :: (HiddenClockResetEnable dom)
