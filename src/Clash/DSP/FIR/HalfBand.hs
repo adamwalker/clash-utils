@@ -25,7 +25,7 @@ delayLine delay valid sampleIn = readResD
 
     readRes, readResD :: Signal dom a
     readRes  = blockRamPow2 (repeat 0) readAddr (mux valid (Just <$> bundle (writeAddr, sampleIn)) (pure Nothing))
-    readResD = regEn 0 valid readRes
+    readResD = regEn (errorX "initial readResD") valid readRes
 
 type FilterBP dom inputType outputType
     =  Signal dom outputType    -- ^ Cascade
