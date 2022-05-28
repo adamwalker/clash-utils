@@ -167,15 +167,23 @@ macUnitSymmetric mac coeffs idx shiftSamples step cascadeIn forwardSampleIn reve
     reverseShiftReg =  shiftReg (step .&&. shiftSamples) reverseSampleIn
 
     --Extract the samples to add and multiply
-    forwardSampleToMul = regEn 0 step $ (!!) <$> forwardShiftReg               <*> idx
-    reverseSampleToMul = regEn 0 step $ (!!) <$> (reverse <$> reverseShiftReg) <*> idx
+    forwardSampleToMul 
+        = regEn (errorX "initial forwardSampleToMul") step 
+        $ liftA2 (!!) forwardShiftReg idx
+    reverseSampleToMul 
+        = regEn (errorX "initial reverseSampleToMul") step 
+        $ liftA2 (!!) (reverse <$> reverseShiftReg) idx
 
     --Save the reverse direction sample
     shiftSamplesD = regEn False step $ regEn False step shiftSamples
     reverseSampleSaved = regEn 0 shiftSamplesD reverseSampleToMul
 
-    coeffToMul  = regEn 0 step $ (coeffs !!) <$> idx
-    macD        = regEn 0 step $ mac step coeffToMul forwardSampleToMul reverseSampleToMul cascadeIn
+    coeffToMul  
+        = regEn (errorX "initial coeffToMul") step 
+        $ (coeffs !!) <$> idx
+    macD        
+        = regEn (errorX "initial macD") step 
+        $ mac step coeffToMul forwardSampleToMul reverseSampleToMul cascadeIn
 
 type SymmAccum dom inputType outputType
     =  Signal dom Bool
