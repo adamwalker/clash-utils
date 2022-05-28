@@ -181,8 +181,11 @@ macUnitSymmetric mac coeffs idx shiftSamples step cascadeIn forwardSampleIn reve
         $ liftA2 (!!) (reverse <$> reverseShiftReg) idx
 
     --Save the reverse direction sample
-    shiftSamplesD = regEn False step $ regEn False step shiftSamples
-    reverseSampleSaved = regEn 0 shiftSamplesD reverseSampleToMul
+    shiftSamplesD   
+        = regEn False step 
+        $ regEn False step shiftSamples
+    reverseSampleSaved 
+        = regEn (errorX "initial reverseSampleSaved") shiftSamplesD reverseSampleToMul
 
     coeffToMul  
         = regEn (errorX "initial coeffToMul") step 
@@ -207,7 +210,7 @@ oddSymmAccum
     -> SymmAccum dom inputType outputType
 oddSymmAccum convert step shift reset forwardSample cascadeIn = (dataSaved, dataOut)
     where
-    dataSaved = regEn 0 (shift .&&. step) forwardSample
+    dataSaved = regEn (errorX "initial dataSaved") (shift .&&. step) forwardSample
     --TOOD: use of dataSaved is incorrect when the MAC delay is long, we need to buffer more samples
     dataOut =  integrateAndDump step reset (convert <$> dataSaved) cascadeIn
 
@@ -219,8 +222,8 @@ evenSymmAccum
     -> SymmAccum dom inputType outputType
 evenSymmAccum add step shift reset forwardSample cascadeIn = (data1, dataOut)
     where
-    data0 = regEn 0 (shift .&&. step) forwardSample
-    data1 = regEn 0 (shift .&&. step) data0
+    data0 = regEn (errorX "initial data0") (shift .&&. step) forwardSample
+    data1 = regEn (errorX "initial data1") (shift .&&. step) data0
     --TOOD: use of dataSaved is incorrect when the MAC delay is long, we need to buffer more samples
     dataOut =  integrateAndDump step reset (add <$> data0 <*> data1) cascadeIn
 
