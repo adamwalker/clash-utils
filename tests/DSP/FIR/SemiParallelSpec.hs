@@ -34,9 +34,11 @@ prop_semiParallelFIRSystolic :: Vec 4 (Signed 32) -> [Signed 32] -> InfiniteList
 prop_semiParallelFIRSystolic coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = goldenExpect coeffs input
+        = drop 1
+        $ goldenExpect coeffs input
     result
-        = take (length input) 
+        = drop 1
+        $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
         $ system (semiParallelFIRSystolic (const macRealReal) (SNat @0) (singleton coeffs) (pure 0)) input ens
@@ -45,9 +47,11 @@ prop_semiParallelFIRSystolicMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 3
 prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = goldenExpect (Clash.concat coeffs) input
+        = drop 1
+        $ goldenExpect (Clash.concat coeffs) input
     result
-        = take (length input) 
+        = drop 1
+        $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
         $ system (semiParallelFIRSystolic (const macRealReal) (SNat @0) coeffs (pure 0)) input ens
@@ -56,9 +60,11 @@ prop_semiParallelFIRSystolicMultiStageMacDelay :: Vec 4 (Vec 4 (Signed 32)) -> [
 prop_semiParallelFIRSystolicMultiStageMacDelay coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = goldenExpect (Clash.concat coeffs) input
+        = drop 1
+        $ goldenExpect (Clash.concat coeffs) input
     result
-        = take (length input) 
+        = drop 1 
+        $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
         $ system (semiParallelFIRSystolic macRealRealPipelined (SNat @1) coeffs (pure 0)) input ens

@@ -65,9 +65,15 @@ macUnit mac coeffs idx shiftSamples step cascadeIn sampleIn = (macD, sampleToMul
     sampleShiftReg :: Signal dom (Vec n inputType)
     sampleShiftReg =  shiftReg (step .&&. shiftSamples) sampleIn
 
-    sampleToMul = regEn 0 step $ (!!) <$> sampleShiftReg <*> idx
-    coeffToMul  = regEn 0 step $ (coeffs !!) <$> idx
-    macD        = regEn 0 step $ mac step coeffToMul sampleToMul cascadeIn
+    sampleToMul 
+        = regEn (errorX "initial sampleToMul") step 
+        $ liftA2 (!!) sampleShiftReg idx
+    coeffToMul  
+        = regEn (errorX "initial coeffToMul") step 
+        $ (coeffs !!) <$> idx
+    macD        
+        = regEn (errorX "initial macD") step 
+        $ mac step coeffToMul sampleToMul cascadeIn
 
 semiParallelFIRSystolic
     :: forall numStages macDelay coeffsPerStage coeffType inputType outputType dom
