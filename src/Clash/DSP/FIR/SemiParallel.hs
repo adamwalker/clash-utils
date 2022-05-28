@@ -30,16 +30,17 @@ integrateAndDump step reset resetVal sampleIn = sum
     sum = delayEn (errorX "initial sum") step $ mux reset resetVal sum + sampleIn
 
 shiftReg 
-    :: (HiddenClockResetEnable dom)
+    :: forall dom n a
+    .  (HiddenClockResetEnable dom)
     => (NFDataX a, Num a)
-    => KnownNat n
+    => (KnownNat n, 1 <= n)
     => Signal dom Bool
     -> Signal dom a
     -> Signal dom (Vec n a)
-shiftReg shift dat = res
+shiftReg shift dat = sequenceA shifts
     where
-    res = delayEn (errorX "initial shiftReg") shift 
-        $ (+>>) <$> dat <*> res
+    shifts :: Vec n (Signal dom a)
+    shifts =  generateI (delayEn (errorX "initial shift reg") shift) dat
 
 --Multiply and accumulate unit
 --Keeps a shift register of samples, and a coefficient ROM
@@ -47,7 +48,7 @@ shiftReg shift dat = res
 macUnit
     :: forall n dom coeffType inputType outputType
     .  (HiddenClockResetEnable dom)
-    => KnownNat n
+    => (KnownNat n, 1 <= n)
     => (NFDataX inputType, Num inputType)
     => (NFDataX outputType, Num outputType) 
     => (Num coeffType, NFDataX coeffType)
@@ -78,7 +79,8 @@ macUnit mac coeffs idx shiftSamples step cascadeIn sampleIn = (macD, sampleToMul
 semiParallelFIRSystolic
     :: forall numStages macDelay coeffsPerStage coeffType inputType outputType dom
     .  HiddenClockResetEnable dom
-    => (KnownNat coeffsPerStage, KnownNat numStages)
+    => (KnownNat coeffsPerStage, 1 <= coeffsPerStage)
+    => KnownNat numStages
     => (NFDataX inputType, Num inputType) 
     => (NFDataX outputType, Num outputType)
     => (NFDataX coeffType, Num coeffType)
@@ -149,7 +151,7 @@ semiParallelFIRSystolic mac macDelay coeffs cascadeIn valid sampleIn = (validOut
 macUnitSymmetric
     :: forall n dom coeffType inputType outputType
     .  (HiddenClockResetEnable dom)
-    => KnownNat n
+    => (KnownNat n, 1 <= n)
     => (NFDataX inputType, Num inputType)
     => (NFDataX outputType, Num outputType) 
     => (Num coeffType, NFDataX coeffType)
@@ -230,7 +232,8 @@ evenSymmAccum add step shift reset forwardSample cascadeIn = (data1, dataOut)
 semiParallelFIRSystolicSymmetric
     :: forall numStages macDelay coeffsPerStage coeffType inputType outputType dom
     .  HiddenClockResetEnable dom
-    => (KnownNat coeffsPerStage, KnownNat numStages)
+    => (KnownNat coeffsPerStage, 1 <= coeffsPerStage)
+    => KnownNat numStages
     => (NFDataX inputType, Num inputType) 
     => (NFDataX outputType, Num outputType)
     => (NFDataX coeffType, Num coeffType)
