@@ -8,24 +8,24 @@ import Clash.Prelude
 import Clash.Counter
 
 delayLine 
-    :: forall dom delay a
-    .  (HiddenClockResetEnable dom, Num a, 1 <= delay)
-    => KnownNat delay
+    :: forall dom delayN a
+    .  (HiddenClockResetEnable dom, Num a, 1 <= delayN)
+    => KnownNat delayN
     => NFDataX a
-    => SNat delay
+    => SNat delayN
     -> Signal dom Bool
     -> Signal dom a
     -> (Signal dom a)
-delayLine delay valid sampleIn = readResD
+delayLine delayN valid sampleIn = readResD
     where
 
-    readAddr, writeAddr :: Signal dom (Unsigned (CLog 2 delay))
+    readAddr, writeAddr :: Signal dom (Unsigned (CLog 2 delayN))
     readAddr  = count 0 valid
-    writeAddr = count (snatToNum delay) valid
+    writeAddr = count (snatToNum delayN) valid
 
     readRes, readResD :: Signal dom a
     readRes  = blockRamPow2 (repeat 0) readAddr (mux valid (Just <$> bundle (writeAddr, sampleIn)) (pure Nothing))
-    readResD = regEn (errorX "initial readResD") valid readRes
+    readResD = delayEn (errorX "initial readResD") valid readRes
 
 type FilterBP dom inputType outputType
     =  Signal dom outputType    -- ^ Cascade
