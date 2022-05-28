@@ -34,13 +34,13 @@ prop_polyphaseDecim :: Vec 2 (Vec 1 (Vec 2 (Signed 32))) -> [Signed 32] -> Infin
 prop_polyphaseDecim coeffs input (InfiniteList ens _) = expect === result
     where
     expect
-        = drop 1
+        = drop 2
         $ take (length input)
         $ stride 1 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
-        = drop 1
+        = drop 2
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
@@ -55,13 +55,13 @@ prop_polyphaseDecimMultiStage :: Vec 2 (Vec 2 (Vec 2 (Signed 32))) -> [Signed 32
 prop_polyphaseDecimMultiStage coeffs input (InfiniteList ens _) = expect === result
     where
     expect
-        = drop 1
+        = drop 4
         $ take (length input)
         $ stride 1 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
-        = drop 1
+        = drop 4
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
@@ -76,13 +76,13 @@ prop_polyphaseDecimMultiStage2 :: Vec 2 (Vec 4 (Vec 2 (Signed 32))) -> [Signed 3
 prop_polyphaseDecimMultiStage2 coeffs input (InfiniteList ens _) = expect === result
     where
     expect
-        = drop 1
+        = drop 8
         $ take (length input)
         $ stride 1 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
-        = drop 1
+        = drop 8
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
@@ -97,13 +97,13 @@ prop_polyphaseDecimMultiStage3 :: Vec 4 (Vec 4 (Vec 4 (Signed 32))) -> [Signed 3
 prop_polyphaseDecimMultiStage3 coeffs input (InfiniteList ens _) = expect === result
     where
     expect
-        = drop 1
+        = drop 16
         $ take (length input)
         $ stride 3 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
-        = drop 1
+        = drop 16
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
@@ -118,13 +118,13 @@ prop_polyphaseDecimMultiStage4 :: Vec 3 (Vec 2 (Vec 3 (Signed 32))) -> [Signed 3
 prop_polyphaseDecimMultiStage4 coeffs input (InfiniteList ens _) = expect === result
     where
     expect
-        = drop 1
+        = drop 6
         $ take (length input)
         $ stride 2 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
-        = drop 1
+        = drop 6
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
@@ -140,13 +140,13 @@ prop_polyphaseDecimMultiStage2_backPressure :: Vec 4 (Vec 4 (Vec 8 (Signed 32)))
 prop_polyphaseDecimMultiStage2_backPressure coeffs input (InfiniteList ens _) = expect === result
     where
     expect
-        = drop 1
+        = drop 32
         $ take (length input)
         $ stride 3 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
-        = drop 1
+        = drop 32
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
@@ -162,13 +162,13 @@ prop_polyphaseDecimMultiStage3_backPressure :: Vec 2 (Vec 8 (Vec 8 (Signed 32)))
 prop_polyphaseDecimMultiStage3_backPressure coeffs input (InfiniteList ens _) = expect === result
     where
     expect
-        = drop 1
+        = drop 64
         $ take (length input)
         $ stride 1 
         $ sample @System 
         $ goldenFIR (Clash.concat $ Clash.transpose $ Clash.map Clash.concat coeffs) (pure True) (fromList $ 0 : input ++ repeat 0)
     result 
-        = drop 1
+        = drop 64
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 

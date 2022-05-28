@@ -37,13 +37,15 @@ prop_halfbandDecim coeffs input (InfiniteList ens _) = expect === result
         $ Clash.replicate (SNat @7) 0 Clash.++ Clash.singleton 1 Clash.++ Clash.repeat 0
 
     expect
-        = take (length input)
+        = drop 15
+        $ take (length input)
         $ stride 1 
         $ drop 1
         $ goldenExpect coeffsHB input
 
     result 
-        = take (length input) 
+        = drop 15
+        $ take (length input) 
         $ drop 1
         $ map snd . filter fst
         $ sample @System 
@@ -71,13 +73,15 @@ prop_halfbandDecimSymm coeffs midCoeff input (InfiniteList ens _) = expect === r
         $ Clash.replicate (SNat @8) 0 Clash.++ Clash.singleton 1 Clash.++ Clash.repeat 0
 
     expect
-        = take (length input)
+        = drop 17
+        $ take (length input)
         $ stride 1 
         $ drop 1
         $ goldenExpect coeffsHB input
 
     result 
-        = take (length input) 
+        = drop 17
+        $ take (length input) 
         $ drop 1
         $ map snd . filter fst
         $ sample @System 
@@ -105,13 +109,15 @@ prop_halfbandDecimSymmMulti coeffs midCoeff input (InfiniteList ens _) = expect 
         $ Clash.replicate (SNat @16) 0 Clash.++ Clash.singleton 1 Clash.++ Clash.repeat 0
 
     expect
-        = take (length input)
+        = drop 33
+        $ take (length input)
         $ stride 1 
         $ drop 1
         $ goldenExpect coeffsHB input
 
     result 
-        = take (length input) 
+        = drop 33
+        $ take (length input) 
         $ drop 1
         $ map snd . filter fst
         $ sample @System 

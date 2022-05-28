@@ -38,7 +38,7 @@ shiftReg
     -> Signal dom (Vec n a)
 shiftReg shift dat = res
     where
-    res = regEn (repeat 0) shift 
+    res = regEn (repeat (errorX "initial shiftReg")) shift 
         $ (+>>) <$> dat <*> res
 
 --Multiply and accumulate unit

@@ -34,10 +34,10 @@ prop_semiParallelFIRSystolic :: Vec 4 (Signed 32) -> [Signed 32] -> InfiniteList
 prop_semiParallelFIRSystolic coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = drop 1
+        = drop 4
         $ goldenExpect coeffs input
     result
-        = drop 1
+        = drop 4
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
@@ -47,10 +47,10 @@ prop_semiParallelFIRSystolicMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> [Signed 3
 prop_semiParallelFIRSystolicMultiStage coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = drop 1
+        = drop 16
         $ goldenExpect (Clash.concat coeffs) input
     result
-        = drop 1
+        = drop 16
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
@@ -60,10 +60,10 @@ prop_semiParallelFIRSystolicMultiStageMacDelay :: Vec 4 (Vec 4 (Signed 32)) -> [
 prop_semiParallelFIRSystolicMultiStageMacDelay coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = drop 1
+        = drop 16
         $ goldenExpect (Clash.concat coeffs) input
     result
-        = drop 1 
+        = drop 16
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
@@ -73,10 +73,10 @@ prop_semiParallelFIRSystolicSymmetric :: Vec 4 (Signed 32) -> [Signed 32] -> Inf
 prop_semiParallelFIRSystolicSymmetric coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = drop 1 
+        = drop 9 
         $ goldenExpect (coeffs Clash.++ Clash.singleton 1 Clash.++ Clash.reverse coeffs) input
     result
-        = drop 1
+        = drop 9
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
@@ -86,10 +86,10 @@ prop_semiParallelFIRSystolicSymmetricEven :: Vec 4 (Signed 32) -> Signed 32 -> [
 prop_semiParallelFIRSystolicSymmetricEven coeffs midCoeff input (InfiniteList ens _) = expect === result 
     where
     expect
-        = drop 1 
+        = drop 10 
         $ goldenExpect (coeffs Clash.++ Clash.singleton midCoeff Clash.++ Clash.singleton midCoeff Clash.++ Clash.reverse coeffs) input
     result
-        = drop 1 
+        = drop 10
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
@@ -99,10 +99,10 @@ prop_semiParallelFIRSystolicSymmetricMultiStage :: Vec 4 (Vec 4 (Signed 32)) -> 
 prop_semiParallelFIRSystolicSymmetricMultiStage coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = drop 1
+        = drop 33
         $ goldenExpect (Clash.concat coeffs Clash.++ Clash.singleton 1 Clash.++ Clash.reverse (Clash.concat coeffs)) input
     result
-        = drop 1
+        = drop 33
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
@@ -112,10 +112,10 @@ prop_semiParallelFIRSystolicSymmetricMacDelay :: Vec 4 (Vec 4 (Signed 32)) -> [S
 prop_semiParallelFIRSystolicSymmetricMacDelay coeffs input (InfiniteList ens _) = expect === result 
     where
     expect
-        = drop 1
+        = drop 33
         $ goldenExpect (Clash.concat coeffs Clash.++ Clash.singleton 1 Clash.++ Clash.reverse (Clash.concat coeffs)) input
     result
-        = drop 1 
+        = drop 33 
         $ take (length input) 
         $ map snd . filter fst
         $ sample @System 
