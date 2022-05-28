@@ -38,13 +38,13 @@ theFilter
         filter'
 
 top
-    :: "clk"       ::: Clock System
-    -> "iValid"    ::: Signal System Bool
-    -> "iSampleIn" ::: Signal System (Signed 16)
+    :: "clk"       ::: Clock XilinxSystem
+    -> "iValid"    ::: Signal XilinxSystem Bool
+    -> "iSampleIn" ::: Signal XilinxSystem (Signed 16)
     -> (
-            "oVld"   ::: Signal System Bool,
-            "oDat"   ::: Signal System (Signed 40),
-            "oReady" ::: Signal System Bool
+            "oVld"   ::: Signal XilinxSystem Bool,
+            "oDat"   ::: Signal XilinxSystem (Signed 40),
+            "oReady" ::: Signal XilinxSystem Bool
        )
 top clk = exposeClockResetEnable theFilter clk resetGen enableGen
 
