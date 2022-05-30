@@ -15,7 +15,7 @@ coeffs = (
 theFilter 
     :: HiddenClockResetEnable dom
     => Signal dom Bool                                            -- ^ Input valid
-    -> Signal dom (Signed 16)                                      -- ^ Sample
+    -> Signal dom (Signed 16)                                     -- ^ Sample
     -> (Signal dom Bool, Signal dom (Signed 40), Signal dom Bool) -- ^ (Output valid, output data, ready)
 theFilter
     = semiParallelFIRSystolic 
