@@ -3,5 +3,6 @@
 *.log
 *.jou
 *.txt
+*.str
 outputs
 verilog
