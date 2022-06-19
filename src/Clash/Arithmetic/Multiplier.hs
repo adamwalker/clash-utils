@@ -67,7 +67,7 @@ serialMultiplyCarrySave x en y = sumOut
     partials =  sequenceA $ fmap unpack $ bool <$> 0 <*> x <*> y
 
     res :: Vec (n + 1) (Signal dom (Bool, Bool))
-    res =  map (regEn (False, False) en) $ zipWith3 (liftA3 fullAdder) partials carryOuts (pure False :> sumOuts)
+    res =  map (delayEn (False, False) en) $ zipWith3 (liftA3 fullAdder) partials carryOuts (pure False :> sumOuts)
 
     sumOut  :: Signal dom Bool
     sumOuts :: Vec n (Signal dom Bool)
@@ -92,7 +92,7 @@ serialMultiplyCarrySaveSigned x en msb y = sumOut
     msbD = regEn False en msb
 
     partials' :: Vec (n + 2) (Signal dom Bool)
-    partials' =  sequenceA $ fmap unpack $ bool <$> 0 <*> x <*> y
+    partials' =  traverse unpack $ bool <$> 0 <*> x <*> y
 
     p :> ps = partials'
 
