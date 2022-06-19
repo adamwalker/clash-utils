@@ -15,7 +15,7 @@ delayLine
     => SNat delayN
     -> Signal dom Bool
     -> Signal dom a
-    -> (Signal dom a)
+    -> Signal dom a
 delayLine delayN valid sampleIn = readResD
     where
 

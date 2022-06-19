@@ -40,7 +40,7 @@ firTransposed
     -> Signal dom Bool                        -- ^ Input enable
     -> Signal dom inputType                   -- ^ Input samples
     -> Signal dom outputType                  -- ^ Output samples
-firTransposed mac coeffs en x = foldl (func x) 0 $ (pure <$> coeffs)
+firTransposed mac coeffs en x = foldl (func x) 0 $ pure <$> coeffs
     where
     func x accum coeff = regEn 0 en $ mac en coeff x accum
 
