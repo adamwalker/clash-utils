@@ -84,13 +84,13 @@ cMulPipe en x y
     = liftA2 (:+) rr ri
     where
     --Products
-    xryr = regEn (errorX "initial xryr") en $ liftA2 mul (realPart <$> x) (realPart <$> y)
-    xiyi = regEn (errorX "initial xiyi") en $ liftA2 mul (imagPart <$> x) (imagPart <$> y)
-    xryi = regEn (errorX "initial xryi") en $ liftA2 mul (realPart <$> x) (imagPart <$> y)
-    xiyr = regEn (errorX "initial xiyr") en $ liftA2 mul (imagPart <$> x) (realPart <$> y)
+    xryr = delayEn (errorX "initial xryr") en $ liftA2 mul (realPart <$> x) (realPart <$> y)
+    xiyi = delayEn (errorX "initial xiyi") en $ liftA2 mul (imagPart <$> x) (imagPart <$> y)
+    xryi = delayEn (errorX "initial xryi") en $ liftA2 mul (realPart <$> x) (imagPart <$> y)
+    xiyr = delayEn (errorX "initial xiyr") en $ liftA2 mul (imagPart <$> x) (realPart <$> y)
     --Sums
-    rr   = regEn (errorX "initial rr")   en $ liftA2 sub xryr xiyi
-    ri   = regEn (errorX "initial ri")   en $ liftA2 add xryi xiyr
+    rr   = delayEn (errorX "initial rr")   en $ liftA2 sub xryr xiyi
+    ri   = delayEn (errorX "initial ri")   en $ liftA2 add xryi xiyr
 
 cMul3Pipe
     :: HiddenClockResetEnable dom
@@ -114,17 +114,17 @@ cMul3Pipe en x y
     =  liftA2 (:+) rr ri
     where
     --Sums
-    xSum    = regEn (errorX "initial xSum")    en $ liftA2 add (realPart <$> x) (imagPart <$> x)
-    yDiff   = regEn (errorX "initial yDiff")   en $ liftA2 sub (imagPart <$> y) (realPart <$> y)
-    ySum    = regEn (errorX "initial ySum")    en $ liftA2 add (realPart <$> y) (imagPart <$> y)
+    xSum    = delayEn (errorX "initial xSum")    en $ liftA2 add (realPart <$> x) (imagPart <$> x)
+    yDiff   = delayEn (errorX "initial yDiff")   en $ liftA2 sub (imagPart <$> y) (realPart <$> y)
+    ySum    = delayEn (errorX "initial ySum")    en $ liftA2 add (realPart <$> y) (imagPart <$> y)
     --Delays
-    xD      = regEn (errorX "initial xD") en x
-    yD      = regEn (errorX "initial yD") en y
+    xD      = delayEn (errorX "initial xD") en x
+    yD      = delayEn (errorX "initial yD") en y
     --Products
-    yrXSum  = regEn (errorX "initial yrXSum")  en $ liftA2 mul (realPart <$> yD) xSum
-    xrYDiff = regEn (errorX "initial xrYDiff") en $ liftA2 mul (realPart <$> xD) yDiff
-    xiYSum  = regEn (errorX "initial xiYSum")  en $ liftA2 mul (imagPart <$> xD) ySum
+    yrXSum  = delayEn (errorX "initial yrXSum")  en $ liftA2 mul (realPart <$> yD) xSum
+    xrYDiff = delayEn (errorX "initial xrYDiff") en $ liftA2 mul (realPart <$> xD) yDiff
+    xiYSum  = delayEn (errorX "initial xiYSum")  en $ liftA2 mul (imagPart <$> xD) ySum
     --Sums
-    rr      = regEn (errorX "initial rr")      en $ liftA2 sub yrXSum xiYSum
-    ri      = regEn (errorX "initial ri")      en $ liftA2 add yrXSum xrYDiff
+    rr      = delayEn (errorX "initial rr")      en $ liftA2 sub yrXSum xiYSum
+    ri      = delayEn (errorX "initial ri")      en $ liftA2 add yrXSum xrYDiff
 
