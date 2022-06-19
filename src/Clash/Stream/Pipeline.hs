@@ -26,7 +26,7 @@ forwardPipeline vldIn datIn readyIn = (vldOut, datOut, readyOut)
     vldOut =  register False $ vldIn .||. fmap not readyOut
 
     datOut :: Signal dom a
-    datOut =  regEn (errorX "initial stream forwardPipeline value") readyOut datIn
+    datOut =  delayEn (errorX "initial stream forwardPipeline value") readyOut datIn
 
 -- | Break combinational paths in the backwards (ready) direction only
 backwardPipeline
@@ -45,7 +45,7 @@ backwardPipeline vldIn datIn readyIn = (vldOut, datOut, bufferEmpty)
     vldOut =  vldIn .||. fmap not bufferEmpty
 
     datSaved :: Signal dom a
-    datSaved =  regEn (errorX "initial stream backwardPipeline value") bufferEmpty datIn
+    datSaved =  delayEn (errorX "initial stream backwardPipeline value") bufferEmpty datIn
 
     datOut :: Signal dom a
     datOut =  mux bufferEmpty datIn datSaved 
