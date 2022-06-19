@@ -10,7 +10,6 @@ bitReversalReorder
     :: forall dom n a
     .  HiddenClockResetEnable dom
     => NFDataX a
-    => Default a
     => SNat n
     -> Signal dom Bool
     -> Signal dom a
@@ -32,6 +31,6 @@ bitReversalReorder SNat en dat = ramOut
 
     addressFinal = mux stage address addressReversed
 
-    ramOut = blockRamPow2 (repeat def :: Vec (2 ^ n) a) addressFinal
+    ramOut = blockRamPow2 (repeat (errorX "initial reorder ram") :: Vec (2 ^ n) a) addressFinal
         $ mux en (Just <$> bundle (addressFinal, dat)) (pure Nothing)
 
