@@ -35,7 +35,7 @@ sineTable' table quadrant addr = mux negD (negate <$> signed) signed
         = unbundle $ bitCoerce <$> quadrant
 
     --Save the negation signal for the cycle after the ram read
-    negD = register False neg
+    negD = delay False neg
 
     --The table ram
     tableRes = blockRam table (mux flip (complement <$> addr) addr) (pure Nothing)

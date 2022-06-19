@@ -101,7 +101,7 @@ cordicPipeline dir start consts en input
     where 
 
     step (idx, coeff) 
-        = regEn (errorX "Initial CORDIC pipe") en 
+        = delayEn (errorX "Initial CORDIC pipe") en 
         . fmap (step' idx coeff)
         where
         step' 
@@ -120,19 +120,19 @@ cordicExample
     -> Signal dom (CordicState (SFixed 16 16) (SFixed 2 16)) -- ^ Result. Real part of `cplx` is magnitude. `arg` contains argument.
 cordicExample consts' x y 
     = fmap (step 14 $ consts !! 7)
-    $ register undefined
+    $ delay undefined
     $ fmap (step 12 $ consts !! 6)
-    $ register undefined
+    $ delay undefined
     $ fmap (step 10 $ consts !! 5)
-    $ register undefined
+    $ delay undefined
     $ fmap (step 8  $ consts !! 4)
-    $ register undefined
+    $ delay undefined
     $ fmap (step 6  $ consts !! 3)
-    $ register undefined
+    $ delay undefined
     $ fmap (step 4  $ consts !! 2)
-    $ register undefined
+    $ delay undefined
     $ fmap (step 2  $ consts !! 1)
-    $ register undefined
+    $ delay undefined
     $ fmap (step 0  $ consts !! 0)
     $ CordicState <$> cplx <*> pure (0 :: SFixed 2 16)
     where 
