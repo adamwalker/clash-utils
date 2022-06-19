@@ -32,7 +32,7 @@ comb
 comb SNat valid x = x - last delayLine
     where
     delayLine :: Vec (m + 1) (Signal dom a)
-    delayLine =  iterateI (regEn 0 valid) x
+    delayLine =  iterateI (delayEn (errorX "initial delayLine") valid) x
 
 -- | Generates a pulse every n cycles
 nth 
@@ -64,5 +64,5 @@ cicDecimate r m SNat valid x = (validN, result)
     where
     integrated = last $ iterate (SNat @(n + 1)) (integrate valid) x
     validN     = nth r valid
-    result     = last $ iterate (SNat @(n + 1)) (regEn 0 validN . comb m validN) integrated
+    result     = last $ iterate (SNat @(n + 1)) (delayEn (errorX "initial cicDecimate result") validN . comb m validN) integrated
 
