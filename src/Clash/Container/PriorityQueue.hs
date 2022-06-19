@@ -28,8 +28,8 @@ prioQueue SNat ident insert delete val deleteVal readCascadeIn = (result, cascad
     where
 
     ident'  = mux (insert .||. delete) ident identD
-    identD  = register 0                          ident' --TODO: why does this fail if the initial value is undefined
-    identDD = register (errorX "initial identDD") identD
+    identD  = delay 0                          ident' --TODO: why does this fail if the initial value is undefined
+    identDD = delay (errorX "initial identDD") identD
 
     result = (readRes, inProgressInsert .||. inProgressDelete .||. inProgressDeleteD)
     cascade = (
@@ -50,10 +50,10 @@ prioQueue SNat ident insert delete val deleteVal readCascadeIn = (result, cascad
             | otherwise     = c + 1
 
     insertWriteAddress :: Signal dom (Index iters)
-    insertWriteAddress =  register 0 progressCntr
+    insertWriteAddress =  delay (errorX "initial insertWriteAddress") progressCntr
 
     deleteWriteAddress :: Signal dom (Index iters)
-    deleteWriteAddress =  register 0 insertWriteAddress
+    deleteWriteAddress =  delay (errorX "initial deleteWriteAddress") insertWriteAddress
 
     --Track operation in progress
     inProgressInsert :: Signal dom Bool
@@ -76,15 +76,15 @@ prioQueue SNat ident insert delete val deleteVal readCascadeIn = (result, cascad
             writeCommand
 
     --Writeback calculation for insert
-    toInsert                    = register (errorX "prioQueue: initial toInsert") $ mux insert val next
+    toInsert                    = delay (errorX "prioQueue: initial toInsert") $ mux insert val next
     (toWriteBackInsert :< next) = sequenceA $ sortedInsert <$> toInsert <*> readRes
 
     --Writeback calculation for delete
     readResD :: Signal dom (Vec (n + 1) a)
-    readResD =  register (repeat (errorX "initial readResD")) readRes
+    readResD =  delay (repeat (errorX "initial readResD")) readRes
 
     deleteValSaved :: Signal dom a
-    deleteValSaved =  regEn (errorX "initial deleteValSaved") delete deleteVal
+    deleteValSaved =  delayEn (errorX "initial deleteValSaved") delete deleteVal
 
     deleteWriteBack :: Signal dom (Vec (n + 1) a)
     deleteWriteBack 
