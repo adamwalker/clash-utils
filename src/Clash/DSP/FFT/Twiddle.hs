@@ -12,7 +12,7 @@ import Clash.DSP.Complex
 twiddleFactors 
     :: Int              -- ^ Twiddle factor vector length
     -> [Complex Double] -- ^ Twiddle factors
-twiddleFactors num = P.take num $ [fromComplex $ C.cis $ (-1) * P.pi * fromIntegral i / (fromIntegral num) | i <- [0..]]
+twiddleFactors num = P.take num $ [fromComplex $ C.cis $ (-1) * P.pi * fromIntegral i / fromIntegral num | i <- [0..]]
 
 -- | Take every second element of a vector of twiddle factors.
 halveTwiddles 
