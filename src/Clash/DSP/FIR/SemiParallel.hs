@@ -95,7 +95,7 @@ semiParallelFIRSystolic mac macDelay coeffs cascadeIn valid sampleIn = (validOut
     where
 
     --Delay the cascade
-    cascadeDelayed = last $ generate (macDelay `addSNat` (SNat @2)) (regEn 0 globalStep) cascadeIn
+    cascadeDelayed = last $ generate (macDelay `addSNat` (SNat @2)) (delayEn 0 globalStep) cascadeIn
 
     --The chain of shift registers and MAC units
     sampleOut = foldl func (cascadeDelayed, sampleIn) (zip3 coeffs indices (init shifts))
@@ -249,7 +249,7 @@ semiParallelFIRSystolicSymmetric mac symmAccum macDelay coeffs cascadeIn valid s
     where
 
     --Delay the cascade
-    cascadeDelayed = last $ generate (macDelay `addSNat` (SNat @2)) (regEn 0 globalStep) cascadeIn
+    cascadeDelayed = last $ generate (macDelay `addSNat` (SNat @2)) (delayEn 0 globalStep) cascadeIn
 
     --The chain of shift registers and MAC units
     (_loopedBackSample, dataOut) = foldr step (symmAccum globalStep (last shifts) validOut) (zip3 coeffs indices (init shifts)) sampleIn cascadeDelayed
