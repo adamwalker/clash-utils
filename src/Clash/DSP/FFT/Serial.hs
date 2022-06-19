@@ -18,7 +18,7 @@ fftBase
     => Signal dom Bool 
     -> Signal dom (Complex a, Complex a) 
     -> Signal dom (Complex a, Complex a)
-fftBase en = regEn (0, 0) en . fmap func
+fftBase en = delayEn (errorX "initial fftBase", errorX "initial fftBase") en . fmap func
     where
     func (x, y) = (x + y, x - y)
 
@@ -37,7 +37,7 @@ fftBase en = regEn (0, 0) en . fmap func
  -             |>______|           |/
  -}
 fftReorder
-    :: forall dom n a. (HiddenClockResetEnable dom, KnownNat n, Default a, NFDataX a)
+    :: forall dom n a. (HiddenClockResetEnable dom, KnownNat n, NFDataX a)
     => Signal dom Bool
     -> Signal dom Bool
     -> Signal dom (Unsigned n)
@@ -47,23 +47,23 @@ fftReorder
 fftReorder en stage address upper lower = (upperRamReadResult, lowerData)
     where
 
-    upperD = regEn def en upper
+    upperD = delayEn (errorX "initial upperD") en upper
 
     --Swap
-    upperData = mux (not <$> regEn False en stage) upperD             lowerRamReadResult
-    lowerData = mux (not <$> regEn False en stage) lowerRamReadResult upperD
+    upperData = mux (not <$> delayEn (errorX "initial upperData sel") en stage) upperD             lowerRamReadResult
+    lowerData = mux (not <$> delayEn (errorX "initial lowerData sel") en stage) lowerRamReadResult upperD
 
     --Buffer
-    lowerRamReadResult = blockRamPow2 (repeat def :: Vec (2 ^ n) a) address 
+    lowerRamReadResult = blockRamPow2 (repeat (errorX "initial FFT RAM") :: Vec (2 ^ n) a) address 
         $ mux en (Just <$> bundle (address, lower)) (pure Nothing)
-    upperRamReadResult = blockRamPow2 (repeat def :: Vec (2 ^ n) a) (regEn 0 en address)
-        $ mux en (Just <$> bundle (regEn 0 en address, upperData)) (pure Nothing)
+    upperRamReadResult = blockRamPow2 (repeat (errorX "initial FFT RAM") :: Vec (2 ^ n) a) (delayEn (errorX "initial upper read address") en address)
+        $ mux en (Just <$> bundle (delayEn (errorX "initial upper write address") en address, upperData)) (pure Nothing)
 
 --Decimation in time
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
 -- | A step in the serial FFT decimation in time algorithm. Consumes and produces two complex samples per cycle. 
 fftSerialDITStep
-    :: forall dom n twiddle input output. (HiddenClockResetEnable dom, KnownNat n, Default input, NFDataX input)
+    :: forall dom n twiddle input output. (HiddenClockResetEnable dom, KnownNat n, NFDataX input)
     => Butterfly dom twiddle input output
     -> Vec (2 ^ (n + 1)) twiddle          -- ^ Precomputed twiddle factors
     -> Signal dom Bool                    -- ^ Input enable signal
@@ -84,22 +84,22 @@ fftSerialDITStep butterfly twiddles en input = bundle (butterflyHighOutput, butt
 
     --The butterfly
     twiddlesRot = rotateLeftS twiddles (SNat @(2 ^ n))
-    twiddle     = (twiddlesRot !!) <$> (regEn 0 en $ regEn 0 en counter)
+    twiddle     = (twiddlesRot !!) <$> delayEn (errorX "initial twiddle") en (delayEn (errorX "initial twiddle") en counter)
 
     (butterflyHighOutput, butterflyLowOutput) 
-        = butterfly twiddle upperRamReadResult (regEn def en lowerData)
+        = butterfly twiddle upperRamReadResult (delayEn (errorX "initial butterfly input") en lowerData)
 
 --Decimation in frequency
 --2^(n + 1) == size of FFT / 2 == number of butterfly input pairs
 -- | A step in the serial FFT decimation in frequency algorithm. Consumes and produces two complex samples per cycle. 
 fftSerialDIFStep
-    :: forall dom n twiddle input output. (HiddenClockResetEnable dom, KnownNat n, Default output, NFDataX output)
+    :: forall dom n twiddle input output. (HiddenClockResetEnable dom, KnownNat n, NFDataX output)
     => Butterfly dom twiddle input output
     -> Vec (2 ^ (n + 1)) twiddle          -- ^ Precomputed twiddle factors
     -> Signal dom Bool                    -- ^ Input enable signal
     -> Signal dom (input, input)          -- ^ Pair of input samples
     -> Signal dom (output, output)        -- ^ Pair of output samples
-fftSerialDIFStep butterfly twiddles en input = bundle (upperRamReadResult, regEn def en lowerData)
+fftSerialDIFStep butterfly twiddles en input = bundle (upperRamReadResult, delayEn (errorX "initial FFT out") en lowerData)
     where
 
     --The state
