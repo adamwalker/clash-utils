@@ -9,6 +9,7 @@ module Clash.DSP.CICFilter (
     ) where
 
 import Clash.Prelude
+import Clash.Counter
 
 -- | Running sum
 integrate
@@ -44,11 +45,7 @@ nth
 nth SNat valid = (cnt .==. 0) .&&. valid
     where
     cnt :: Signal dom (Index n)
-    cnt = regEn 0 valid $ func <$> cnt
-        where
-        func cnt
-            | cnt == maxBound = 0
-            | otherwise       = cnt + 1
+    cnt = wrappingCounter 0 valid
 
 -- | [CIC decimator](https://en.wikipedia.org/wiki/Cascaded_integrator%E2%80%93comb_filter)
 cicDecimate

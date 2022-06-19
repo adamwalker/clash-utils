@@ -52,3 +52,4 @@ wrappingCounter init inc = res
     wrappingInc x
         | x == maxBound = 0
         | otherwise     = x + 1
+
