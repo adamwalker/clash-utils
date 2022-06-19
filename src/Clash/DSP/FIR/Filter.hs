@@ -28,7 +28,7 @@ fir
     -> Signal dom Bool                                                           -- ^ Input enable
     -> Signal dom inputType                                                      -- ^ Input samples
     -> Signal dom outputType                                                     -- ^ Output samples
-fir mul add coeffs en x = dotp (map pure coeffs) (iterateI (regEn 0 en) x)
+fir mul add coeffs en x = dotp (map pure coeffs) (iterateI (delayEn 0 en) x)
     where
     dotp as bs = fold add $ zipWith mul as bs
 
