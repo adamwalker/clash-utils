@@ -102,7 +102,7 @@ cuckooStage SNat hashFunc toLookup keyD insertVal modificationD incomingEviction
     --Save the hash for the next cycle when we write back the modified value
     --to avoid recomputing it
     hashD :: Signal dom (Unsigned n)
-    hashD =  last $ generate (SNat @(numRamPipes + 1)) (register (errorX "Cuckoo: initial hashD")) hash
+    hashD =  last $ generate (SNat @(numRamPipes + 1)) (delay (errorX "Cuckoo: initial hashD")) hash
 
     --Calculate the block ram write back if we're doing a modification
     finalMod      :: Signal dom (Maybe (Unsigned n, Maybe (TableEntry k v)))
@@ -130,7 +130,7 @@ cuckooPipeline numRamPipes@SNat hashFuncs toLookup modificationsD inserts = (loo
 
     --Save the lookup key for comparison with the table entry key in the next cycle
     keyD :: Signal dom k
-    keyD =  last $ generate (SNat @(numRamPipes + 1)) (register (errorX "Cuckoo: initial keyD")) toLookup
+    keyD =  last $ generate (SNat @(numRamPipes + 1)) (delay (errorX "Cuckoo: initial keyD")) toLookup
 
     --Construct the pipeline
     (accum, res) = mapAccumL func accum $ zip3 hashFuncs inserts modificationsD
@@ -163,7 +163,7 @@ cuckooPipelineInsert' numRamPipes@SNat hashFuncs toLookup modificationD = (luRes
         $  insertD
         :> repeat (pure Nothing)
 
-    toLookupD = last $ generate (SNat @(numRamPipes + 1)) (register (errorX "Cuckoo: toLookup")) toLookup
+    toLookupD = last $ generate (SNat @(numRamPipes + 1)) (delay (errorX "Cuckoo: toLookup")) toLookup
     luRes     = fold (liftA2 (<|>)) lookupResults
 
     --Form an insert from our modification in case the key is not found in any tables
@@ -220,7 +220,7 @@ cuckooPipelineMultiMap numRamPipes@SNat hashFuncs toLookup modification = (looku
     --Save the modification for writeback on the next cycle
     modificationD  = generate (SNat @(numRamPipes + 1)) (register Nothing) $ mux busy (pure Nothing) modification
     --Save the lookup key for comparison on the next cycle
-    toLookupD      = last $ generate (SNat @(numRamPipes + 1)) (register (errorX "toLookupD")) toLookup
+    toLookupD      = last $ generate (SNat @(numRamPipes + 1)) (delay (errorX "toLookupD")) toLookup
 
     --Calculate the modification/delete writebacks for each table
     modificationsD :: Vec (m + 1) (Signal dom (Maybe (Maybe (i, v))))
