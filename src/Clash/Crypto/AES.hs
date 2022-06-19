@@ -113,10 +113,10 @@ keyExpander
 keyExpander start key = keyState
     where
     keyState :: Signal dom (Vec 4 (BitVector 32))
-    keyState =  delay (repeat 0) $ mux start (unpack <$> key) (keyScheduleStep <$> (pack <$> rc) <*> keyState)
+    keyState =  delay (errorX "initial keyState") $ mux start (unpack <$> key) (keyScheduleStep <$> (pack <$> rc) <*> keyState)
 
     rc :: Signal dom (Vec 8 Bool)
-    rc =  delay (repeat False :< True) $ mux start (pure $ unpack 1) (gfDouble <$> rc)
+    rc =  delay (errorX "initial rc") $ mux start (pure $ unpack 1) (gfDouble <$> rc)
 
 -- | AES encryption state machine
 aesEncrypt
@@ -142,7 +142,7 @@ aesEncrypt start key block = bundle (cnt .==. 12, pack <$> roundState)
             | otherwise = cnt + 1
 
     roundState :: Signal dom AESState 
-    roundState = delay (repeat (repeat 0)) $ step <$> cnt <*> roundState <*> roundKey <*> block
+    roundState = delay (errorX "initial roundState") $ step <$> cnt <*> roundState <*> roundKey <*> block
         where
         step :: Unsigned 4 -> AESState -> Vec 4 (BitVector 32) -> BitVector 128 -> AESState
         step cnt roundState roundKey block = addRoundKey roundKey $ bool preRoundKey (unpack block) (cnt == 1)

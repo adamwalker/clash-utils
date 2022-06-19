@@ -63,7 +63,7 @@ binaryToDecExample
 binaryToDecExample x 
     = fmap pack 
     $ liftA2 convertSteps (slice d3 d0 <$> x) 
-    $ delay (repeat 0) 
+    $ delay (errorX "initial binaryToDecExample") 
     $ liftA2 convertSteps (slice d7 d4 <$> x)
     $ pure (repeat 0)
 

@@ -64,7 +64,7 @@ serialMultiplyCarrySave x en y = sumOut
     where
 
     partials :: Vec (n + 1) (Signal dom Bool)
-    partials =  sequenceA $ fmap unpack $ bool <$> 0 <*> x <*> y
+    partials =  traverse unpack $ bool <$> 0 <*> x <*> y
 
     res :: Vec (n + 1) (Signal dom (Bool, Bool))
     res =  map (delayEn (False, False) en) $ zipWith3 (liftA3 fullAdder) partials carryOuts (pure False :> sumOuts)
@@ -140,7 +140,7 @@ boothWindows
     .  KnownNat n
     => Vec (2 * (n + 1)) Bool   -- ^ Input bit vector
     -> Vec (n + 1) (Vec 3 Bool) -- ^ 3 bit windows
-boothWindows xs = map (take (SNat @3)) $ map (:< False) shifts
+boothWindows xs = map (take (SNat @3) . (:< False)) shifts
     where
 
     shiftL :: Vec (2 * (n + 1)) Bool -> Vec (2 * (n + 1)) Bool
