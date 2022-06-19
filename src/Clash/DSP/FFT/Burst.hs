@@ -104,9 +104,9 @@ burstFFT twiddles (dat0, dat1) = (butOut0, butOut1)
     --
     (stage, index, twiddleAddress, parity, address0, address1) = addressGenerator 
 
-    address0D = register 0 address0
-    address1D = register 0 address1
-    parityD   = register False parity
+    address0D = register (errorX "initial address0D") address0
+    address1D = register (errorX "initial address1D") address1
+    parityD   = register (errorX "initial parityD")   parity
 
     --
     --The RAMs
