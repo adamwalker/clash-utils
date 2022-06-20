@@ -98,11 +98,11 @@ prop_halfbandDecimSymm coeffs midCoeff input (InfiniteList ens _) = expect === r
 --2 phases
 --2 stages in semi parallel filter
 --4 coefficients in filter
-prop_halfbandDecimSymmMulti :: Vec 2 (Vec 8 (Signed 32)) -> Signed 32 -> [Signed 32] -> InfiniteList Bool -> Property
-prop_halfbandDecimSymmMulti coeffs midCoeff input (InfiniteList ens _) = expect === result
+prop_halfbandDecimSymmMulti :: Vec 2 (Vec 8 (Signed 32)) -> [Signed 32] -> InfiniteList Bool -> Property
+prop_halfbandDecimSymmMulti coeffs input (InfiniteList ens _) = expect === result
     where
 
-    combined = Clash.concat coeffs :< midCoeff
+    combined = Clash.concat coeffs 
     coeffsHB 
         = Clash.init 
         $ Clash.merge (combined Clash.++ Clash.reverse combined)
@@ -129,5 +129,5 @@ prop_halfbandDecimSymmMulti coeffs midCoeff input (InfiniteList ens _) = expect 
         -> Signal dom Bool 
         -> Signal dom (Signed 32) 
         -> (Signal dom Bool, Signal dom (Signed 32), Signal dom Bool)
-    filter' = semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (evenSymmAccum (SNat @0) (\x y -> (x + y) * midCoeff)) (SNat @0) coeffs
+    filter' = semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (evenSymmAccum2 (SNat @0) (const macPreAddRealReal) (Clash.last coeffs)) (SNat @0) (Clash.init coeffs)
 

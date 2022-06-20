@@ -22,9 +22,9 @@ filter'
 filter' 
     = semiParallelFIRSystolicSymmetric 
         macPreAddRealRealPipelined 
-        (evenSymmAccum (\x y -> extend $ mul (1234 :: Signed 16) $ add x y)) 
+        (evenSymmAccum2 (SNat @2) macPreAddRealRealPipelined (last coeffs)) 
         (SNat @2) 
-        coeffs
+        (init coeffs)
 
 theFilter 
     :: HiddenClockResetEnable dom
