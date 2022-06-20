@@ -53,9 +53,9 @@ streamList samples enables = unbundle . mealy step (samples, enables)
     where
     step :: ([a], [Bool]) -> Bool -> (([a], [Bool]), (Bool, a))
     step (l@(x:xs), es@(True:_)) False = ((l, es),  (True, x))
-    step (l@(x:xs), (e:es))      False = ((l, es),  (e, x))
-    step (l@(x:xs), (False:es))  True  = ((l, es),  (False, x))
-    step (  (x:xs), (True:es))   True  = ((xs, es), (True, x))
+    step (l@(x:xs), e:es)        False = ((l, es),  (e, x))
+    step (l@(x:xs), False:es)    True  = ((l, es),  (False, x))
+    step (   x:xs,  True:es)     True  = ((xs, es), (True, x))
     step ([],       _)           _     = error "Data list empty"
     step (_,        [])          _     = error "Enable list empty"
 
