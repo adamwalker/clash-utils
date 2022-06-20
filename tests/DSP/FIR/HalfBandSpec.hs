@@ -93,7 +93,7 @@ prop_halfbandDecimSymm coeffs midCoeff input (InfiniteList ens _) = expect === r
         -> Signal dom Bool 
         -> Signal dom (Signed 32) 
         -> (Signal dom Bool, Signal dom (Signed 32), Signal dom Bool)
-    filter' = semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (evenSymmAccum (\x y -> (x + y) * midCoeff)) (SNat @0) (singleton coeffs) 
+    filter' = semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (evenSymmAccum (SNat @0) (\x y -> (x + y) * midCoeff)) (SNat @0) (singleton coeffs) 
 
 --2 phases
 --2 stages in semi parallel filter
@@ -129,5 +129,5 @@ prop_halfbandDecimSymmMulti coeffs midCoeff input (InfiniteList ens _) = expect 
         -> Signal dom Bool 
         -> Signal dom (Signed 32) 
         -> (Signal dom Bool, Signal dom (Signed 32), Signal dom Bool)
-    filter' = semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (evenSymmAccum (\x y -> (x + y) * midCoeff)) (SNat @0) coeffs
+    filter' = semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (evenSymmAccum (SNat @0) (\x y -> (x + y) * midCoeff)) (SNat @0) coeffs
 
