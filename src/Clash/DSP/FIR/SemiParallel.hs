@@ -5,6 +5,7 @@ module Clash.DSP.FIR.SemiParallel (
         macUnitSymmetric,
         oddSymmAccum,
         evenSymmAccum,
+        evenSymmAccum2,
         semiParallelFIRSystolicSymmetric,
         semiParallelFIRTransposed,
         semiParallelFIRTransposedBlockRam,
@@ -196,22 +197,23 @@ macUnitSymmetric mac coeffs idx shiftSamples step cascadeIn forwardSampleIn reve
         = delayEn (errorX "initial macD") step 
         $ mac step coeffToMul forwardSampleToMul reverseSampleToMul cascadeIn
 
-type SymmAccum dom inputType outputType
+type SymmAccum dom n inputType outputType
     =  Signal dom Bool
+    -> Signal dom (Index n)
     -> Signal dom Bool
     -> Signal dom inputType
     -> Signal dom outputType
     -> (Signal dom inputType, Signal dom Bool, Signal dom outputType)
 
 oddSymmAccum 
-    :: forall dom inputType outputType macDelay
+    :: forall dom n inputType outputType macDelay
     .  HiddenClockResetEnable dom
     => (Num inputType, NFDataX inputType)
     => (Num outputType, NFDataX outputType)
     => SNat macDelay
     -> (inputType -> outputType)
-    -> SymmAccum dom inputType outputType
-oddSymmAccum macDelay convert step shift forwardSample cascadeIn = (dataSaved, validOut, dataOut)
+    -> SymmAccum dom n inputType outputType
+oddSymmAccum macDelay convert step _ shift forwardSample cascadeIn = (dataSaved, validOut, dataOut)
     where
     dataSaved = delayEn (errorX "initial dataSaved") (shift .&&. step) forwardSample
     --TOOD: use of dataSaved is incorrect when the MAC delay is long, we need to buffer more samples
@@ -228,14 +230,14 @@ oddSymmAccum macDelay convert step shift forwardSample cascadeIn = (dataSaved, v
         .&&. last (generate (macDelay `addSNat` (SNat @2)) (regEn False step) shift)
 
 evenSymmAccum 
-    :: forall dom inputType outputType macDelay
+    :: forall dom n inputType outputType macDelay
     .  HiddenClockResetEnable dom
     => (Num inputType, NFDataX inputType)
     => (Num outputType, NFDataX outputType)
     => SNat macDelay
     -> (inputType -> inputType -> outputType)
-    -> SymmAccum dom inputType outputType
-evenSymmAccum macDelay add step shift forwardSample cascadeIn = (data1, validOut, dataOut)
+    -> SymmAccum dom n inputType outputType
+evenSymmAccum macDelay add step _ shift forwardSample cascadeIn = (data1, validOut, dataOut)
     where
     data0 = delayEn (errorX "initial data0") (shift .&&. step) forwardSample
     data1 = delayEn (errorX "initial data1") (shift .&&. step) data0
@@ -252,6 +254,65 @@ evenSymmAccum macDelay add step shift forwardSample cascadeIn = (data1, validOut
         =    step 
         .&&. last (generate (macDelay `addSNat` (SNat @2)) (regEn False step) shift)
 
+evenSymmAccum2
+    :: forall n dom macDelay coeffType inputType outputType
+    .  (HiddenClockResetEnable dom)
+    => (KnownNat n, 1 <= n)
+    => (NFDataX inputType, Num inputType)
+    => (NFDataX outputType, Num outputType) 
+    => (Num coeffType, NFDataX coeffType)
+    => SNat macDelay
+    -> MACPreAdd dom coeffType inputType outputType
+    -> Vec n coeffType                                                -- ^ Filter coefficients
+    -> SymmAccum dom n inputType outputType
+evenSymmAccum2 macDelay mac coeffs step idx shift forwardSampleIn cascadeIn = (reverseSampleSaved, validOut, dataOut)
+    where
+
+    --Keep the shift registers in the forward and reverse directions
+    forwardShiftReg :: Signal dom (Vec n inputType)
+    forwardShiftReg =  shiftReg (step .&&. shift) forwardSampleIn
+
+    reverseSampleIn :: Signal dom inputType
+    reverseSampleIn =  delayEn (errorX "initial reverseSampleIn") (step .&&. shift) forwardSampleToMul
+
+    reverseShiftReg :: Signal dom (Vec n inputType)
+    reverseShiftReg =  shiftReg (step .&&. shift) reverseSampleIn
+
+    --Extract the samples to add and multiply
+    forwardSampleToMul 
+        = delayEn (errorX "initial forwardSampleToMul") step 
+        $ liftA2 (!!) forwardShiftReg idx
+    reverseSampleToMul 
+        = delayEn (errorX "initial reverseSampleToMul") step 
+        $ liftA2 (!!) (reverse <$> reverseShiftReg) idx
+
+    --Save the reverse direction sample
+    shiftSamplesD   
+        = regEn False step 
+        $ regEn False step shift
+    reverseSampleSaved 
+        = delayEn (errorX "initial reverseSampleSaved") shiftSamplesD reverseSampleToMul
+
+    coeffToMul  
+        = delayEn (errorX "initial coeffToMul") step 
+        $ (coeffs !!) <$> idx
+    macD        
+        = delayEn (errorX "initial macD") step 
+        $ mac step coeffToMul forwardSampleToMul reverseSampleToMul cascadeIn
+
+    --TOOD: use of dataSaved is incorrect when the MAC delay is long, we need to buffer more samples
+    dataOut =  integrateAndDump step validOut 0 macD
+    --The output is valid if
+    --  * The final stage (the integrator) would be shifting a new sample in
+    --  * plus, the MAC unit delay
+    --  * plus, 1 cycle for the mac unit stage
+    --  * plus, 1 cycle for the integrator
+    validOut :: Signal dom Bool
+    validOut 
+        --TODO: globalStep here is not good for timing
+        =    step 
+        .&&. last (generate (macDelay `addSNat` (SNat @3)) (regEn False step) shift)
+
 semiParallelFIRSystolicSymmetric
     :: forall numStages macDelay coeffsPerStage coeffType inputType outputType dom
     .  HiddenClockResetEnable dom
@@ -261,7 +322,7 @@ semiParallelFIRSystolicSymmetric
     => (NFDataX outputType, Num outputType)
     => (NFDataX coeffType, Num coeffType)
     => MACPreAdd dom coeffType inputType outputType
-    -> SymmAccum dom inputType outputType
+    -> SymmAccum dom coeffsPerStage inputType outputType
     -> SNat macDelay
     -> Vec (numStages + 1) (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
     -> Signal dom outputType
@@ -275,7 +336,7 @@ semiParallelFIRSystolicSymmetric mac symmAccum macDelay coeffs cascadeIn valid s
     cascadeDelayed = last $ generate (macDelay `addSNat` (SNat @2)) (delayEn (errorX "initial cascadeDelayed") globalStep) cascadeIn
 
     --The chain of shift registers and MAC units
-    (_loopedBackSample, dataValid, dataOut) = foldr step (symmAccum globalStep (last shifts)) (zip3 coeffs indices (init shifts)) sampleIn cascadeDelayed
+    (_loopedBackSample, dataValid, dataOut) = foldr step (symmAccum globalStep (last indices) (last shifts)) (zip3 coeffs (init indices) (init shifts)) sampleIn cascadeDelayed
         where
         step (coeffs, index, shift) accum forwardSample cascadeIn = (reverseSample', sampleValid, sampleOut')
             where
@@ -306,7 +367,7 @@ semiParallelFIRSystolicSymmetric mac symmAccum macDelay coeffs cascadeIn valid s
     shifts :: Vec (numStages + 2) (Signal dom Bool)
     shifts =  iterateI (regEn False globalStep) ready
 
-    indices :: Vec (numStages + 1) (Signal dom (Index coeffsPerStage))
+    indices :: Vec (numStages + 2) (Signal dom (Index coeffsPerStage))
     indices =  iterateI (regEn 0 globalStep) address
 
 semiParallelFIRTransposed
