@@ -72,7 +72,7 @@ macPreAddRealRealPipelined en c i1 i2 a
     = liftA2 (+) a
     $ fmap extend 
     $ delayEn (errorX "macPreAddRealRealPipelined post multiply register") en
-    $ liftA2 mul c
+    $ liftA2 mul (delayEn (errorX "initial coefficient") en c) --TODO: delay here is a waste of registers
     $ delayEn (errorX "macPreAddRealRealPipelined post pre-add register") en 
     $ liftA2 add i1 i2 
 
