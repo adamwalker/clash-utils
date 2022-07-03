@@ -60,7 +60,7 @@ cordicStep
     -> CordicState a b -- ^ Output state
 cordicStep dir idx a state@(CordicState (x :+ y) arg) = CordicState (nextX :+ nextY) nextArg
     where
-    addSub sel x y 
+    addSub sel x y --TODO: the arctan added/subtracted can be fewer bits than the accumulator
         | sel       = x + y
         | otherwise = x - y
 
