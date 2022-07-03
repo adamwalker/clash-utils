@@ -15,12 +15,16 @@ approxEqual x y = abs (x - y) < 0.0001
 
 --CORDIC testing
 spec = describe "CORDIC" $ do
-    specify "vector mode"    $ property prop_CORDICVectorMode
-    specify "rotation mode " $ property prop_CORDICRotationMode
-    specify "pipelined "     $ property prop_CORDICPipelined
+    specify "vector mode"                          $ property prop_CORDICVectorMode
+    specify "vector mode binary angle measurement" $ property prop_CORDICVectorModeBAM
+    specify "rotation mode "                       $ property prop_CORDICRotationMode
+    specify "pipelined "                           $ property prop_CORDICPipelined
 
 consts :: Vec 100 (SFixed 2 32)
 consts = $(listToVecTH (Prelude.take 100 arctans))
+
+constsBAM :: Vec 100 (SFixed 1 32)
+constsBAM = $(listToVecTH (Prelude.take 100 $ Prelude.map (/pi) arctans))
 
 --Test CORDIC vector mode by calculating the magnitude and phase of a complex number
 prop_CORDICVectorMode = 
@@ -34,6 +38,19 @@ prop_CORDICVectorMode =
 
     doIt :: CordicState (SFixed 32 32) (SFixed 2 32) -> CordicState (SFixed 32 32) (SFixed 2 32)
     doIt = cordicSteps dirMagPhase (0 :: Index 100) consts
+
+--Test CORDIC vector mode by calculating the magnitude and phase of a complex number
+prop_CORDICVectorModeBAM = 
+    forAll (choose (0, 500000000)) $ \(x :: Double) -> --Restrict the input ranges so that the error does not grow beyond what approxEqual considers acceptable
+        forAll (choose (-500000000, 500000000)) $ \(y :: Double) -> 
+            let res     = doIt $ CordicState (fromRational (toRational x) :+ fromRational (toRational y)) 0
+                cplxNum = x C.:+ y
+            in     approxEqual (kValue 100 * realToFrac (realPart (cplx res))) (C.magnitude cplxNum)
+                && approxEqual (realToFrac (arg res)) (C.phase cplxNum / pi)
+    where
+
+    doIt :: CordicState (SFixed 32 32) (SFixed 1 32) -> CordicState (SFixed 32 32) (SFixed 1 32)
+    doIt = cordicSteps dirMagPhase (0 :: Index 100) constsBAM
 
 --Test CORDIC rotation mode by calculating the real and imaginary part of a complex number given in polar form
 prop_CORDICRotationMode = 
