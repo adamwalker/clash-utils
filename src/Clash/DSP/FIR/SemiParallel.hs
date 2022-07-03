@@ -87,7 +87,7 @@ semiParallelFIRSystolic
     => (NFDataX coeffType, Num coeffType)
     => MAC dom coeffType inputType outputType
     -> SNat macDelay
-    -> Vec (numStages + 1) (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
+    -> Vec numStages (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
     -> Signal dom outputType                                     -- ^ Cascade
     -> Signal dom Bool                                           -- ^ Input valid
     -> Signal dom inputType                                      -- ^ Sample
@@ -126,10 +126,10 @@ semiParallelFIRSystolic mac macDelay coeffs cascadeIn valid sampleIn = (validOut
 
     --`shifts`, `indices` are the shift register chains of shift signals for the sample buffers, and coefficient indices
     --Alternatively, `shift` could be derived from the current sample index
-    shifts :: Vec (numStages + 2) (Signal dom Bool)
+    shifts :: Vec (numStages + 1) (Signal dom Bool)
     shifts =  iterateI (regEn False globalStep) ready
 
-    indices :: Vec (numStages + 1) (Signal dom (Index coeffsPerStage))
+    indices :: Vec numStages (Signal dom (Index coeffsPerStage))
     indices =  iterateI (regEn 0 globalStep) address
 
     --The output is valid if:
@@ -324,7 +324,7 @@ semiParallelFIRSystolicSymmetric
     => MACPreAdd dom coeffType inputType outputType
     -> SymmAccum dom coeffsPerStage inputType outputType
     -> SNat macDelay
-    -> Vec (numStages + 1) (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
+    -> Vec numStages (Vec coeffsPerStage coeffType)        -- ^ Filter coefficients partitioned by stage
     -> Signal dom outputType
     -> Signal dom Bool                                           -- ^ Input valid
     -> Signal dom inputType                                      -- ^ Sample
@@ -364,10 +364,10 @@ semiParallelFIRSystolicSymmetric mac symmAccum macDelay coeffs cascadeIn valid s
 
     --`shifts`, `indices` are the shift register chains of shift signals for the sample buffers, and coefficient indices
     --Alternatively, `shift` could be derived from the current sample index
-    shifts :: Vec (numStages + 2) (Signal dom Bool)
+    shifts :: Vec (numStages + 1) (Signal dom Bool)
     shifts =  iterateI (regEn False globalStep) ready
 
-    indices :: Vec (numStages + 2) (Signal dom (Index coeffsPerStage))
+    indices :: Vec (numStages + 1) (Signal dom (Index coeffsPerStage))
     indices =  iterateI (regEn 0 globalStep) address
 
 semiParallelFIRTransposed
