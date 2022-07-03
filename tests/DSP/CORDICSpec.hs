@@ -19,7 +19,7 @@ spec = describe "CORDIC" $ do
     specify "rotation mode " $ property prop_CORDICRotationMode
     specify "pipelined "     $ property prop_CORDICPipelined
 
-consts :: Vec 100 (SFixed 32 32)
+consts :: Vec 100 (SFixed 2 32)
 consts = $(listToVecTH (Prelude.take 100 arctans))
 
 --Test CORDIC vector mode by calculating the magnitude and phase of a complex number
@@ -32,7 +32,7 @@ prop_CORDICVectorMode =
                 && approxEqual (realToFrac (arg res)) (C.phase cplxNum)
     where
 
-    doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
+    doIt :: CordicState (SFixed 32 32) (SFixed 2 32) -> CordicState (SFixed 32 32) (SFixed 2 32)
     doIt = cordicSteps dirMagPhase (0 :: Index 100) consts
 
 --Test CORDIC rotation mode by calculating the real and imaginary part of a complex number given in polar form
@@ -44,7 +44,7 @@ prop_CORDICRotationMode =
                 && approxEqual (kValue 100 * realToFrac (imagPart (cplx res))) (x * Prelude.sin y)
     where
 
-    doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
+    doIt :: CordicState (SFixed 32 32) (SFixed 2 32) -> CordicState (SFixed 32 32) (SFixed 2 32)
     doIt = cordicSteps dirRealImag (0 :: Index 100) consts
 
 --Test CORDIC vector mode by calculating the magnitude and phase of a complex number
@@ -57,7 +57,7 @@ prop_CORDICPipelined =
                 && approxEqual (realToFrac (arg res)) (C.phase cplxNum)
     where
 
-    doIt :: CordicState (SFixed 32 32) (SFixed 32 32) -> CordicState (SFixed 32 32) (SFixed 32 32)
+    doIt :: CordicState (SFixed 32 32) (SFixed 2 32) -> CordicState (SFixed 32 32) (SFixed 2 32)
     doIt input 
         = last
         $ take 12
