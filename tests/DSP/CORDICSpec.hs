@@ -25,7 +25,7 @@ consts = $(listToVecTH (Prelude.take 100 arctans))
 --Test CORDIC vector mode by calculating the magnitude and phase of a complex number
 prop_CORDICVectorMode = 
     forAll (choose (0, 500000000)) $ \(x :: Double) -> --Restrict the input ranges so that the error does not grow beyond what approxEqual considers acceptable
-        forAll (choose (0, 500000000)) $ \(y :: Double) -> 
+        forAll (choose (-500000000, 500000000)) $ \(y :: Double) -> 
             let res     = doIt $ CordicState (fromRational (toRational x) :+ fromRational (toRational y)) 0
                 cplxNum = x C.:+ y
             in     approxEqual (kValue 100 * realToFrac (realPart (cplx res))) (C.magnitude cplxNum)
@@ -50,7 +50,7 @@ prop_CORDICRotationMode =
 --Test CORDIC vector mode by calculating the magnitude and phase of a complex number
 prop_CORDICPipelined = 
     forAll (choose (0, 500000000)) $ \(x :: Double) -> --Restrict the input ranges so that the error does not grow beyond what approxEqual considers acceptable
-        forAll (choose (0, 500000000)) $ \(y :: Double) -> 
+        forAll (choose (-500000000, 500000000)) $ \(y :: Double) -> 
             let res     = doIt $ CordicState (fromRational (toRational x) :+ fromRational (toRational y)) 0
                 cplxNum = x C.:+ y
             in     approxEqual (kValue 100 * realToFrac (realPart (cplx res))) (C.magnitude cplxNum)
