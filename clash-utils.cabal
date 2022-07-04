@@ -45,6 +45,7 @@ library
         Clash.DSP.FIR.HalfBand,
         Clash.DSP.FIR.Polyphase, 
         Clash.DSP.FIR.SemiParallel, 
+        Clash.DSP.Fixed,
         Clash.DSP.IIRFilter, 
         Clash.DSP.MAC,
         Clash.DSP.SineTable,
