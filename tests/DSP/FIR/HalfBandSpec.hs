@@ -49,7 +49,7 @@ prop_halfbandDecim coeffs input (InfiniteList ens _) = expect === result
         $ drop 1
         $ map snd . filter fst
         $ sample @System 
-        $ system (halfBandDecimate (SNat @7) id filter') input ens
+        $ system (halfBandDecimate' (SNat @7) id filter') input ens
 
     filter'
         :: forall dom. HiddenClockResetEnable dom 
@@ -85,7 +85,7 @@ prop_halfbandDecimSymm coeffs midCoeff input (InfiniteList ens _) = expect === r
         $ drop 1
         $ map snd . filter fst
         $ sample @System 
-        $ system (halfBandDecimate (SNat @8) id filter') input ens
+        $ system (halfBandDecimate' (SNat @8) id filter') input ens
 
     filter'
         :: forall dom. HiddenClockResetEnable dom 
@@ -121,13 +121,5 @@ prop_halfbandDecimSymmMulti coeffs input (InfiniteList ens _) = expect === resul
         $ drop 1
         $ map snd . filter fst
         $ sample @System 
-        $ system (halfBandDecimate (SNat @16) id filter') input ens
-
-    filter' 
-        :: forall dom. HiddenClockResetEnable dom 
-        => Signal dom (Signed 32) 
-        -> Signal dom Bool 
-        -> Signal dom (Signed 32) 
-        -> (Signal dom Bool, Signal dom (Signed 32), Signal dom Bool)
-    filter' = semiParallelFIRSystolicSymmetric (const macPreAddRealReal) (evenSymmAccum2 (SNat @0) (const macPreAddRealReal) (Clash.last coeffs)) (SNat @0) (Clash.init coeffs)
+        $ system (halfBandDecimate (const macPreAddRealReal) (SNat @0) (SNat @16) id coeffs) input ens
 

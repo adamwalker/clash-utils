@@ -1,11 +1,14 @@
 module Clash.DSP.FIR.HalfBand (
         delayLine,
+        halfBandDecimate',
         halfBandDecimate
     ) where
 
 import Clash.Prelude
 
 import Clash.Counter
+import Clash.DSP.MAC(MACPreAdd)
+import Clash.DSP.FIR.SemiParallel(evenSymmAccum2, semiParallelFIRSystolicSymmetric)
 
 delayLine 
     :: forall dom delayN a
@@ -37,7 +40,7 @@ type FilterBP dom inputType outputType
         Signal dom Bool
         )                       -- ^ (Output valid, output data, ready)
 
-halfBandDecimate
+halfBandDecimate'
     :: forall dom delay inputType outputType
     .  HiddenClockResetEnable dom
     => (Num inputType, NFDataX inputType)
@@ -52,7 +55,7 @@ halfBandDecimate
         Signal dom outputType, 
         Signal dom Bool
         )
-halfBandDecimate delay convert filter valid sampleIn = (hValid, hOut, ready)
+halfBandDecimate' delay convert filter valid sampleIn = (hValid, hOut, ready)
     where
 
     --Sequencing
@@ -72,4 +75,35 @@ halfBandDecimate delay convert filter valid sampleIn = (hValid, hOut, ready)
     delayOut = delayLine delay (valid .&&. phase) sampleIn
 
     cascade = mux hReady delayOut 0
+
+halfBandDecimate 
+    :: forall dom macDelay delayLineDelay coeffType inputType outputType numStages numCoeffs
+    .  HiddenClockResetEnable dom
+    => (KnownNat delayLineDelay, 1 <= delayLineDelay)
+    => (KnownNat numCoeffs, 1 <= numCoeffs)
+    => KnownNat numStages
+    => (Num inputType, NFDataX inputType)
+    => (Num outputType, NFDataX outputType)
+    => (Num coeffType, NFDataX coeffType)
+    => MACPreAdd dom coeffType inputType outputType
+    -> SNat macDelay
+    -> SNat delayLineDelay
+    -> (inputType -> outputType)
+    -> Vec (numStages + 1) (Vec numCoeffs coeffType)
+    -> Signal dom Bool
+    -> Signal dom inputType
+    -> (Signal dom Bool, Signal dom outputType, Signal dom Bool)
+halfBandDecimate mac macDelay delayLineDelay convert coeffs = halfBandDecimate' delayLineDelay convert filter
+    where
+    filter 
+        :: Signal dom outputType 
+        -> Signal dom Bool 
+        -> Signal dom inputType 
+        -> (Signal dom Bool, Signal dom outputType, Signal dom Bool)
+    filter 
+        = semiParallelFIRSystolicSymmetric 
+            mac 
+            (evenSymmAccum2 macDelay mac (last coeffs)) 
+            macDelay 
+            (init coeffs)
 
