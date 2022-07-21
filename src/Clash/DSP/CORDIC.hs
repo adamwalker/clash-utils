@@ -16,8 +16,7 @@ module Clash.DSP.CORDIC (
     cordicStep,
     cordicSteps,
     cordicPipeline,
-    toPolar,
-    cordicExample
+    toPolar
     ) where
 
 import Clash.Prelude
@@ -142,38 +141,4 @@ toPolar consts en input = res
         where
         func False (CordicState (x :+ y) arg) = (x, arg)
         func True  (CordicState (x :+ y) arg) = (x, arg `xor` minBound)
-
-{-| An example synthesizeable CORDIC implementation. Finds the magnitude and phase of a complex number. Consists of an 8 deep pipeline. Each pipeline stages performs two CORDIC iterations for a total of 16 iterations. Processes one input per cycle. Latency is 8 cycles. -}
-cordicExample 
-    :: HiddenClockResetEnable dom
-    => Vec 16 (SFixed 2 16)                                  -- ^ Vector or arctans. Needs to be supplied as an argument to work around GHC's annoying "stage restriction".
-    -> Signal dom (SFixed 16 16)                             -- ^ Real part
-    -> Signal dom (SFixed 16 16)                             -- ^ Imaginary part
-    -> Signal dom (CordicState (SFixed 16 16) (SFixed 2 16)) -- ^ Result. Real part of `cplx` is magnitude. `arg` contains argument.
-cordicExample consts' x y 
-    = fmap (step 14 $ consts !! 7)
-    $ delay (errorX "initial cordicExample")
-    $ fmap (step 12 $ consts !! 6)
-    $ delay (errorX "initial cordicExample")
-    $ fmap (step 10 $ consts !! 5)
-    $ delay (errorX "initial cordicExample")
-    $ fmap (step 8  $ consts !! 4)
-    $ delay (errorX "initial cordicExample")
-    $ fmap (step 6  $ consts !! 3)
-    $ delay (errorX "initial cordicExample")
-    $ fmap (step 4  $ consts !! 2)
-    $ delay (errorX "initial cordicExample")
-    $ fmap (step 2  $ consts !! 1)
-    $ delay (errorX "initial cordicExample")
-    $ fmap (step 0  $ consts !! 0)
-    $ CordicState <$> cplx <*> pure (0 :: SFixed 2 16)
-    where 
-
-    step :: Index 16 -> Vec 2 (SFixed 2 16) -> CordicState (SFixed 16 16) (SFixed 2 16) -> CordicState (SFixed 16 16) (SFixed 2 16)
-    step = cordicSteps (\(CordicState (_ :+ y) _) -> y < 0)
-
-    cplx = liftA2 (:+) x y
-
-    consts :: Vec 8 (Vec 2 (SFixed 2 16))
-    consts = unconcatI consts'
 
