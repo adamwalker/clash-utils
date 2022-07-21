@@ -16,6 +16,7 @@ module Clash.DSP.CORDIC (
     cordicStep,
     cordicSteps,
     cordicPipeline,
+    toPolar,
     cordicExample
     ) where
 
@@ -110,6 +111,37 @@ cordicPipeline dir start consts en input
             -> CordicState a b 
             -> CordicState a b
         step' = cordicSteps dir
+
+toPolar 
+    :: forall dom numStages numPerStage a b
+    .  HiddenClockResetEnable dom
+    => KnownNat numStages
+    => KnownNat numPerStage
+    => (Ord a, Bits a, NFDataX a, Num a)
+    => (Bits b, Bounded b, NFDataX b, Num b)
+    => Vec (numStages + 1) (Vec numPerStage b)
+    -> Signal dom Bool
+    -> Signal dom (Complex a)
+    -> Signal dom (a, b)
+toPolar consts en input = res
+    where
+
+    (flip, swizzled) = unbundle $ delayEn undefined en $ swizzle <$> input
+        where
+        swizzle c@(x :+ _)
+            | x < 0     = (True,  fmap negate c)
+            | otherwise = (False, c)
+
+    preFlip 
+        = cordicPipeline dirMagPhase (0 :: Index ((numStages + 1) * numPerStage)) consts en 
+        $ CordicState <$> swizzled <*> pure 0
+
+    flipD = last $ generate (SNat @(numStages + 1)) (delayEn (errorX "initial toPolar delay") en) flip
+
+    res = func <$> flipD <*> preFlip
+        where
+        func False (CordicState (x :+ y) arg) = (x, arg)
+        func True  (CordicState (x :+ y) arg) = (x, arg `xor` minBound)
 
 {-| An example synthesizeable CORDIC implementation. Finds the magnitude and phase of a complex number. Consists of an 8 deep pipeline. Each pipeline stages performs two CORDIC iterations for a total of 16 iterations. Processes one input per cycle. Latency is 8 cycles. -}
 cordicExample 
