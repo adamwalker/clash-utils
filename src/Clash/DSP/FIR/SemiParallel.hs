@@ -1,3 +1,9 @@
+{-| 
+    Semi-parallel. These accept a sample every Nth sample instead of every cycle.
+    By reusing the DSPs over multiple cycles, longer filters can be implemented with the same DSP resources.
+
+    __FPGA proven__
+-}
 module Clash.DSP.FIR.SemiParallel (
         macUnit,
         integrateAndDump,

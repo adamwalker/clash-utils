@@ -1,3 +1,8 @@
+{-| 
+    Multiply and accumulate functions designed to map to Xilinx's DSP blocks.
+
+    __FPGA proven__
+-}
 module Clash.DSP.MAC (
         MAC(..),
         MACPreAdd(..),

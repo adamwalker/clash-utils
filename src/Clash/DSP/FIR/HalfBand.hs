@@ -1,3 +1,8 @@
+{-| 
+    Half band decimators.
+
+    __FPGA proven__
+-}
 module Clash.DSP.FIR.HalfBand (
         delayLine,
         halfBandDecimate',
