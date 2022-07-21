@@ -1,5 +1,7 @@
 {-| More efficient LFSR calculations based on tables rather than unrolling the LFSR updates.
- -  This is equivalent to unrolling the LFSR update, but I have found that Vivado has a much easier time optimising it.
+    This is equivalent to unrolling the LFSR update, but I have found that Vivado has a much easier time optimising it.
+
+    __FPGA proven__
  -}
 module Clash.LFSR.Table (
         makeLFSRTable,

@@ -1,4 +1,6 @@
 {-| Linear feedback shift registers.
+
+    __FPGA proven__
  -}
 module Clash.LFSR.Feedback (
     fibonacciFeedback,

@@ -1,3 +1,6 @@
+{-
+    __FPGA proven__
+-}
 module Clash.Counter (
     countAmt,
     count,
