@@ -121,5 +121,5 @@ prop_halfbandDecimSymmMulti coeffs input (InfiniteList ens _) = expect === resul
         $ drop 1
         $ map snd . filter fst
         $ sample @System 
-        $ system (halfBandDecimate (const macPreAddRealReal) (SNat @0) id coeffs) input ens
+        $ system (halfBandDecimate (macPreAddRealRealPipelined) (SNat @2) id coeffs) input ens
 
