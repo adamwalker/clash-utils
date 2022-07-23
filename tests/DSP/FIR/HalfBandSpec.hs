@@ -70,7 +70,7 @@ prop_halfbandDecimSymm coeffs midCoeff input (InfiniteList ens _) = expect === r
     coeffsHB 
         = Clash.init 
         $ Clash.merge (combined Clash.++ Clash.reverse combined)
-        $ Clash.replicate (SNat @8) 0 Clash.++ Clash.singleton 1 Clash.++ Clash.repeat 0
+        $ Clash.replicate (SNat @7) 0 Clash.++ Clash.singleton 1 Clash.++ Clash.repeat 0
 
     expect
         = drop 17
@@ -85,7 +85,7 @@ prop_halfbandDecimSymm coeffs midCoeff input (InfiniteList ens _) = expect === r
         $ drop 1
         $ map snd . filter fst
         $ sample @System 
-        $ system (halfBandDecimate' (SNat @8) id filter') input ens
+        $ system (halfBandDecimate' (SNat @7) id filter') input ens
 
     filter'
         :: forall dom. HiddenClockResetEnable dom 
@@ -106,7 +106,7 @@ prop_halfbandDecimSymmMulti coeffs input (InfiniteList ens _) = expect === resul
     coeffsHB 
         = Clash.init 
         $ Clash.merge (combined Clash.++ Clash.reverse combined)
-        $ Clash.replicate (SNat @16) 0 Clash.++ Clash.singleton 1 Clash.++ Clash.repeat 0
+        $ Clash.replicate (SNat @15) 0 Clash.++ Clash.singleton 1 Clash.++ Clash.repeat 0
 
     expect
         = drop 33
@@ -121,5 +121,5 @@ prop_halfbandDecimSymmMulti coeffs input (InfiniteList ens _) = expect === resul
         $ drop 1
         $ map snd . filter fst
         $ sample @System 
-        $ system (halfBandDecimate (const macPreAddRealReal) (SNat @0) (SNat @16) id coeffs) input ens
+        $ system (halfBandDecimate (const macPreAddRealReal) (SNat @0) (SNat @15) id coeffs) input ens
 
