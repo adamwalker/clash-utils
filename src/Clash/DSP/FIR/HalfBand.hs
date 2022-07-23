@@ -82,9 +82,9 @@ halfBandDecimate' delay convert filter valid sampleIn = (hValid, hOut, ready)
     cascade = mux hReady delayOut 0
 
 halfBandDecimate 
-    :: forall dom macDelay delayLineDelay coeffType inputType outputType numStages numCoeffs
+    :: forall dom macDelay delayLineDelay coeffType inputType outputType numStages numCoeffs 
     .  HiddenClockResetEnable dom
-    => (KnownNat delayLineDelay, 1 <= delayLineDelay)
+    => ((delayLineDelay + 1) ~ ((numStages + 1) * numCoeffs), 1 <= delayLineDelay, KnownNat delayLineDelay)
     => (KnownNat numCoeffs, 1 <= numCoeffs)
     => KnownNat numStages
     => (Num inputType, NFDataX inputType)
@@ -92,13 +92,12 @@ halfBandDecimate
     => (Num coeffType, NFDataX coeffType)
     => MACPreAdd dom coeffType inputType outputType
     -> SNat macDelay
-    -> SNat delayLineDelay
     -> (inputType -> outputType)
     -> Vec (numStages + 1) (Vec numCoeffs coeffType)
     -> Signal dom Bool
     -> Signal dom inputType
     -> (Signal dom Bool, Signal dom outputType, Signal dom Bool)
-halfBandDecimate mac macDelay delayLineDelay convert coeffs = halfBandDecimate' delayLineDelay convert filter
+halfBandDecimate mac macDelay convert coeffs = halfBandDecimate' (SNat @delayLineDelay) convert filter
     where
     filter 
         :: Signal dom outputType 
