@@ -2,7 +2,8 @@ module Clash.DSP.Fixed (
     renorm,
     truncateFrac,
     extendFrac,
-    truncateInt
+    truncateInt,
+    extendIntFrac
 ) where
 
 import Clash.Prelude
@@ -40,4 +41,10 @@ truncateInt
     => SFixed (l + m) n
     -> SFixed m n
 truncateInt = sf (SNat @n) . truncateB . unSF
+
+extendIntFrac 
+    :: (KnownNat l, KnownNat m, KnownNat n, KnownNat o) 
+    => SFixed l n
+    -> SFixed (l + m) (n + o)
+extendIntFrac = resizeF --TODO: implement without relying on resizeF
 
