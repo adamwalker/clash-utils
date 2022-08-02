@@ -20,7 +20,7 @@ theFilter
 theFilter
     = semiParallelFIRSystolicSymmetric
         macPreAddRealRealPipelined
-        (oddSymmAccum extend)
+        (oddSymmAccum (SNat @2) extend)
         (SNat @2) 
         coeffs
         (pure 0)

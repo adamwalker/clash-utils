@@ -13,19 +13,6 @@ coeffs = (
         (2131 :> 2310 :> 1450 :> 1450 :> 2130 :> 2311 :> 1450 :> 1451 :> 2131 :> 2310 :> 1450 :> 1450 :> 2311 :> 1450 :> 1451 :> 2131 :> Nil) :> 
     Nil) 
 
-filter' 
-    :: forall dom. HiddenClockResetEnable dom 
-    => Signal dom (Signed 40) 
-    -> Signal dom Bool 
-    -> Signal dom (Signed 16) 
-    -> (Signal dom Bool, Signal dom (Signed 40), Signal dom Bool)
-filter' 
-    = semiParallelFIRSystolicSymmetric 
-        macPreAddRealRealPipelined 
-        (evenSymmAccum2 (SNat @2) macPreAddRealRealPipelined (last coeffs)) 
-        (SNat @2) 
-        (init coeffs)
-
 theFilter 
     :: HiddenClockResetEnable dom
     => Signal dom Bool                                            -- ^ Input valid
@@ -33,9 +20,10 @@ theFilter
     -> (Signal dom Bool, Signal dom (Signed 40), Signal dom Bool) -- ^ (Output valid, output data, ready)
 theFilter
     = halfBandDecimate 
-        (SNat @16) 
+        macPreAddRealRealPipelined
+        (SNat @2)
         extend 
-        filter'
+        coeffs
 
 top
     :: "clk"       ::: Clock XilinxSystem
