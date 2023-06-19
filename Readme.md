@@ -2,7 +2,7 @@
 
 A collection of reusable [Clash](http://www.clash-lang.org/) designs/examples.
 
-See [here](http://adamwalker.github.io/Building-FPGA-KVS/) and [here](http://adamwalker.github.io/Filter-Design-in-Clash/) for projects built using components in this library.
+See [here](http://adamwalker.github.io/Building-FPGA-KVS/) and [here](http://adamwalker.github.io/FPGA-FM-Radio/) for projects built using components in this library.
 
 ## Includes:
 * [Binary to BCD conversion](https://en.wikipedia.org/wiki/Double_dabble), BCD arithmetic that efficiently utilises the carry chain.
