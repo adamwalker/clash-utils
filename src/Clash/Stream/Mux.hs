@@ -15,9 +15,9 @@ streamMux
     => Signal dom Bool                    -- ^ Downstream ready
     -> Vec m (Signal dom (Bool, Bool, a)) -- ^ Incoming streams
     -> (
-            Vec m (Signal dom Bool),      -- ^ Upstream readys
-            Signal dom (Bool, Bool, a)    -- ^ Outgoing streams
-    )
+            Vec m (Signal dom Bool),
+            Signal dom (Bool, Bool, a)
+       )                                  -- ^ (Upstream readys, Outgoing streams)
 streamMux ready streams = (readys, activeStream)
     where
 
@@ -45,9 +45,9 @@ streamMuxLowLatency
     => Signal dom Bool                    -- ^ Downstream ready
     -> Vec m (Signal dom (Bool, Bool, a)) -- ^ Incoming streams
     -> (
-            Vec m (Signal dom Bool),      -- ^ Upstream readys
-            Signal dom (Bool, Bool, a)    -- ^ Outgoing streams
-    )
+            Vec m (Signal dom Bool),
+            Signal dom (Bool, Bool, a)
+       )                                  -- ^ (Upstream readys, Outgoing streams)
 streamMuxLowLatency ready streams = (readys, activeStream)
     where
 
@@ -81,9 +81,9 @@ streamMuxBiased
     => Signal dom Bool                    -- ^ Downstream ready
     -> Vec m (Signal dom (Bool, Bool, a)) -- ^ Incoming streams
     -> (
-            Vec m (Signal dom Bool),      -- ^ Upstream readys
-            Signal dom (Bool, Bool, a)    -- ^ Outgoing streams
-    )
+            Vec m (Signal dom Bool),
+            Signal dom (Bool, Bool, a)
+       )                                  -- ^ (Upstream readys, Outgoing streams)
 streamMuxBiased ready streams = (readys, activeStream)
     where
     readys :: Vec m (Signal dom Bool)

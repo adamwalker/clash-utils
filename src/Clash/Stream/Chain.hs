@@ -21,9 +21,9 @@ type VecStream a b dom m
     =  Signal dom Bool               -- ^ Downstream ready
     -> Vec m (Signal dom a)          -- ^ Incoming streams
     -> (
-            Vec m (Signal dom Bool), -- ^ Upstream readys
-            Signal dom b             -- ^ Outgoing streams
-    )
+            Vec m (Signal dom Bool),
+            Signal dom b
+       )                             -- ^ (Upstream readys, Outgoing streams)
 
 -- | Convenience function for merging streams together, correctly connecting up their ready signals
 chainStreamVec
